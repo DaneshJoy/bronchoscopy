@@ -1,0 +1,152 @@
+import vtk
+from PyQt5.QtWidgets import QFrame
+from PyQt5 import QtWidgets, QtCore
+from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+
+
+class QVtkViewer3D(QFrame):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        colors = vtk.vtkNamedColors()
+        colors.SetColor("SkinColor", [255, 125, 64, 255])
+        colors.SetColor("BkgColor", [51, 77, 102, 255])
+
+        # Make the actual QtWidget a child so that it can be reparented
+        self.interactor = QVTKRenderWindowInteractor(self)
+        self.layout = QtWidgets.QVBoxLayout()
+        self.layout.addWidget(self.interactor)
+        self.layout.setContentsMargins(50, 0, 0, 0)
+        self.setLayout(self.layout)
+        
+        # Setup VTK Environment
+        self.ren = vtk.vtkRenderer()
+        ren_win = self.interactor.GetRenderWindow()
+        ren_win.AddRenderer(self.ren)
+
+        self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
+        self.ren.SetBackground(0, 0.35, 0.5)
+        # ren.SetBackground(colors.GetColor3D("BkgColor"))
+        self.interactor.Initialize()
+
+    def start(self):
+        self.interactor.Initialize()
+        self.interactor.Start()
+
+    def showImage(self, reader):
+        # Isosurface
+        skinExtractor = vtk.vtkMarchingCubes()
+        skinExtractor.SetInputConnection(reader.GetOutputPort())
+        skinExtractor.SetValue(0, 500)
+
+        # Mapper
+        skinMapper = vtk.vtkPolyDataMapper()
+        skinMapper.SetInputConnection(skinExtractor.GetOutputPort())
+        skinMapper.ScalarVisibilityOff()
+        # skinMapper.UseLookupTableScalarRangeOn()
+
+        # Actor
+        skin = vtk.vtkActor()
+        skin.SetMapper(skinMapper)
+        skin.GetProperty().SetDiffuseColor(0.8, 0.6, 0.2)
+        # skin.GetProperty().SetDiffuseColor(colors.GetColor3D("SkinColor"))
+
+        # Camera
+        cam = vtk.vtkCamera()
+        cam.SetViewUp(0, 0, -1)
+        cam.SetPosition(0, -1, 0)
+        cam.SetFocalPoint(0, 0, 0)
+        cam.ComputeViewPlaneNormal()
+        cam.Azimuth(30.0)
+        cam.Elevation(30.0)
+
+        self.ren.AddActor(skin)
+        self.ren.SetActiveCamera(cam)
+        self.ren.ResetCamera()
+        cam.Dolly(1)  # Moves the camera towards the FocalPoint
+        self.ren.ResetCameraClippingRange()
+
+        # self.renderer = ren
+        # self.interactor = interactor
+        self.interactor.Initialize()
+        self.interactor.Start()
+
+
+class QVtkViewer2D(QFrame):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        # Make the actual QtWidget a child so that it can be reparented
+        self.interactor = QVTKRenderWindowInteractor(self)
+        self.layout = QtWidgets.QGridLayout()
+        self.layout.addWidget(self.interactor)
+        self.layout.setContentsMargins(50, 0, 0, 0)
+        self.setLayout(self.layout)
+
+        # Setup VTK Environment
+        self.ren = vtk.vtkRenderer()
+        ren_win = self.interactor.GetRenderWindow()
+        ren_win.AddRenderer(self.ren)
+        self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
+        self.ren.SetBackground(0, 0, 0)
+        # ren.SetBackground(colors.GetColor3D("BkgColor"))
+        self.interactor.Initialize()
+
+    def start(self):
+        self.interactor.Initialize()
+        self.interactor.Start()
+
+    def showImage(self, reader, planeType):
+        # black/white lookup table
+        bwLut = vtk.vtkLookupTable()
+        bwLut.SetTableRange(0, 2000)
+        bwLut.SetSaturationRange(0, 0)
+        bwLut.SetHueRange(0, 0)
+        bwLut.SetValueRange(0, 1)
+        bwLut.Build()
+
+        # plane
+        planeColors = vtk.vtkImageMapToColors()
+        planeColors.SetInputConnection(reader.GetOutputPort())
+        planeColors.SetLookupTable(bwLut)
+        planeColors.Update()
+
+        plane = vtk.vtkImageActor()
+        plane.GetMapper().SetInputConnection(planeColors.GetOutputPort())
+
+        # Camera
+        cam = vtk.vtkCamera()
+        # cam.SetViewUp(0, 0, -1)
+        cam.SetFocalPoint(0, 0, 0)
+        cam.ComputeViewPlaneNormal()
+        # cam.Azimuth(30.0)
+        # cam.Elevation(30.0)
+
+        if planeType == "axial":
+            plane.SetDisplayExtent(0, 255, 0, 255, 46, 46)
+            # cam.SetPosition(0, 0, -1)
+            cam.Roll(180)
+
+        elif planeType == "coronal":
+            plane.SetDisplayExtent(0, 255, 128, 128, 0, 92)
+            # cam.SetPosition(0, -1, 0)
+            cam.Elevation(90)
+            cam.OrthogonalizeViewUp()
+        else:  # planeType == "sagittal"
+            plane.SetDisplayExtent(128, 128, 0, 255, 0, 92)
+            # cam.SetPosition(-1, 0, 0)
+            cam.Azimuth(90)
+            cam.Roll(90)
+            cam.OrthogonalizeViewUp()
+
+        self.ren.AddActor(plane)
+        # ren_win.Render()
+        self.ren.SetActiveCamera(cam)
+        self.ren.ResetCamera()
+        cam.Dolly(1)  # Moves the camera towards the FocalPoint
+        self.ren.ResetCameraClippingRange()
+
+        # self.renderer = ren
+        # self.interactor = interactor
+        self.interactor.Initialize()
+        self.interactor.Start()
