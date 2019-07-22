@@ -5,7 +5,7 @@ from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 
 class QVtkViewer3D(QFrame):
-    def __init__(self, parent):
+    def __init__(self, parent, size):
         super().__init__(parent)
 
         colors = vtk.vtkNamedColors()
@@ -14,24 +14,23 @@ class QVtkViewer3D(QFrame):
 
         # Make the actual QtWidget a child so that it can be reparented
         self.interactor = QVTKRenderWindowInteractor(self)
-        self.layout = QtWidgets.QVBoxLayout()
+        self.layout = QtWidgets.QGridLayout()
         self.layout.addWidget(self.interactor)
-        self.layout.setContentsMargins(50, 0, 0, 0)
+        self.layout.setContentsMargins(5, 5, 5, 5)
+        width = (size.width()-370) // 2
+        height = (size.height()-170) // 2
+        self.interactor.setMinimumSize(width, height)
         self.setLayout(self.layout)
-        
+
         # Setup VTK Environment
         self.ren = vtk.vtkRenderer()
         ren_win = self.interactor.GetRenderWindow()
         ren_win.AddRenderer(self.ren)
 
         self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
-        self.ren.SetBackground(0, 0.35, 0.5)
+        self.ren.SetBackground(0, 0, 0)
         # ren.SetBackground(colors.GetColor3D("BkgColor"))
         self.interactor.Initialize()
-
-    def start(self):
-        self.interactor.Initialize()
-        self.interactor.Start()
 
     def showImage(self, reader):
         # Isosurface
@@ -63,7 +62,7 @@ class QVtkViewer3D(QFrame):
         self.ren.AddActor(skin)
         self.ren.SetActiveCamera(cam)
         self.ren.ResetCamera()
-        cam.Dolly(1)  # Moves the camera towards the FocalPoint
+        cam.Dolly(1.5)  # Moves the camera towards the FocalPoint
         self.ren.ResetCameraClippingRange()
 
         # self.renderer = ren
@@ -73,14 +72,17 @@ class QVtkViewer3D(QFrame):
 
 
 class QVtkViewer2D(QFrame):
-    def __init__(self, parent):
+    def __init__(self, parent, size):
         super().__init__(parent)
 
         # Make the actual QtWidget a child so that it can be reparented
         self.interactor = QVTKRenderWindowInteractor(self)
         self.layout = QtWidgets.QGridLayout()
         self.layout.addWidget(self.interactor)
-        self.layout.setContentsMargins(50, 0, 0, 0)
+        self.layout.setContentsMargins(5, 5, 5, 5)
+        width = (size.width()-370) // 2
+        height = (size.height()-170) // 2
+        self.interactor.setMinimumSize(width, height)
         self.setLayout(self.layout)
 
         # Setup VTK Environment
@@ -91,10 +93,6 @@ class QVtkViewer2D(QFrame):
         self.ren.SetBackground(0, 0, 0)
         # ren.SetBackground(colors.GetColor3D("BkgColor"))
         self.interactor.Initialize()
-
-    def start(self):
-        self.interactor.Initialize()
-        self.interactor.Start()
 
     def showImage(self, reader, planeType):
         # black/white lookup table
@@ -143,7 +141,7 @@ class QVtkViewer2D(QFrame):
         # ren_win.Render()
         self.ren.SetActiveCamera(cam)
         self.ren.ResetCamera()
-        cam.Dolly(1)  # Moves the camera towards the FocalPoint
+        cam.Dolly(1.5)  # Moves the camera towards the FocalPoint
         self.ren.ResetCameraClippingRange()
 
         # self.renderer = ren
