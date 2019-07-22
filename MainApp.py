@@ -58,11 +58,11 @@ class MainWindow(QMainWindow):
         pass
 
 if __name__ == "__main__":
-    # ReCompile Ui
-    os.chdir(os.path.dirname(__file__))
-    with open("MainWindow.ui") as ui_file:
-        with open("MainWindow.py", "w") as py_ui_file:
-            uic.compileUi(ui_file, py_ui_file, execute=True)
+    # # ReCompile Ui
+    # os.chdir(os.path.dirname(__file__))
+    # with open("MainWindow.ui") as ui_file:
+    #     with open("MainWindow.py", "w") as py_ui_file:
+    #         uic.compileUi(ui_file, py_ui_file, execute=True)
 
     app = QApplication([])
 

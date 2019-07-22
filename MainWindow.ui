@@ -452,10 +452,6 @@
    <addaction name="actionExit"/>
   </widget>
   <action name="actionOpen">
-   <property name="icon">
-    <iconset>
-     <normaloff>C:/Users/Saeed/Pictures/smiley.png</normaloff>C:/Users/Saeed/Pictures/smiley.png</iconset>
-   </property>
    <property name="text">
     <string>Open...</string>
    </property>
@@ -471,7 +467,7 @@
    <property name="iconVisibleInMenu">
     <bool>true</bool>
    </property>
-   <property name="shortcutVisibleInContextMenu" stdset="0">
+   <property name="shortcutVisibleInContextMenu">
     <bool>false</bool>
    </property>
   </action>
@@ -486,10 +482,6 @@
    </property>
   </action>
   <action name="actionExit">
-   <property name="icon">
-    <iconset>
-     <normaloff>C:/Users/Saeed/Pictures/smiley.png</normaloff>C:/Users/Saeed/Pictures/smiley.png</iconset>
-   </property>
    <property name="text">
     <string>Exit</string>
    </property>
