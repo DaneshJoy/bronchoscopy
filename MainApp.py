@@ -13,7 +13,7 @@ from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog
 from PyQt5.QtGui import QPalette
 
-from QVtkViewer import QVtkViewer3D, QVtkViewer2D
+from ui.QVtkViewer import QVtkViewer3D, QVtkViewer2D
 
 
 class MainWindow(QMainWindow):
