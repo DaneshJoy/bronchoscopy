@@ -70,7 +70,7 @@ if __name__ == "__main__":
     Set Dark Pallete
     '''
     # # Force the style to be the same on all OSs:
-    # app.setStyle("Fusion")
+    app.setStyle("Fusion")
 
     # # Now use a palette to switch to dark colors:
     # palette = QPalette()
