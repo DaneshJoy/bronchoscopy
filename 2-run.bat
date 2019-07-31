@@ -1,2 +1,3 @@
 @ECHO OFF
+ECHO Starting BronchoVision...
 CALL python MainApp.py
