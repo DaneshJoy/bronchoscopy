@@ -148,3 +148,5 @@ class QVtkViewer2D(QFrame):
         # self.interactor = interactor
         self.interactor.Initialize()
         self.interactor.Start()
+		
+        
