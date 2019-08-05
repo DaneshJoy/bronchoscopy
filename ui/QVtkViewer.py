@@ -71,6 +71,22 @@ class QVtkViewer3D(QFrame):
         self.interactor.Start()
 
 
+class MyInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
+    def __init__(self, parent=None):
+        self.AddObserver("MiddleButtonPressEvent", self.middle_button_press_event)
+        self.AddObserver("MiddleButtonReleaseEvent", self.middle_button_release_event)
+
+    def middle_button_press_event(self, obj, event):
+        print("Middle Button pressed")
+        self.OnMiddleButtonDown()
+        return
+
+    def middle_button_release_event(self, obj, event):
+        print("Middle Button released")
+        self.OnMiddleButtonUp()
+        return
+
+
 class QVtkViewer2D(QFrame):
     def __init__(self, parent, size):
         super().__init__(parent)
@@ -89,10 +105,18 @@ class QVtkViewer2D(QFrame):
         self.ren = vtk.vtkRenderer()
         ren_win = self.interactor.GetRenderWindow()
         ren_win.AddRenderer(self.ren)
-        self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
+        # self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera)
+        # self.interactor.SetInteractorStyle(MyInteractorStyle())
+        self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleImage())
         self.ren.SetBackground(0, 0, 0)
         # ren.SetBackground(colors.GetColor3D("BkgColor"))
         self.interactor.Initialize()
+
+    def DummyFunc1(self, obj, ev):
+        print("Before Event")
+
+    def DummyFunc2(self, obj, ev):
+        print("After Event")
 
     def showImage(self, reader, planeType):
         # black/white lookup table
@@ -146,6 +170,11 @@ class QVtkViewer2D(QFrame):
 
         # self.renderer = ren
         # self.interactor = interactor
+
+        # self.interactor.RemoveObservers('LeftButtonPressEvent')
+        # self.interactor.AddObserver('LeftButtonPressEvent', self.DummyFunc1, 1.0)
+        # self.interactor.AddObserver('LeftButtonPressEvent', self.DummyFunc2, -1.0)
+
         self.interactor.Initialize()
         self.interactor.Start()
 		
