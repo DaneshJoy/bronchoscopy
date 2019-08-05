@@ -36,7 +36,7 @@ class QVtkViewer3D(QFrame):
         # Isosurface
         skinExtractor = vtk.vtkMarchingCubes()
         skinExtractor.SetInputConnection(reader.GetOutputPort())
-        skinExtractor.SetValue(0, 500)
+        skinExtractor.SetValue(0, 300)
 
         # Mapper
         skinMapper = vtk.vtkPolyDataMapper()
