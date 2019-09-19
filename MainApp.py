@@ -38,9 +38,9 @@ class MainWindow(QMainWindow):
             reader.SetFileName(fileName)
             reader.Update()
             self.vtk_widget_3D.showImage(reader)
-            self.vtk_widget_axial.showImage(reader, 'axial')
-            self.vtk_widget_coronal.showImage(reader, 'coronal')
-            self.vtk_widget_sagittal.showImage(reader, 'sagittal')
+            self.vtk_widget_axial.showImage(reader)
+            self.vtk_widget_coronal.showImage(reader)
+            self.vtk_widget_sagittal.showImage(reader)
 
     def setup(self, size):
         import MainWindow
@@ -50,9 +50,9 @@ class MainWindow(QMainWindow):
         # self.resize(sizeObject.width(), sizeObject.height())
         # self.resize(size.width(), size.height())
         self.vtk_widget_3D = QVtkViewer3D(self.ui.vtk_panel_3D, size)
-        self.vtk_widget_axial = QVtkViewer2D(self.ui.vtk_panel_axial, size)
-        self.vtk_widget_coronal = QVtkViewer2D(self.ui.vtk_panel_coronal, size)
-        self.vtk_widget_sagittal = QVtkViewer2D(self.ui.vtk_panel_sagittal, size)
+        self.vtk_widget_axial = QVtkViewer2D(self.ui.vtk_panel_axial, size, 'axial')
+        self.vtk_widget_coronal = QVtkViewer2D(self.ui.vtk_panel_coronal, size, 'coronal')
+        self.vtk_widget_sagittal = QVtkViewer2D(self.ui.vtk_panel_sagittal, size, 'sagittal')
 
     def initialize(self):
         pass

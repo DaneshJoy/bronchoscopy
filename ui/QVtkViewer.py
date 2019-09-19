@@ -88,7 +88,7 @@ class MyInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
 
 
 class QVtkViewer2D(QFrame):
-    def __init__(self, parent, size):
+    def __init__(self, parent, size, planeType):
         super().__init__(parent)
 
         # Make the actual QtWidget a child so that it can be reparented
@@ -112,13 +112,16 @@ class QVtkViewer2D(QFrame):
         # ren.SetBackground(colors.GetColor3D("BkgColor"))
         self.interactor.Initialize()
 
+        self.plane = vtk.vtkImageActor()
+        self.planeType = planeType
+
     def DummyFunc1(self, obj, ev):
         print("Before Event")
 
     def DummyFunc2(self, obj, ev):
         print("After Event")
 
-    def showImage(self, reader, planeType):
+    def showImage(self, reader):
         # black/white lookup table
         bwLut = vtk.vtkLookupTable()
         bwLut.SetTableRange(0, 2000)
@@ -133,8 +136,8 @@ class QVtkViewer2D(QFrame):
         planeColors.SetLookupTable(bwLut)
         planeColors.Update()
 
-        plane = vtk.vtkImageActor()
-        plane.GetMapper().SetInputConnection(planeColors.GetOutputPort())
+        
+        self.plane.GetMapper().SetInputConnection(planeColors.GetOutputPort())
 
         # Camera
         cam = vtk.vtkCamera()
@@ -144,24 +147,24 @@ class QVtkViewer2D(QFrame):
         # cam.Azimuth(30.0)
         # cam.Elevation(30.0)
 
-        if planeType == "axial":
-            plane.SetDisplayExtent(0, 255, 0, 255, 46, 46)
+        if self.planeType == "axial":
+            self.plane.SetDisplayExtent(0, 255, 0, 255, 46, 46)
             # cam.SetPosition(0, 0, -1)
             cam.Roll(180)
 
-        elif planeType == "coronal":
-            plane.SetDisplayExtent(0, 255, 128, 128, 0, 92)
+        elif self.planeType == "coronal":
+            self.plane.SetDisplayExtent(0, 255, 128, 128, 0, 92)
             # cam.SetPosition(0, -1, 0)
             cam.Elevation(90)
             cam.OrthogonalizeViewUp()
-        else:  # planeType == "sagittal"
-            plane.SetDisplayExtent(128, 128, 0, 255, 0, 92)
+        else:  # self.planeType == "sagittal"
+            self.plane.SetDisplayExtent(128, 128, 0, 255, 0, 92)
             # cam.SetPosition(-1, 0, 0)
             cam.Azimuth(90)
             cam.Roll(90)
             cam.OrthogonalizeViewUp()
 
-        self.ren.AddActor(plane)
+        self.ren.AddActor(self.plane)
         # ren_win.Render()
         self.ren.SetActiveCamera(cam)
         self.ren.ResetCamera()
@@ -177,5 +180,21 @@ class QVtkViewer2D(QFrame):
 
         self.interactor.Initialize()
         self.interactor.Start()
-		
-        
+
+    def setSlice(sliceNumber):
+        if self.planeType == "axial":
+            self.plane.SetDisplayExtent(0, 255, 0, 255, sliceNumber, sliceNumber)
+            # # cam.SetPosition(0, 0, -1)
+            # cam.Roll(180)
+
+        elif self.planeType == "coronal":
+            self.plane.SetDisplayExtent(0, 255, sliceNumber, sliceNumber, 0, 92)
+            # # cam.SetPosition(0, -1, 0)
+            # cam.Elevation(90)
+            # cam.OrthogonalizeViewUp()
+        else:  # self.planeType == "sagittal"
+            self.plane.SetDisplayExtent(sliceNumber, sliceNumber, 0, 255, 0, 92)
+            # # cam.SetPosition(-1, 0, 0)
+            # cam.Azimuth(90)
+            # cam.Roll(90)
+            # cam.OrthogonalizeViewUp()
