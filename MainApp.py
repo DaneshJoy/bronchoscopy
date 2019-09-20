@@ -15,6 +15,7 @@ from PyQt5.QtGui import QPalette
 
 from ui.QVtkViewer import QVtkViewer3D, QVtkViewer2D
 
+import MainWindow
 
 class MainWindow(QMainWindow):
     def __init__(self, size):
@@ -27,6 +28,9 @@ class MainWindow(QMainWindow):
         self.setup(size)
 
         self.ui.actionOpen.triggered.connect(self.openFileDialog)
+        self.ui.Slider_axial.valueChanged.connect(self.axialChanged)
+        self.ui.Slider_coronal.valueChanged.connect(self.coronalChanged)
+        self.ui.Slider_sagittal.valueChanged.connect(self.sagittalChanged)
 
     def openFileDialog(self):
         options = QFileDialog.Options()
@@ -34,13 +38,52 @@ class MainWindow(QMainWindow):
         fileName, _ = QFileDialog.getOpenFileName(self, "Open Medical Image", "", "Meta (*.mhd);;Nifti (*.nii;*.nii.gz);;All Files (*)", options=options)
         # QMessageBox.information(self, 'Test Message', fileName)
         if fileName:
+
             reader = vtk.vtkMetaImageReader()
             reader.SetFileName(fileName)
             reader.Update()
+
             self.vtk_widget_3D.showImage(reader)
             self.vtk_widget_axial.showImage(reader)
             self.vtk_widget_coronal.showImage(reader)
             self.vtk_widget_sagittal.showImage(reader)
+
+            self.showSubPanels()
+            image = reader.GetOutput()
+            dims = image.GetDimensions()
+            self.ui.Slider_axial.setRange(0, dims[2]-1)
+            self.ui.Slider_coronal.setRange(0, dims[1]-1)
+            self.ui.Slider_sagittal.setRange(0, dims[0]-1)
+            self.ui.Slider_axial.setValue(dims[2]//2)
+            self.ui.Slider_coronal.setValue(dims[1]//2)
+            self.ui.Slider_sagittal.setValue(dims[0]//2)
+
+    def axialChanged(self):
+        self.vtk_widget_axial.setSlice(self.ui.Slider_axial.value())
+        self.vtk_widget_axial.interactor.Initialize()
+        return False
+
+    def coronalChanged(self):
+        self.vtk_widget_coronal.setSlice(self.ui.Slider_coronal.value())
+        self.vtk_widget_coronal.interactor.Initialize()
+        return False
+
+    def sagittalChanged(self):
+        self.vtk_widget_sagittal.setSlice(self.ui.Slider_sagittal.value())
+        self.vtk_widget_sagittal.interactor.Initialize()
+        return False
+    
+    def hideSubPanels(self):
+        self.ui.SubPanel_3D.hide()
+        self.ui.SubPanel_axial.hide()
+        self.ui.SubPanel_coronal.hide()
+        self.ui.SubPanel_sagittal.hide()
+
+    def showSubPanels(self):
+        self.ui.SubPanel_3D.show()
+        self.ui.SubPanel_axial.show()
+        self.ui.SubPanel_coronal.show()
+        self.ui.SubPanel_sagittal.show()
 
     def setup(self, size):
         import MainWindow
@@ -53,6 +96,7 @@ class MainWindow(QMainWindow):
         self.vtk_widget_axial = QVtkViewer2D(self.ui.vtk_panel_axial, size, 'axial')
         self.vtk_widget_coronal = QVtkViewer2D(self.ui.vtk_panel_coronal, size, 'coronal')
         self.vtk_widget_sagittal = QVtkViewer2D(self.ui.vtk_panel_sagittal, size, 'sagittal')
+        self.hideSubPanels()
 
     def initialize(self):
         pass

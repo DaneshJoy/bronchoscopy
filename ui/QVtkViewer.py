@@ -122,6 +122,9 @@ class QVtkViewer2D(QFrame):
         print("After Event")
 
     def showImage(self, reader):
+        image = reader.GetOutput()
+        self.dims = image.GetDimensions()
+
         # black/white lookup table
         bwLut = vtk.vtkLookupTable()
         bwLut.SetTableRange(0, 2000)
@@ -148,17 +151,17 @@ class QVtkViewer2D(QFrame):
         # cam.Elevation(30.0)
 
         if self.planeType == "axial":
-            self.plane.SetDisplayExtent(0, 255, 0, 255, 46, 46)
+            self.plane.SetDisplayExtent(0, self.dims[0], 0, self.dims[1], self.dims[2]//2, self.dims[2]//2)
             # cam.SetPosition(0, 0, -1)
             cam.Roll(180)
 
         elif self.planeType == "coronal":
-            self.plane.SetDisplayExtent(0, 255, 128, 128, 0, 92)
+            self.plane.SetDisplayExtent(0, self.dims[0], self.dims[1]//2, self.dims[1]//2, 0, self.dims[2])
             # cam.SetPosition(0, -1, 0)
             cam.Elevation(90)
             cam.OrthogonalizeViewUp()
         else:  # self.planeType == "sagittal"
-            self.plane.SetDisplayExtent(128, 128, 0, 255, 0, 92)
+            self.plane.SetDisplayExtent(self.dims[0]//2, self.dims[0]//2, 0, self.dims[1], 0, self.dims[2])
             # cam.SetPosition(-1, 0, 0)
             cam.Azimuth(90)
             cam.Roll(90)
@@ -181,19 +184,19 @@ class QVtkViewer2D(QFrame):
         self.interactor.Initialize()
         self.interactor.Start()
 
-    def setSlice(sliceNumber):
+    def setSlice(self, sliceNumber):
         if self.planeType == "axial":
-            self.plane.SetDisplayExtent(0, 255, 0, 255, sliceNumber, sliceNumber)
+            self.plane.SetDisplayExtent(0, self.dims[0], 0, self.dims[1], sliceNumber, sliceNumber)
             # # cam.SetPosition(0, 0, -1)
             # cam.Roll(180)
 
         elif self.planeType == "coronal":
-            self.plane.SetDisplayExtent(0, 255, sliceNumber, sliceNumber, 0, 92)
+            self.plane.SetDisplayExtent(0, self.dims[0], sliceNumber, sliceNumber, 0, self.dims[2])
             # # cam.SetPosition(0, -1, 0)
             # cam.Elevation(90)
             # cam.OrthogonalizeViewUp()
         else:  # self.planeType == "sagittal"
-            self.plane.SetDisplayExtent(sliceNumber, sliceNumber, 0, 255, 0, 92)
+            self.plane.SetDisplayExtent(sliceNumber, sliceNumber, 0, self.dims[1], 0, self.dims[2])
             # # cam.SetPosition(-1, 0, 0)
             # cam.Azimuth(90)
             # cam.Roll(90)
