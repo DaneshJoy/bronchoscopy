@@ -2,7 +2,7 @@ import vtk
 from PyQt5.QtWidgets import QFrame
 from PyQt5 import QtWidgets, QtCore
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
-
+import numpy as np
 
 class QVtkViewer3D(QFrame):
     def __init__(self, parent, size):
@@ -19,18 +19,23 @@ class QVtkViewer3D(QFrame):
         self.layout.setContentsMargins(5, 5, 5, 5)
         width = (size.width()-370) // 2
         height = (size.height()-170) // 2
-        self.interactor.setMinimumSize(width, height)
+        self.interactor.setMinimumSize(width+30, height)
         self.setLayout(self.layout)
 
         # Setup VTK Environment
         self.ren = vtk.vtkRenderer()
-        ren_win = self.interactor.GetRenderWindow()
-        ren_win.AddRenderer(self.ren)
+        self.ren_win = self.interactor.GetRenderWindow()
+        self.ren_win.AddRenderer(self.ren)
+        self.ren_win.SetSize(size.width(), size.height())
 
-        self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
+        # self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
+        self.interactor.SetInteractorStyle(self.MyInteractorStyle(self))
         self.ren.SetBackground(0, 0, 0)
         # ren.SetBackground(colors.GetColor3D("BkgColor"))
         self.interactor.Initialize()
+
+    def removeImage(self):
+        self.ren.RemoveAllViewProps()
 
     def showImage(self, reader):
         # Isosurface
@@ -51,18 +56,21 @@ class QVtkViewer3D(QFrame):
         # skin.GetProperty().SetDiffuseColor(colors.GetColor3D("SkinColor"))
 
         # Camera
-        cam = vtk.vtkCamera()
-        cam.SetViewUp(0, 0, -1)
-        cam.SetPosition(0, -1, 0)
-        cam.SetFocalPoint(0, 0, 0)
-        cam.ComputeViewPlaneNormal()
-        cam.Azimuth(30.0)
-        cam.Elevation(30.0)
+        self.cam = vtk.vtkCamera()
+        self.cam.SetViewUp(0, 0, -1)
+        self.cam.SetPosition(0, -1, 0)
+        self.cam.SetFocalPoint(0, 0, 0)
+        self.cam.ComputeViewPlaneNormal()
+        self.cam.Azimuth(30.0)
+        self.cam.Elevation(30.0)
+
+        self.txt = vtk.vtkTextActor()
+        self.updateTextActor()
 
         self.ren.AddActor(skin)
-        self.ren.SetActiveCamera(cam)
+        self.ren.SetActiveCamera(self.cam)
         self.ren.ResetCamera()
-        cam.Dolly(1.5)  # Moves the camera towards the FocalPoint
+        self.cam.Dolly(1.5)  # Moves the camera towards the FocalPoint
         self.ren.ResetCameraClippingRange()
 
         # self.renderer = ren
@@ -70,21 +78,65 @@ class QVtkViewer3D(QFrame):
         self.interactor.Initialize()
         self.interactor.Start()
 
+    def setCamera(self, cam_pos):
 
-class MyInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
-    def __init__(self, parent=None):
-        self.AddObserver("MiddleButtonPressEvent", self.middle_button_press_event)
-        self.AddObserver("MiddleButtonReleaseEvent", self.middle_button_release_event)
+        self.ren.ResetCamera()
+        self.cam = self.ren.GetActiveCamera()
+        # cam.SetFocalPoint(*cam_focal)
+        # camera.SetViewUp(*cam_up)
+        self.cam.SetPosition(*cam_pos)
+        self.updateTextActor()
 
-    def middle_button_press_event(self, obj, event):
-        print("Middle Button pressed")
-        self.OnMiddleButtonDown()
-        return
+    def updateTextActor(self):
+        # create a text actor
+        renSize = self.ren_win.GetSize()
+        self.ren.RemoveActor(self.txt)
+        self.txt.SetInput('Cam Position: ' + str(np.round(self.cam.GetPosition(),2)) + '\n' + \
+                          'Focal Point:   '+str(np.round(self.cam.GetFocalPoint(), 2)))
+        txtprop=self.txt.GetTextProperty()
+        txtprop.SetFontFamilyToArial()
+        txtprop.SetFontSize(12)
+        txtprop.SetColor(0.7,1,1)
+        self.txt.SetDisplayPosition(0,renSize[1]-30)
+        self.ren.AddActor2D(self.txt)
+        # self.ren.RemoveActor(txtActor)
+        self.ren.SetActiveCamera(self.cam)
+        self.ren.ResetCameraClippingRange()
+        self.interactor.Initialize()
 
-    def middle_button_release_event(self, obj, event):
-        print("Middle Button released")
-        self.OnMiddleButtonUp()
-        return
+    class MyInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
+        def __init__(self, outer_instance):
+            self.outer_instance = outer_instance
+            self.AddObserver("LeftButtonReleaseEvent", self.left_button_press_event)
+            self.AddObserver("RightButtonReleaseEvent", self.right_button_press_event)
+            self.AddObserver("MiddleButtonReleaseEvent", self.middle_button_press_event)
+            self.AddObserver("MouseWheelForwardEvent", self.wheel_forward_event)
+            self.AddObserver("MouseWheelBackwardEvent", self.wheel_backward_event)
+
+        def left_button_press_event(self, obj, event):
+            self.outer_instance.updateTextActor()
+            self.OnLeftButtonUp()
+            return
+
+        def right_button_press_event(self, obj, event):
+            self.outer_instance.updateTextActor()
+            self.OnRightButtonUp()
+            return
+
+        def middle_button_press_event(self, obj, event):
+            self.outer_instance.updateTextActor()
+            self.OnMiddleButtonUp()
+            return
+
+        def wheel_forward_event(self, obj, event):
+            self.outer_instance.updateTextActor()
+            self.OnMouseWheelForward()
+            return
+
+        def wheel_backward_event(self, obj, event):
+            self.outer_instance.updateTextActor()
+            self.OnMouseWheelBackward()
+            return
 
 
 class QVtkViewer2D(QFrame):
@@ -98,7 +150,7 @@ class QVtkViewer2D(QFrame):
         self.layout.setContentsMargins(5, 5, 5, 5)
         width = (size.width()-370) // 2
         height = (size.height()-170) // 2
-        self.interactor.setMinimumSize(width, height)
+        self.interactor.setMinimumSize(width+30, height)
         self.setLayout(self.layout)
 
         # Setup VTK Environment
@@ -120,6 +172,9 @@ class QVtkViewer2D(QFrame):
 
     def DummyFunc2(self, obj, ev):
         print("After Event")
+
+    def removeImage(self):
+        self.ren.RemoveAllViewProps()
 
     def showImage(self, reader):
         image = reader.GetOutput()
@@ -167,7 +222,7 @@ class QVtkViewer2D(QFrame):
             cam.Roll(90)
             cam.OrthogonalizeViewUp()
 
-        self.ren.AddActor(self.plane)
+        self.ren.AddActor2D(self.plane)
         # ren_win.Render()
         self.ren.SetActiveCamera(cam)
         self.ren.ResetCamera()

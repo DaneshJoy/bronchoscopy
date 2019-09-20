@@ -39,6 +39,11 @@ class MainWindow(QMainWindow):
         # QMessageBox.information(self, 'Test Message', fileName)
         if fileName:
 
+            self.vtk_widget_3D.removeImage()
+            self.vtk_widget_axial.removeImage()
+            self.vtk_widget_coronal.removeImage()
+            self.vtk_widget_sagittal.removeImage()
+
             reader = vtk.vtkMetaImageReader()
             reader.SetFileName(fileName)
             reader.Update()
@@ -47,6 +52,8 @@ class MainWindow(QMainWindow):
             self.vtk_widget_axial.showImage(reader)
             self.vtk_widget_coronal.showImage(reader)
             self.vtk_widget_sagittal.showImage(reader)
+
+            self.vtk_widget_3D.setCamera([-59,-0.8,0.08])
 
             self.showSubPanels()
             image = reader.GetOutput()
