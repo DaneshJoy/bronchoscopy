@@ -1483,19 +1483,24 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionOpen"/>
+   <addaction name="actionLoad_DICOM"/>
+   <addaction name="actionLoad_Image"/>
    <addaction name="separator"/>
    <addaction name="actionExit"/>
   </widget>
-  <action name="actionOpen">
+  <action name="actionLoad_Image">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/logo/icons/Open.png</normaloff>:/logo/icons/Open.png</iconset>
+   </property>
    <property name="text">
-    <string>Open...</string>
+    <string>Load Image ...</string>
    </property>
    <property name="iconText">
-    <string>Open...</string>
+    <string>Load Image ...</string>
    </property>
    <property name="toolTip">
-    <string>Open browser window</string>
+    <string>Load Single Medical Images</string>
    </property>
    <property name="menuRole">
     <enum>QAction::TextHeuristicRole</enum>
@@ -1507,19 +1512,28 @@
     <bool>false</bool>
    </property>
   </action>
-  <action name="actionSave">
-   <property name="text">
-    <string>Save</string>
-   </property>
-  </action>
-  <action name="actionSave_as">
-   <property name="text">
-    <string>Save as...</string>
-   </property>
-  </action>
   <action name="actionExit">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/logo/icons/exit.png</normaloff>:/logo/icons/exit.png</iconset>
+   </property>
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionLoad_DICOM">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/logo/icons/Open.png</normaloff>:/logo/icons/Open.png</iconset>
+   </property>
+   <property name="text">
+    <string>Load DICOM ...</string>
+   </property>
+   <property name="iconText">
+    <string>Load DICOM ...</string>
+   </property>
+   <property name="toolTip">
+    <string>Load DICOM Series from Selected Directory</string>
    </property>
   </action>
  </widget>

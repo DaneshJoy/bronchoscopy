@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/MainWindow.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.0
+# Created by: PyQt5 UI code generator 5.12.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -631,18 +631,24 @@ class Ui_MainWindow(object):
         self.toolBar.setAutoFillBackground(False)
         self.toolBar.setObjectName("toolBar")
         MainWindow.addToolBar(QtCore.Qt.TopToolBarArea, self.toolBar)
-        self.actionOpen = QtWidgets.QAction(MainWindow)
-        self.actionOpen.setMenuRole(QtWidgets.QAction.TextHeuristicRole)
-        self.actionOpen.setIconVisibleInMenu(True)
-        self.actionOpen.setShortcutVisibleInContextMenu(False)
-        self.actionOpen.setObjectName("actionOpen")
-        self.actionSave = QtWidgets.QAction(MainWindow)
-        self.actionSave.setObjectName("actionSave")
-        self.actionSave_as = QtWidgets.QAction(MainWindow)
-        self.actionSave_as.setObjectName("actionSave_as")
+        self.actionLoad_Image = QtWidgets.QAction(MainWindow)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(":/logo/icons/Open.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionLoad_Image.setIcon(icon)
+        self.actionLoad_Image.setMenuRole(QtWidgets.QAction.TextHeuristicRole)
+        self.actionLoad_Image.setIconVisibleInMenu(True)
+        self.actionLoad_Image.setShortcutVisibleInContextMenu(False)
+        self.actionLoad_Image.setObjectName("actionLoad_Image")
         self.actionExit = QtWidgets.QAction(MainWindow)
+        icon1 = QtGui.QIcon()
+        icon1.addPixmap(QtGui.QPixmap(":/logo/icons/exit.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionExit.setIcon(icon1)
         self.actionExit.setObjectName("actionExit")
-        self.toolBar.addAction(self.actionOpen)
+        self.actionLoad_DICOM = QtWidgets.QAction(MainWindow)
+        self.actionLoad_DICOM.setIcon(icon)
+        self.actionLoad_DICOM.setObjectName("actionLoad_DICOM")
+        self.toolBar.addAction(self.actionLoad_DICOM)
+        self.toolBar.addAction(self.actionLoad_Image)
         self.toolBar.addSeparator()
         self.toolBar.addAction(self.actionExit)
 
@@ -666,12 +672,13 @@ class Ui_MainWindow(object):
         self.sliceNum_sagittal.setText(_translate("MainWindow", "50"))
         self.sliceNum_axial_3.setText(_translate("MainWindow", "Sagittal"))
         self.toolBar.setWindowTitle(_translate("MainWindow", "toolBar"))
-        self.actionOpen.setText(_translate("MainWindow", "Open..."))
-        self.actionOpen.setIconText(_translate("MainWindow", "Open..."))
-        self.actionOpen.setToolTip(_translate("MainWindow", "Open browser window"))
-        self.actionSave.setText(_translate("MainWindow", "Save"))
-        self.actionSave_as.setText(_translate("MainWindow", "Save as..."))
+        self.actionLoad_Image.setText(_translate("MainWindow", "Load Image ..."))
+        self.actionLoad_Image.setIconText(_translate("MainWindow", "Load Image ..."))
+        self.actionLoad_Image.setToolTip(_translate("MainWindow", "Load Single Medical Images"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
+        self.actionLoad_DICOM.setText(_translate("MainWindow", "Load DICOM ..."))
+        self.actionLoad_DICOM.setIconText(_translate("MainWindow", "Load DICOM ..."))
+        self.actionLoad_DICOM.setToolTip(_translate("MainWindow", "Load DICOM Series from Selected Directory"))
 import resources_rc
 
 

@@ -8,6 +8,8 @@ Created on Mon Jun  3 01:09:45 2019
 import os
 import sys
 import vtk
+import numpy as np
+import SimpleITK as sitk
 from PyQt5.Qt import QApplication, QMainWindow, QColor, Qt
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog
@@ -27,7 +29,8 @@ class MainWindow(QMainWindow):
         self.ui = None
         self.setup(size)
 
-        self.ui.actionOpen.triggered.connect(self.openFileDialog)
+        self.ui.actionLoad_Image.triggered.connect(self.openFileDialog)
+        self.ui.actionLoad_DICOM.triggered.connect(self.openDirDialog)
         self.ui.Slider_axial.valueChanged.connect(self.axialChanged)
         self.ui.Slider_coronal.valueChanged.connect(self.coronalChanged)
         self.ui.Slider_sagittal.valueChanged.connect(self.sagittalChanged)
@@ -35,35 +38,95 @@ class MainWindow(QMainWindow):
     def openFileDialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, "Open Medical Image", "", "Meta (*.mhd);;Nifti (*.nii;*.nii.gz);;All Files (*)", options=options)
+        fileName, filetype = QFileDialog.getOpenFileName(self, "Open Medical Image", "", "Meta (*.mhd *.mha);;Nifti (*.nii *.nii.gz);;All Files (*)", options=options)
         # QMessageBox.information(self, 'Test Message', fileName)
         if fileName:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
 
-            self.vtk_widget_3D.removeImage()
-            self.vtk_widget_axial.removeImage()
-            self.vtk_widget_coronal.removeImage()
-            self.vtk_widget_sagittal.removeImage()
-
-            reader = vtk.vtkMetaImageReader()
-            reader.SetFileName(fileName)
+            if 'Meta' in filetype:
+                reader = vtk.vtkMetaImageReader()
+                reader.SetFileName(fileName)
+            elif 'Nifti' in filetype:
+                reader = vtk.vtkNIFTIImageReader()
+                reader.SetFileName(fileName)
+            else:
+                QApplication.restoreOverrideCursor()
+                QMessageBox.critical(self, 'Unknown File Type', 'Can not load selected image!')
+                return
             reader.Update()
 
-            self.vtk_widget_3D.showImage(reader)
-            self.vtk_widget_axial.showImage(reader)
-            self.vtk_widget_coronal.showImage(reader)
-            self.vtk_widget_sagittal.showImage(reader)
+            # Flip the image
+            flipYFilter = vtk.vtkImageFlip()
+            flipYFilter.SetFilteredAxis(1) # flip y axis
+            flipYFilter.SetInputConnection(reader.GetOutputPort())
+            flipYFilter.Update()
 
-            self.vtk_widget_3D.setCamera([-59,-0.8,0.08])
+            # flipZFilter = vtk.vtkImageFlip()
+            # flipZFilter.SetFilteredAxis(0); # flip z axis
+            # flipZFilter.SetInputConnection(flipYFilter.GetOutputPort());
+            # flipZFilter.Update();
 
-            self.showSubPanels()
-            image = reader.GetOutput()
-            dims = image.GetDimensions()
-            self.ui.Slider_axial.setRange(0, dims[2]-1)
-            self.ui.Slider_coronal.setRange(0, dims[1]-1)
-            self.ui.Slider_sagittal.setRange(0, dims[0]-1)
-            self.ui.Slider_axial.setValue(dims[2]//2)
-            self.ui.Slider_coronal.setValue(dims[1]//2)
-            self.ui.Slider_sagittal.setValue(dims[0]//2)
+            # Create the Viewer
+            # vtkSmartPointer<vtkResliceImageViewer> viewer =
+            # vtkSmartPointer<vtkResliceImageViewer>::New();
+            # viewer->SetInputData(flipYFilter->GetOutput())
+
+            self.showImages(flipYFilter)
+            self.updateSubPanels(flipYFilter)
+            QApplication.restoreOverrideCursor()
+
+            # # Real to VTK Camera
+            # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
+            # self.vtk_widget_3D.setCamera(cam_pos)
+
+    def openDirDialog(self):
+        dirname = QFileDialog.getExistingDirectory(self, "Select a Directory", "" )
+
+        if dirname:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
+            reader = vtk.vtkDICOMImageReader()
+            reader.SetDirectoryName(dirname)
+
+            reader1 = sitk.ImageSeriesReader()
+            dicom_names = reader1.GetGDCMSeriesFileNames(dirname)
+            fileNames = vtk.vtkStringArray()
+            # files = os.listdir(dirname)
+            for f in dicom_names:
+                fileNames.InsertNextValue(f)
+            reader.SetFileNames(fileNames)
+            # reader.SetMemoryRowOrderToFileNative()
+            reader.Update()
+
+            self.showImages(reader)
+            self.updateSubPanels(reader)
+            QApplication.restoreOverrideCursor()
+
+            # Real to VTK Camera
+            cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
+            self.vtk_widget_3D.setCamera(cam_pos)
+
+    def showImages(self, reader):
+        self.vtk_widget_3D.removeImage()
+        self.vtk_widget_axial.removeImage()
+        self.vtk_widget_coronal.removeImage()
+        self.vtk_widget_sagittal.removeImage()
+
+        self.vtk_widget_3D.showImage(reader)
+        self.vtk_widget_axial.showImage(reader)
+        self.vtk_widget_coronal.showImage(reader)
+        self.vtk_widget_sagittal.showImage(reader)
+
+    def updateSubPanels(self, reader):
+        self.showSubPanels()
+        image = reader.GetOutput()
+        dims = image.GetDimensions()
+        self.ui.Slider_axial.setRange(0, dims[2]-1)
+        self.ui.Slider_coronal.setRange(0, dims[1]-1)
+        self.ui.Slider_sagittal.setRange(0, dims[0]-1)
+        self.ui.Slider_axial.setValue(dims[2]//2)
+        self.ui.Slider_coronal.setValue(dims[1]//2)
+        self.ui.Slider_sagittal.setValue(dims[0]//2)
 
     def axialChanged(self):
         self.vtk_widget_axial.setSlice(self.ui.Slider_axial.value())
@@ -114,6 +177,11 @@ if __name__ == "__main__":
     # with open("MainWindow.ui") as ui_file:
     #     with open("MainWindow.py", "w") as py_ui_file:
     #         uic.compileUi(ui_file, py_ui_file, execute=True)
+
+    # Pipe error output to a text file instead of the usual vtk pop-up window
+    fileOutputWindow = vtk.vtkFileOutputWindow()
+    fileOutputWindow.SetFileName("vtk_log.txt")
+    vtk.vtkOutputWindow.SetInstance(fileOutputWindow)
 
     app = QApplication([])
 

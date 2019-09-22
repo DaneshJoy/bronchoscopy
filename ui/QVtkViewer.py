@@ -53,7 +53,11 @@ class QVtkViewer3D(QFrame):
         skin = vtk.vtkActor()
         skin.SetMapper(skinMapper)
         skin.GetProperty().SetDiffuseColor(0.8, 0.6, 0.2)
+        # skin.GetProperty().SetDiffuseColor(1, .49, .25)
         # skin.GetProperty().SetDiffuseColor(colors.GetColor3D("SkinColor"))
+        skin.GetProperty().SetSpecular(.45)
+        skin.GetProperty().SetSpecularPower(20)
+        skin.GetProperty().SetDiffuse(.9)
 
         # Camera
         self.cam = vtk.vtkCamera()
@@ -76,15 +80,37 @@ class QVtkViewer3D(QFrame):
         # self.renderer = ren
         # self.interactor = interactor
         self.interactor.Initialize()
-        self.interactor.Start()
+        # self.interactor.Start()
 
     def setCamera(self, cam_pos):
 
+        pr = vtk.vtkMatrix4x4() # extrinsic Real world
+        # copy from numpy to vtkMatrix4x4
+        pr.DeepCopy(cam_pos.ravel()) 
+
+        pv = vtk.vtkMatrix4x4() # extrinsic VTK world
+        pv.DeepCopy(self.cam.GetModelViewTransformMatrix())
+        
+        # cam_pos = np.array([[0.377856, -0.179424, 0.908312, -120.617], [0.920683, -0.0308268, -0.389092, 86.8299], [0.0978128, 0.983289, 0.153544, -74.8784], [0, 0, 0, 1.0000]])
+
+        pr.Invert()
+
+        newMat = vtk.vtkMatrix4x4()
+        # newMat.DeepCopy(cam_pos.ravel()) 
+
+        vtk.vtkMatrix4x4.Multiply4x4(pr, pv, newMat)
+        transform = vtk.vtkTransform()
+        transform.SetMatrix(newMat)
+        transform.Update()
+
+        print(newMat)
         self.ren.ResetCamera()
-        self.cam = self.ren.GetActiveCamera()
-        # cam.SetFocalPoint(*cam_focal)
-        # camera.SetViewUp(*cam_up)
-        self.cam.SetPosition(*cam_pos)
+        self.cam.ApplyTransform(transform)
+
+        # self.cam = self.ren.GetActiveCamera()
+        # # cam.SetFocalPoint(*cam_focal)
+        # # camera.SetViewUp(*cam_up)
+        # self.cam.SetPosition(*cam_pos)
         self.updateTextActor()
 
     def updateTextActor(self):
@@ -102,7 +128,10 @@ class QVtkViewer3D(QFrame):
         # self.ren.RemoveActor(txtActor)
         self.ren.SetActiveCamera(self.cam)
         self.ren.ResetCameraClippingRange()
-        self.interactor.Initialize()
+        self.interactor.ReInitialize()
+
+        print('ViewTransformMatrix:')
+        print(self.cam.GetViewTransformMatrix())
 
     class MyInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         def __init__(self, outer_instance):
@@ -180,6 +209,12 @@ class QVtkViewer2D(QFrame):
         image = reader.GetOutput()
         self.dims = image.GetDimensions()
 
+        # imageViewerDCM = vtk.vtkImageViewer2()
+        # imageViewerDCM.SetInputConnection(reader.GetOutputPort())
+        # # mMinSliderX = imageViewerDCM.GetSliceMin()
+        # # mMaxSliderX = imageViewerDCM.GetSliceMax()
+        # imageViewerDCM.SetRenderWindow(self.ren.GetRenderWindow())
+
         # black/white lookup table
         bwLut = vtk.vtkLookupTable()
         bwLut.SetTableRange(0, 2000)
@@ -194,7 +229,6 @@ class QVtkViewer2D(QFrame):
         planeColors.SetLookupTable(bwLut)
         planeColors.Update()
 
-        
         self.plane.GetMapper().SetInputConnection(planeColors.GetOutputPort())
 
         # Camera
@@ -209,20 +243,20 @@ class QVtkViewer2D(QFrame):
             self.plane.SetDisplayExtent(0, self.dims[0], 0, self.dims[1], self.dims[2]//2, self.dims[2]//2)
             # cam.SetPosition(0, 0, -1)
             cam.Roll(180)
-
+            # cam.OrthogonalizeViewUp()
         elif self.planeType == "coronal":
             self.plane.SetDisplayExtent(0, self.dims[0], self.dims[1]//2, self.dims[1]//2, 0, self.dims[2])
             # cam.SetPosition(0, -1, 0)
             cam.Elevation(90)
-            cam.OrthogonalizeViewUp()
+            # cam.OrthogonalizeViewUp()
         else:  # self.planeType == "sagittal"
             self.plane.SetDisplayExtent(self.dims[0]//2, self.dims[0]//2, 0, self.dims[1], 0, self.dims[2])
             # cam.SetPosition(-1, 0, 0)
             cam.Azimuth(90)
             cam.Roll(90)
-            cam.OrthogonalizeViewUp()
+            # cam.OrthogonalizeViewUp()
 
-        self.ren.AddActor2D(self.plane)
+        self.ren.AddActor(self.plane)
         # ren_win.Render()
         self.ren.SetActiveCamera(cam)
         self.ren.ResetCamera()
@@ -237,7 +271,7 @@ class QVtkViewer2D(QFrame):
         # self.interactor.AddObserver('LeftButtonPressEvent', self.DummyFunc2, -1.0)
 
         self.interactor.Initialize()
-        self.interactor.Start()
+        # self.interactor.Start()
 
     def setSlice(self, sliceNumber):
         if self.planeType == "axial":

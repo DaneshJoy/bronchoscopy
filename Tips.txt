@@ -1,0 +1,11 @@
+# copy from numpy to vtkMatrix4x4
+pr_vtk.DeepCopy(p_npy.ravel()) 
+        
+# copy from vtkMatrix4x4 to numpy
+p_npy = np.zeros((4,4))
+p_vtk.DeepCopy(p_npy.ravel(), p_npy)
+
+# camera extrinsics
+print(cam.GetViewTransformMatrix())
+or
+print(renderer.GetActiveCamera().GetViewTransformMatrix())
