@@ -55,11 +55,11 @@ class MainWindow(QMainWindow):
                 return
             reader.Update()
 
-            # Flip the image
-            flipYFilter = vtk.vtkImageFlip()
-            flipYFilter.SetFilteredAxis(1) # flip y axis
-            flipYFilter.SetInputConnection(reader.GetOutputPort())
-            flipYFilter.Update()
+            # # Flip the image
+            # flipYFilter = vtk.vtkImageFlip()
+            # flipYFilter.SetFilteredAxis(1) # flip y axis
+            # flipYFilter.SetInputConnection(reader.GetOutputPort())
+            # flipYFilter.Update()
 
             # flipZFilter = vtk.vtkImageFlip()
             # flipZFilter.SetFilteredAxis(0); # flip z axis
@@ -71,13 +71,14 @@ class MainWindow(QMainWindow):
             # vtkSmartPointer<vtkResliceImageViewer>::New();
             # viewer->SetInputData(flipYFilter->GetOutput())
 
-            self.showImages(flipYFilter)
-            self.updateSubPanels(flipYFilter)
+            self.showImages(reader)
+            self.updateSubPanels(reader)
             QApplication.restoreOverrideCursor()
 
             # # Real to VTK Camera
-            # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
-            # self.vtk_widget_3D.setCamera(cam_pos)
+            # cam_pos = np.array([[0.377856, -0.179424, 0.908312, -120.617], [0.920683, -0.0308268, -0.389092, 86.8299], [0.0978128, 0.983289, 0.153544, -74.8784], [0, 0, 0, 1.0000]])
+            cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
+            self.vtk_widget_3D.setCamera(cam_pos)
 
     def openDirDialog(self):
         dirname = QFileDialog.getExistingDirectory(self, "Select a Directory", "" )

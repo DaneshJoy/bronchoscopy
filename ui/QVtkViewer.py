@@ -89,10 +89,8 @@ class QVtkViewer3D(QFrame):
         pr.DeepCopy(cam_pos.ravel()) 
 
         pv = vtk.vtkMatrix4x4() # extrinsic VTK world
-        pv.DeepCopy(self.cam.GetModelViewTransformMatrix())
+        pv.DeepCopy(self.cam.GetViewTransformMatrix())
         
-        # cam_pos = np.array([[0.377856, -0.179424, 0.908312, -120.617], [0.920683, -0.0308268, -0.389092, 86.8299], [0.0978128, 0.983289, 0.153544, -74.8784], [0, 0, 0, 1.0000]])
-
         pr.Invert()
 
         newMat = vtk.vtkMatrix4x4()
@@ -103,9 +101,21 @@ class QVtkViewer3D(QFrame):
         transform.SetMatrix(newMat)
         transform.Update()
 
-        print(newMat)
-        self.ren.ResetCamera()
+        # print(newMat)
+        # self.ren.ResetCamera()
         self.cam.ApplyTransform(transform)
+
+        # the camera Y axis points down
+        self.cam.SetViewUp(0,-1,0)
+        # the camera can stay at the origin because we are transforming the scene objects
+        self.cam.SetPosition(0, 0, 0)
+        # look in the +Z direction of the camera coordinate system
+        self.cam.SetFocalPoint(0, 0, 1)
+
+        # self.cam.SetViewUp(0, 0, -1)
+        # self.cam.SetPosition(0, -1, 0)
+        # self.cam.SetFocalPoint(0, 0, 0)
+        self.cam.ComputeViewPlaneNormal()
 
         # self.cam = self.ren.GetActiveCamera()
         # # cam.SetFocalPoint(*cam_focal)
