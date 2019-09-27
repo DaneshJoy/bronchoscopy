@@ -38,9 +38,26 @@ class QVtkViewer3D(QFrame):
         self.ren.RemoveAllViewProps()
 
     def showImage(self, reader):
+
+        # Flip the image
+        # flipZFilter = vtk.vtkImageFlip()
+        # flipZFilter.SetFilteredAxis(2) # flip z axis
+        # flipZFilter.SetInputConnection(reader.GetOutputPort())
+        # flipZFilter.Update()
+
+        flipXFilter = vtk.vtkImageFlip()
+        flipXFilter.SetFilteredAxis(0); # flip x axis
+        flipXFilter.SetInputConnection(reader.GetOutputPort())
+        flipXFilter.Update()
+
+        flipYFilter = vtk.vtkImageFlip()
+        flipYFilter.SetFilteredAxis(1); # flip y axis
+        flipYFilter.SetInputConnection(flipXFilter.GetOutputPort())
+        flipYFilter.Update()
+
         # Isosurface
         skinExtractor = vtk.vtkMarchingCubes()
-        skinExtractor.SetInputConnection(reader.GetOutputPort())
+        skinExtractor.SetInputConnection(flipYFilter.GetOutputPort())
         skinExtractor.SetValue(0, 300)
 
         # Mapper
@@ -53,6 +70,7 @@ class QVtkViewer3D(QFrame):
         skin = vtk.vtkActor()
         skin.SetMapper(skinMapper)
         skin.GetProperty().SetDiffuseColor(0.8, 0.6, 0.2)
+        skin.GetProperty().SetOpacity(0.5)
         # skin.GetProperty().SetDiffuseColor(1, .49, .25)
         # skin.GetProperty().SetDiffuseColor(colors.GetColor3D("SkinColor"))
         skin.GetProperty().SetSpecular(.45)
@@ -65,8 +83,8 @@ class QVtkViewer3D(QFrame):
         self.cam.SetPosition(0, -1, 0)
         self.cam.SetFocalPoint(0, 0, 0)
         self.cam.ComputeViewPlaneNormal()
-        self.cam.Azimuth(30.0)
-        self.cam.Elevation(30.0)
+        # self.cam.Azimuth(30.0)
+        # self.cam.Elevation(30.0)
 
         self.txt = vtk.vtkTextActor()
         self.updateTextActor()
@@ -82,7 +100,79 @@ class QVtkViewer3D(QFrame):
         self.interactor.Initialize()
         # self.interactor.Start()
 
+    def drawPoints(self, points):
+        from vtk.util.numpy_support import numpy_to_vtkIdTypeArray
+
+        pts = vtk.vtkPoints()
+        conn = vtk.vtkCellArray()
+        poly = vtk.vtkPolyData()
+        nPoints = points.shape[-1]
+
+        for i in range(0,nPoints):
+            pos = points[:,:,i]
+            pts.InsertNextPoint(pos[0,3], pos[1,3], pos[2,3])
+
+        cells = np.hstack((np.ones((nPoints, 1)),
+                                np.arange(nPoints).reshape(-1, 1)))
+        cells = np.ascontiguousarray(cells, dtype=np.int64)
+
+        conn.SetCells(nPoints, numpy_to_vtkIdTypeArray(cells, deep=True))
+
+        poly.SetPoints(pts)
+        poly.SetVerts(conn)
+    
+        pmap = vtk.vtkPolyDataMapper()
+        pmap.SetInputDataObject(poly)
+
+        # actor
+        actor = vtk.vtkActor()
+        actor.SetMapper(pmap)
+        actor.GetProperty().SetPointSize(1)
+        actor.GetProperty().SetColor(0.5,1,1) # (R,G,B)
+
+        # assign actor to the renderer
+        self.ren.AddActor(actor)
+        self.interactor.ReInitialize()
+        self.ren.ResetCameraClippingRange()
+
+    def drawSphere(self, pos, color=[0,1,0]):
+        # create source
+        sphere = vtk.vtkSphereSource()
+        # source.SetCenter(pos)
+
+        newMat = vtk.vtkMatrix4x4()
+        newMat.DeepCopy(pos.ravel())
+
+        transform = vtk.vtkTransform()
+        transform.SetMatrix(newMat)
+        t_sphere = vtk.vtkTransformFilter()
+        t_sphere.SetTransform(transform)
+        t_sphere.SetInputConnection(sphere.GetOutputPort())
+
+        sphere.SetRadius(3)
+        # sphere.SetThetaResolution(2)
+        # sphere.SetPhiResolution(2)
+
+        # mapper
+        mapper = vtk.vtkPolyDataMapper()
+        if vtk.VTK_MAJOR_VERSION <= 5:
+            mapper.SetInput(t_sphere.GetOutput())
+        else:
+            mapper.SetInputConnection(t_sphere.GetOutputPort())
+
+        # actor
+        actor = vtk.vtkActor()
+        actor.SetMapper(mapper)
+        actor.GetProperty().SetColor(color) # (R,G,B)
+
+        # assign actor to the renderer
+        self.ren.AddActor(actor)
+        self.interactor.ReInitialize()
+
     def setCamera(self, cam_pos):
+        # self.ren.ResetCamera()
+        cam = self.ren.GetActiveCamera()
+        # cam = vtk.vtkCamera()
 
         pr = vtk.vtkMatrix4x4() # extrinsic Real world
         # copy from numpy to vtkMatrix4x4
@@ -102,25 +192,42 @@ class QVtkViewer3D(QFrame):
         transform.Update()
 
         # print(newMat)
-        # self.ren.ResetCamera()
-        self.cam.ApplyTransform(transform)
+        # cam = self.ren.GetActiveCamera()
+        cam.ApplyTransform(transform)
+        # cam.SetModelTransformMatrix(newMat)
+        cam.Modified()
+        self.ren.ResetCamera()
+        self.ren.SetActiveCamera(cam)
+        self.ren.Render()
 
-        # the camera Y axis points down
-        self.cam.SetViewUp(0,-1,0)
-        # the camera can stay at the origin because we are transforming the scene objects
-        self.cam.SetPosition(0, 0, 0)
-        # look in the +Z direction of the camera coordinate system
-        self.cam.SetFocalPoint(0, 0, 1)
+        # # convert the principal point to window center (normalized coordinate system) and set it
+        # wcx = -2*(principal_pt.x() - double(nx)/2) / nx
+        # wcy =  2*(principal_pt.y() - double(ny)/2) / ny
+        # self.cam.SetWindowCenter(wcx, wcy)
 
-        # self.cam.SetViewUp(0, 0, -1)
-        # self.cam.SetPosition(0, -1, 0)
-        # self.cam.SetFocalPoint(0, 0, 0)
-        self.cam.ComputeViewPlaneNormal()
+        # # convert the focal length to view angle and set it
+        # view_angle = vnl_math::deg_per_rad * (2.0 * np.arctan2(ny/2.0, focal_len))
+        # self.cam.SetViewAngle( view_angle );
+
+        # # the camera Y axis points down
+        # self.cam.SetViewUp(0,-1,0)
+        # # the camera can stay at the origin because we are transforming the scene objects
+        # self.cam.SetPosition(0, 0, 0)
+        # # look in the +Z direction of the camera coordinate system
+        # self.cam.SetFocalPoint(0, 0, 1)
+
+        # cam.SetViewUp(0, 0, -1)
+        # cam.SetPosition(0, -1, 0)
+        # cam.SetFocalPoint(0, 0, 0)
+        cam.ComputeViewPlaneNormal()
 
         # self.cam = self.ren.GetActiveCamera()
         # # cam.SetFocalPoint(*cam_focal)
         # # camera.SetViewUp(*cam_up)
         # self.cam.SetPosition(*cam_pos)
+
+        # self.ren.SetActiveCamera(cam)
+        self.interactor.ReInitialize()
         self.updateTextActor()
 
     def updateTextActor(self):
@@ -216,6 +323,7 @@ class QVtkViewer2D(QFrame):
         self.ren.RemoveAllViewProps()
 
     def showImage(self, reader):
+
         image = reader.GetOutput()
         self.dims = image.GetDimensions()
 

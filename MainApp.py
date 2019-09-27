@@ -9,7 +9,9 @@ import os
 import sys
 import vtk
 import numpy as np
+import time
 import SimpleITK as sitk
+from scipy.io import loadmat
 from PyQt5.Qt import QApplication, QMainWindow, QColor, Qt
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog
@@ -27,6 +29,7 @@ class MainWindow(QMainWindow):
         self.vtk_widget_coronal = None
         self.vtk_widget_sagittal = None
         self.ui = None
+        self.registeredPoints = None
         self.setup(size)
 
         self.ui.actionLoad_Image.triggered.connect(self.openFileDialog)
@@ -34,6 +37,8 @@ class MainWindow(QMainWindow):
         self.ui.Slider_axial.valueChanged.connect(self.axialChanged)
         self.ui.Slider_coronal.valueChanged.connect(self.coronalChanged)
         self.ui.Slider_sagittal.valueChanged.connect(self.sagittalChanged)
+
+        self.ui.btn_LoadPoints.clicked.connect(self.readRegisteredPoints)
 
     def openFileDialog(self):
         options = QFileDialog.Options()
@@ -55,30 +60,9 @@ class MainWindow(QMainWindow):
                 return
             reader.Update()
 
-            # # Flip the image
-            # flipYFilter = vtk.vtkImageFlip()
-            # flipYFilter.SetFilteredAxis(1) # flip y axis
-            # flipYFilter.SetInputConnection(reader.GetOutputPort())
-            # flipYFilter.Update()
-
-            # flipZFilter = vtk.vtkImageFlip()
-            # flipZFilter.SetFilteredAxis(0); # flip z axis
-            # flipZFilter.SetInputConnection(flipYFilter.GetOutputPort());
-            # flipZFilter.Update();
-
-            # Create the Viewer
-            # vtkSmartPointer<vtkResliceImageViewer> viewer =
-            # vtkSmartPointer<vtkResliceImageViewer>::New();
-            # viewer->SetInputData(flipYFilter->GetOutput())
-
             self.showImages(reader)
             self.updateSubPanels(reader)
             QApplication.restoreOverrideCursor()
-
-            # # Real to VTK Camera
-            # cam_pos = np.array([[0.377856, -0.179424, 0.908312, -120.617], [0.920683, -0.0308268, -0.389092, 86.8299], [0.0978128, 0.983289, 0.153544, -74.8784], [0, 0, 0, 1.0000]])
-            cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
-            self.vtk_widget_3D.setCamera(cam_pos)
 
     def openDirDialog(self):
         dirname = QFileDialog.getExistingDirectory(self, "Select a Directory", "" )
@@ -104,8 +88,8 @@ class MainWindow(QMainWindow):
             QApplication.restoreOverrideCursor()
 
             # Real to VTK Camera
-            cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
-            self.vtk_widget_3D.setCamera(cam_pos)
+            # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
+            # self.vtk_widget_3D.setCamera(cam_pos)
 
     def showImages(self, reader):
         self.vtk_widget_3D.removeImage()
@@ -155,6 +139,30 @@ class MainWindow(QMainWindow):
         self.ui.SubPanel_axial.show()
         self.ui.SubPanel_coronal.show()
         self.ui.SubPanel_sagittal.show()
+
+    def readRegisteredPoints(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(self, "Open Matlab file", "", "Matlab (*.mat);;All Files (*)", options=options)
+        if fileName:
+            matFile = loadmat(fileName)
+            # self.registeredPoints = matFile[list(matFile.keys())[-1]]
+            self.registeredPoints = matFile['EMT_cor']
+            self.ui.lbl_NumPoints.setText('Number of Points: ' + str(self.registeredPoints.shape[-1]))
+            self.drawTrajectory(self.registeredPoints)
+
+    def drawTrajectory(self, points):
+        self.vtk_widget_3D.drawPoints(points)
+        self.vtk_widget_3D.drawSphere(points[:,:,0], color=[0,1,0]) # start point
+        self.vtk_widget_3D.drawSphere(points[:,:,-1], color=[1,0,0]) # end point
+        self.moveCam(points)
+
+    def moveCam(self, points):
+        # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
+        for i in range(1,1000):
+            testPoint = points[:,:,i]
+            self.vtk_widget_3D.setCamera(testPoint)
+            time.sleep(0.2)
 
     def setup(self, size):
         import MainWindow
