@@ -964,6 +964,8 @@ class Ui_MainWindow(object):
         self.verticalLayout_sagittal.setStretch(0, 20)
         self.verticalLayout_sagittal.setStretch(1, 1)
         self.gridLayout.addLayout(self.verticalLayout_sagittal, 1, 1, 1, 1)
+        self.gridLayout.setRowStretch(0, 10)
+        self.gridLayout.setRowStretch(1, 1)
         self.horizontalLayout.addWidget(self.splitter)
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
