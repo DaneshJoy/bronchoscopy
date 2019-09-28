@@ -159,7 +159,7 @@ class MainWindow(QMainWindow):
 
     def moveCam(self, points):
         # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
-        for i in range(1,10):
+        for i in range(1,1000):
             testPoint = points[:,:,i]
             self.vtk_widget_3D.setCamera(testPoint)
             time.sleep(0.1)

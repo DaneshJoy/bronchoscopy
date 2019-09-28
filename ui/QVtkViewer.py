@@ -70,12 +70,13 @@ class QVtkViewer3D(QFrame):
         skin = vtk.vtkActor()
         skin.SetMapper(skinMapper)
         skin.GetProperty().SetDiffuseColor(0.8, 0.6, 0.2)
-        skin.GetProperty().SetOpacity(0.9)
+        skin.GetProperty().SetAmbient(0.1)
+        # skin.GetProperty().SetOpacity(0.9)
         # skin.GetProperty().SetDiffuseColor(1, .49, .25)
         # skin.GetProperty().SetDiffuseColor(colors.GetColor3D("SkinColor"))
-        skin.GetProperty().SetSpecular(.45)
+        skin.GetProperty().SetSpecular(.2)
         skin.GetProperty().SetSpecularPower(20)
-        skin.GetProperty().SetDiffuse(.9)
+        skin.GetProperty().SetDiffuse(1.5)
 
         # Camera
         self.cam = vtk.vtkCamera()
@@ -127,7 +128,7 @@ class QVtkViewer3D(QFrame):
         # actor
         actor = vtk.vtkActor()
         actor.SetMapper(pmap)
-        actor.GetProperty().SetPointSize(1)
+        actor.GetProperty().SetPointSize(2)
         actor.GetProperty().SetColor(0.5,1,1) # (R,G,B)
 
         # assign actor to the renderer
@@ -149,7 +150,7 @@ class QVtkViewer3D(QFrame):
         t_sphere.SetTransform(transform)
         t_sphere.SetInputConnection(sphere.GetOutputPort())
 
-        sphere.SetRadius(3)
+        sphere.SetRadius(2)
         # sphere.SetThetaResolution(2)
         # sphere.SetPhiResolution(2)
 
@@ -170,8 +171,6 @@ class QVtkViewer3D(QFrame):
         self.interactor.ReInitialize()
 
     def setCamera(self, cam_pos):
-        cam = self.ren.GetActiveCamera()
-        # cam = vtk.vtkCamera()
 
         ''' Set Camera Intrinsics '''
         px = 206.147
@@ -197,11 +196,11 @@ class QVtkViewer3D(QFrame):
         # convert the principal point to window center (normalized coordinate system) and set it
         wcx = -2.0*(px - w/2.0) / w
         wcy =  2.0*(py - h/2.0) / h
-        cam.SetWindowCenter(wcx, wcy)
+        self.ren.GetActiveCamera().SetWindowCenter(wcx, wcy)
 
         # Set vertical view angle as a indirect way of setting the y focal distance
         view_angle = 180 / np.pi * 2.0 * np.arctan2(h / 2.0, fy)
-        cam.SetViewAngle(view_angle)
+        self.ren.GetActiveCamera().SetViewAngle(view_angle)
 
         # Set the image aspect ratio as an indirect way of setting the x focal distance
         m = np.eye(4)
@@ -209,71 +208,39 @@ class QVtkViewer3D(QFrame):
         m[0,0] = 1.0/aspect
         t = vtk.vtkTransform()
         t.SetMatrix(m.flatten())
-        cam.SetUserTransform(t)
+        self.ren.GetActiveCamera().SetUserTransform(t)
 
         ''' Set Camera Extrinsics '''
         pr = vtk.vtkMatrix4x4() # extrinsic Real world
         # copy from numpy to vtkMatrix4x4
         pr.DeepCopy(cam_pos.ravel()) 
+        # pr.Invert()
 
-        tmp1 = vtk.vtkMatrix4x4()
-        tmp2 = vtk.vtkMatrix4x4()
-        tmp1.Identity()
-        tmp1.SetElement(1, 1, -tmp1.GetElement(1, 1))
-        tmp1.SetElement(2, 2, -tmp1.GetElement(2, 2))
-        vtk.vtkMatrix4x4.Multiply4x4(tmp1, pr, tmp2)
+        pv = vtk.vtkMatrix4x4() # extrinsic VTK world
+        pv.DeepCopy(self.ren.GetActiveCamera().GetViewTransformMatrix())
 
-        tmp2_rot = np.zeros([3,3])
-        tmp2_trs = np.zeros([3,1])
-        for i in range(3):
-            for j in range(3):
-                tmp2_rot[i,j] = tmp2.GetElement(i,j)
-        for i in range(3):
-            tmp2_trs[i] = tmp2.GetElement(i,3)
-        tmp2_rot_inv = np.linalg.inv(tmp2_rot)
-        tmp2_trs_new = np.dot(tmp2_rot_inv, tmp2_trs)
-        tmp2_trs_new *= -1
+        newMat = vtk.vtkMatrix4x4()
+        vtk.vtkMatrix4x4.Multiply4x4(pr, pv, newMat)
+        transform = vtk.vtkTransform()
+        transform.SetMatrix(newMat)
+        transform.Update()
 
-        # focalPoint = P-viewPlaneNormal, viewPlaneNormal is rotation[2]
-        viewPlaneNormal = np.zeros([3,1])
-        viewPlaneNormal[0] = tmp2_rot_inv[2,0]
-        viewPlaneNormal[1] = tmp2_rot_inv[2,1]
-        viewPlaneNormal[2] = tmp2_rot_inv[2,2]
+        self.ren.GetActiveCamera().ApplyTransform(transform)
+        # self.ren.GetActiveCamera().ComputeViewPlaneNormal()
+        # self.ren.GetActiveCamera().OrthogonalizeViewUp()
 
-        cam.SetPosition(tmp2_trs_new[0], tmp2_trs_new[1], tmp2_trs_new[2])
-        cam.SetFocalPoint(tmp2_trs_new[0] - viewPlaneNormal[0],
-                          tmp2_trs_new[1] - viewPlaneNormal[1],
-                          tmp2_trs_new[2] - viewPlaneNormal[2])
-        cam.SetViewUp(tmp2_rot[1,0], tmp2_rot[1,1], tmp2_rot[1,2])
-        # cam.ComputeViewPlaneNormal()
-        # cam.OrthogonalizeViewUp()
-        # cam.Dolly(1.5)
-        # cam.SetViewUp(tmp2_rot[1,0], tmp2_rot[1,1], tmp2_rot[1,2])
+        # Use the following line to start from the start point
+        self.ren.GetActiveCamera().Yaw(180)
 
+        # Use the following two lines to have a nice start from far!
+        # self.ren.GetActiveCamera().Azimuth(180)
+        # self.ren.GetActiveCamera().Dolly(1.2)
 
-
-        # pv = vtk.vtkMatrix4x4() # extrinsic VTK world
-        # pv.DeepCopy(self.cam.GetViewTransformMatrix())
-        
-        # tmp2.Invert()
-
-        # newMat = vtk.vtkMatrix4x4()
-        # # newMat.DeepCopy(cam_pos.ravel()) 
-
-        # vtk.vtkMatrix4x4.Multiply4x4(tmp2, pv, newMat)
-        # transform = vtk.vtkTransform()
-        # transform.SetMatrix(newMat)
-        # transform.Update()
-
-        # cam.ApplyTransform(transform)
-        # cam.SetModelTransformMatrix(newMat)
-
-
-        cam.Modified()
+        # self.ren.GetActiveCamera().Modified()
 
         # near = 0.1
         # far = 1000.0
-        # cam.SetClippingRange(near, far)
+        # self.ren.GetActiveCamera().SetClippingRange(near, far)
         
 
         # print(newMat)
@@ -288,15 +255,16 @@ class QVtkViewer3D(QFrame):
         # cam.SetPosition(0, -1, 0)
         # cam.SetFocalPoint(0, 0, 0)
         # cam.ComputeViewPlaneNormal()
-        self.ren.ResetCamera()
+        # self.ren.ResetCamera()
 
         # First point should be:
         #     position: (34, -34, 150)
         #     focal point: (22, 90, 160)
 
-        self.ren.SetActiveCamera(cam)
+        # self.ren.SetActiveCamera(cam)
+        
         self.ren.ResetCameraClippingRange()
-        self.ren.Render()
+        # self.ren.Render()
         self.interactor.ReInitialize()
         self.updateTextActor()
 
