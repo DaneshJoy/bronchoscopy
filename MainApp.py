@@ -39,6 +39,8 @@ class MainWindow(QMainWindow):
         self.ui.Slider_sagittal.valueChanged.connect(self.sagittalChanged)
 
         self.ui.btn_LoadPoints.clicked.connect(self.readRegisteredPoints)
+        self.ui.btn_MoveCam.clicked.connect(self.moveCam)
+        self.ui.slider_Frames.valueChanged.connect(self.frameChanged)
 
     def openFileDialog(self):
         options = QFileDialog.Options()
@@ -149,19 +151,37 @@ class MainWindow(QMainWindow):
             # self.registeredPoints = matFile[list(matFile.keys())[-1]]
             self.registeredPoints = matFile['EMT_cor']
             self.ui.lbl_NumPoints.setText('Number of Points: ' + str(self.registeredPoints.shape[-1]))
+            self.ui.slider_Frames.setRange(0, self.registeredPoints.shape[-1]-1)
+            self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
             self.drawTrajectory(self.registeredPoints)
 
     def drawTrajectory(self, points):
         self.vtk_widget_3D.drawPoints(points)
         self.vtk_widget_3D.drawSphere(points[:,:,0], color=[0,1,0]) # start point
         self.vtk_widget_3D.drawSphere(points[:,:,-1], color=[1,0,0]) # end point
-        self.moveCam(points)
+        # self.moveCam(points)
+
+    def frameChanged(self):
+        if self.registeredPoints is None:
+            self.ui.slider_Frames.setValue(0)
+            # QMessageBox.critical(self, 'No Points Found', 'Please load the registered points first !')
+            return
+        pNum = self.ui.slider_Frames.value()
+        testPoint = self.registeredPoints[:,:,pNum]
+        self.vtk_widget_3D.setCamera(testPoint)
+        self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
+
 
     def moveCam(self, points):
         # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
-        for i in range(1,1000):
-            testPoint = points[:,:,i]
+        if self.registeredPoints is None:
+            QMessageBox.critical(self, 'No Points Found', 'Please load the registered points first !')
+            return
+        for i in range(0,self.registeredPoints.shape[-1]):
+            testPoint = self.registeredPoints[:,:,i]
             self.vtk_widget_3D.setCamera(testPoint)
+            self.ui.slider_Frames.setValue(i)
+            self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
             time.sleep(0.1)
 
     def setup(self, size):

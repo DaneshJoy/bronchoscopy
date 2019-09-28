@@ -74,26 +74,25 @@ class QVtkViewer3D(QFrame):
         # skin.GetProperty().SetOpacity(0.9)
         # skin.GetProperty().SetDiffuseColor(1, .49, .25)
         # skin.GetProperty().SetDiffuseColor(colors.GetColor3D("SkinColor"))
-        skin.GetProperty().SetSpecular(.2)
-        skin.GetProperty().SetSpecularPower(20)
-        skin.GetProperty().SetDiffuse(1.5)
+        skin.GetProperty().SetSpecular(0.7)
+        skin.GetProperty().SetSpecularPower(40)
+        skin.GetProperty().SetDiffuse(0.7)
 
         # Camera
-        self.cam = vtk.vtkCamera()
-        self.cam.SetViewUp(0, 0, -1)
-        self.cam.SetPosition(0, -1, 0)
-        self.cam.SetFocalPoint(0, 0, 0)
-        self.cam.ComputeViewPlaneNormal()
-        # self.cam.Azimuth(30.0)
-        # self.cam.Elevation(30.0)
+        cam = vtk.vtkCamera()
+        cam.SetViewUp(0, 0, 1)
+        cam.SetPosition(0, -1, 0)
+        cam.SetFocalPoint(0, 0, 0)
+        cam.ComputeViewPlaneNormal()
+        # cam.Azimuth(30.0)
+        # cam.Elevation(30.0)
+        cam.Dolly(1.5)  # Moves the camera towards the FocalPoint
 
-        self.txt = vtk.vtkTextActor()
-        self.updateTextActor()
+        # self.updateTextActor()
 
         self.ren.AddActor(skin)
-        self.ren.SetActiveCamera(self.cam)
+        self.ren.SetActiveCamera(cam)
         self.ren.ResetCamera()
-        self.cam.Dolly(1.5)  # Moves the camera towards the FocalPoint
         self.ren.ResetCameraClippingRange()
 
         # self.renderer = ren
@@ -191,9 +190,9 @@ class QVtkViewer3D(QFrame):
         # cx = self.width - px
         # cy = py
 
+        # convert the principal point to window center (normalized coordinate system) and set it
         # wcx = cx / ((w-1)/2) - 1
         # wcy = cy / ((h-1)/2) - 1
-        # convert the principal point to window center (normalized coordinate system) and set it
         wcx = -2.0*(px - w/2.0) / w
         wcy =  2.0*(py - h/2.0) / h
         self.ren.GetActiveCamera().SetWindowCenter(wcx, wcy)
@@ -226,8 +225,6 @@ class QVtkViewer3D(QFrame):
         transform.Update()
 
         self.ren.GetActiveCamera().ApplyTransform(transform)
-        # self.ren.GetActiveCamera().ComputeViewPlaneNormal()
-        # self.ren.GetActiveCamera().OrthogonalizeViewUp()
 
         # Use the following line to start from the start point
         self.ren.GetActiveCamera().Yaw(180)
@@ -241,8 +238,7 @@ class QVtkViewer3D(QFrame):
         # near = 0.1
         # far = 1000.0
         # self.ren.GetActiveCamera().SetClippingRange(near, far)
-        
-
+    
         # print(newMat)
         # # the camera Y axis points down
         # self.cam.SetViewUp(0,-1,0)
@@ -264,16 +260,19 @@ class QVtkViewer3D(QFrame):
         # self.ren.SetActiveCamera(cam)
         
         self.ren.ResetCameraClippingRange()
+
+        # self.ren.GetActiveCamera().ComputeViewPlaneNormal()
+        # self.ren.GetActiveCamera().OrthogonalizeViewUp()
         # self.ren.Render()
         self.interactor.ReInitialize()
-        self.updateTextActor()
+        # self.updateTextActor() # This function has interactor.ReInitialize() in it
 
     def updateTextActor(self):
         # create a text actor
         renSize = self.ren_win.GetSize()
         self.ren.RemoveActor(self.txt)
-        self.txt.SetInput('Cam Position: ' + str(np.round(self.cam.GetPosition(),2)) + '\n' + \
-                          'Focal Point:   '+str(np.round(self.cam.GetFocalPoint(), 2)))
+        self.txt.SetInput('Cam Position: ' + str(np.round(self.ren.GetActiveCamera().GetPosition(),2)) + '\n' + \
+                          'Focal Point:   '+str(np.round(self.ren.GetActiveCamera().GetFocalPoint(), 2)))
         txtprop=self.txt.GetTextProperty()
         txtprop.SetFontFamilyToArial()
         txtprop.SetFontSize(12)
@@ -281,8 +280,8 @@ class QVtkViewer3D(QFrame):
         self.txt.SetDisplayPosition(0,renSize[1]-30)
         self.ren.AddActor2D(self.txt)
         # self.ren.RemoveActor(txtActor)
-        self.ren.SetActiveCamera(self.cam)
-        self.ren.ResetCameraClippingRange()
+        # self.ren.SetActiveCamera(self.cam)
+        # self.ren.ResetCameraClippingRange()
         self.interactor.ReInitialize()
 
     class MyInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
@@ -295,27 +294,27 @@ class QVtkViewer3D(QFrame):
             self.AddObserver("MouseWheelBackwardEvent", self.wheel_backward_event)
 
         def left_button_press_event(self, obj, event):
-            self.outer_instance.updateTextActor()
+            # self.outer_instance.updateTextActor()
             self.OnLeftButtonUp()
             return
 
         def right_button_press_event(self, obj, event):
-            self.outer_instance.updateTextActor()
+            # self.outer_instance.updateTextActor()
             self.OnRightButtonUp()
             return
 
         def middle_button_press_event(self, obj, event):
-            self.outer_instance.updateTextActor()
+            # self.outer_instance.updateTextActor()
             self.OnMiddleButtonUp()
             return
 
         def wheel_forward_event(self, obj, event):
-            self.outer_instance.updateTextActor()
+            # self.outer_instance.updateTextActor()
             self.OnMouseWheelForward()
             return
 
         def wheel_backward_event(self, obj, event):
-            self.outer_instance.updateTextActor()
+            # self.outer_instance.updateTextActor()
             self.OnMouseWheelBackward()
             return
 
