@@ -6,6 +6,4 @@ p_npy = np.zeros((4,4))
 p_vtk.DeepCopy(p_npy.ravel(), p_npy)
 
 # camera extrinsics
-print(cam.GetViewTransformMatrix())
-or
-print(renderer.GetActiveCamera().GetViewTransformMatrix())
+renderer.GetActiveCamera().GetViewTransformMatrix() # type: vtkMatrix4x4 -> can be printed

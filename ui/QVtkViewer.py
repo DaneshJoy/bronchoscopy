@@ -40,57 +40,55 @@ class QVtkViewer3D(QFrame):
     def showImage(self, reader):
 
         # Flip the image
-        flipZFilter = vtk.vtkImageFlip()
-        flipZFilter.SetFilteredAxis(2) # flip z axis
-        flipZFilter.SetInputConnection(reader.GetOutputPort())
-        flipZFilter.Update()
-
-        flipXFilter = vtk.vtkImageFlip()
-        flipXFilter.SetFilteredAxis(0); # flip x axis
-        flipXFilter.SetInputConnection(reader.GetOutputPort())
-        flipXFilter.Update()
+        # flipXFilter = vtk.vtkImageFlip()
+        # flipXFilter.SetFilteredAxis(0); # flip x axis
+        # flipXFilter.SetInputConnection(reader.GetOutputPort())
+        # flipXFilter.Update()
 
         flipYFilter = vtk.vtkImageFlip()
         flipYFilter.SetFilteredAxis(1); # flip y axis
-        flipYFilter.SetInputConnection(flipXFilter.GetOutputPort())
+        flipYFilter.SetInputConnection(reader.GetOutputPort())
         flipYFilter.Update()
 
         # Isosurface
-        skinExtractor = vtk.vtkMarchingCubes()
-        skinExtractor.SetInputConnection(flipYFilter.GetOutputPort())
-        skinExtractor.SetValue(0, 300)
+        self.surfaceExtractor = vtk.vtkMarchingCubes()
+        self.surfaceExtractor.SetInputConnection(flipYFilter.GetOutputPort())
+        self.surfaceExtractor.SetValue(0, 300)
 
         # Mapper
-        skinMapper = vtk.vtkPolyDataMapper()
-        skinMapper.SetInputConnection(skinExtractor.GetOutputPort())
-        skinMapper.ScalarVisibilityOff()
+        surfaceMapper = vtk.vtkPolyDataMapper()
+        surfaceMapper.SetInputConnection(self.surfaceExtractor.GetOutputPort())
+        surfaceMapper.ScalarVisibilityOff()
         # skinMapper.UseLookupTableScalarRangeOn()
 
         # Actor
-        skin = vtk.vtkActor()
-        skin.SetMapper(skinMapper)
-        skin.GetProperty().SetDiffuseColor(0.8, 0.6, 0.2)
-        skin.GetProperty().SetAmbient(0.1)
-        # skin.GetProperty().SetOpacity(0.9)
-        # skin.GetProperty().SetDiffuseColor(1, .49, .25)
-        # skin.GetProperty().SetDiffuseColor(colors.GetColor3D("SkinColor"))
-        skin.GetProperty().SetSpecular(0.7)
-        skin.GetProperty().SetSpecularPower(40)
-        skin.GetProperty().SetDiffuse(0.7)
+        self.surface = vtk.vtkActor()
+        self.surface.SetMapper(surfaceMapper)
+        self.surface.GetProperty().SetDiffuseColor(0.8, 0.6, 0.2)
+        self.surface.GetProperty().SetAmbient(0.1)
+        # self.surface.GetProperty().SetOpacity(0.9)
+        # self.surface.GetProperty().SetDiffuseColor(1, .49, .25)
+        # self.surface.GetProperty().SetDiffuseColor(colors.GetColor3D("SkinColor"))
+        self.surface.GetProperty().SetSpecular(0.7)
+        self.surface.GetProperty().SetSpecularPower(40)
+        self.surface.GetProperty().SetDiffuse(0.7)
 
         # Camera
         cam = vtk.vtkCamera()
+        # self.cam.SetViewUp(0,-1,0) # the camera Y axis points down
+        # self.cam.SetPosition(0, 0, 0)
+        # self.cam.SetFocalPoint(0, 0, 1) # look in the +Z direction of the camera coordinate system
         cam.SetViewUp(0, 0, 1)
         cam.SetPosition(0, -1, 0)
         cam.SetFocalPoint(0, 0, 0)
         cam.ComputeViewPlaneNormal()
         # cam.Azimuth(30.0)
         # cam.Elevation(30.0)
-        cam.Dolly(1.5)  # Moves the camera towards the FocalPoint
+        cam.Dolly(1.5) # Moves the camera towards the FocalPoint
 
         # self.updateTextActor()
 
-        self.ren.AddActor(skin)
+        self.ren.AddActor(self.surface)
         self.ren.SetActiveCamera(cam)
         self.ren.ResetCamera()
         self.ren.ResetCameraClippingRange()
@@ -233,34 +231,10 @@ class QVtkViewer3D(QFrame):
         # self.ren.GetActiveCamera().Azimuth(180)
         # self.ren.GetActiveCamera().Dolly(1.2)
 
-        # self.ren.GetActiveCamera().Modified()
-
         # near = 0.1
         # far = 1000.0
         # self.ren.GetActiveCamera().SetClippingRange(near, far)
-    
-        # print(newMat)
-        # # the camera Y axis points down
-        # self.cam.SetViewUp(0,-1,0)
-        # # the camera can stay at the origin because we are transforming the scene objects
-        # self.cam.SetPosition(0, 0, 0)
-        # # look in the +Z direction of the camera coordinate system
-        # self.cam.SetFocalPoint(0, 0, 1)
-
-        # cam.SetViewUp(0, 0, -1)
-        # cam.SetPosition(0, -1, 0)
-        # cam.SetFocalPoint(0, 0, 0)
-        # cam.ComputeViewPlaneNormal()
-        # self.ren.ResetCamera()
-
-        # First point should be:
-        #     position: (34, -34, 150)
-        #     focal point: (22, 90, 160)
-
-        # self.ren.SetActiveCamera(cam)
-        
         self.ren.ResetCameraClippingRange()
-
         # self.ren.GetActiveCamera().ComputeViewPlaneNormal()
         # self.ren.GetActiveCamera().OrthogonalizeViewUp()
         # self.ren.Render()
@@ -283,6 +257,74 @@ class QVtkViewer3D(QFrame):
         # self.ren.SetActiveCamera(self.cam)
         # self.ren.ResetCameraClippingRange()
         self.interactor.ReInitialize()
+
+    def flip(self, direction):
+        if direction == 'X':
+            # self.ren.RemoveActor(self.surface)
+            flipXFilter = vtk.vtkImageFlip()
+            flipXFilter.SetFilteredAxis(0); # flip x axis
+            flipXFilter.SetInputConnection(self.surfaceExtractor.GetOutputPort())
+            flipXFilter.Update()
+
+            self.surfaceExtractor.SetInputConnection(flipXFilter.GetOutputPort())
+            self.surfaceExtractor.SetValue(0, 300)
+
+            # Mapper
+            surfaceMapper = vtk.vtkPolyDataMapper()
+            surfaceMapper.SetInputConnection(self.surfaceExtractor.GetOutputPort())
+            surfaceMapper.ScalarVisibilityOff()
+            # skinMapper.UseLookupTableScalarRangeOn()
+
+            # Actor
+            self.surface.SetMapper(surfaceMapper)
+            self.surface.GetProperty().SetDiffuseColor(0.8, 0.6, 0.2)
+            self.surface.GetProperty().SetAmbient(0.1)
+            # self.surface.GetProperty().SetOpacity(0.9)
+            # self.surface.GetProperty().SetDiffuseColor(1, .49, .25)
+            # self.surface.GetProperty().SetDiffuseColor(colors.GetColor3D("SkinColor"))
+            self.surface.GetProperty().SetSpecular(0.7)
+            self.surface.GetProperty().SetSpecularPower(40)
+            self.surface.GetProperty().SetDiffuse(0.7)
+            self.ren.AddActor(self.surface)
+            self.interactor.ReInitialize()
+        elif direction == 'Y':
+            # self.ren.RemoveActor(self.surface)
+            flipYFilter = vtk.vtkImageFlip()
+            flipYFilter.SetFilteredAxis(1); # flip y axis
+            flipYFilter.SetInputConnection(self.surfaceExtractor.GetOutputPort())
+            flipYFilter.Update()
+
+            self.surfaceExtractor.SetInputConnection(flipYFilter.GetOutputPort())
+            self.surfaceExtractor.SetValue(0, 300)
+
+            # Mapper
+            surfaceMapper = vtk.vtkPolyDataMapper()
+            surfaceMapper.SetInputConnection(self.surfaceExtractor.GetOutputPort())
+            surfaceMapper.ScalarVisibilityOff()
+            # skinMapper.UseLookupTableScalarRangeOn()
+
+            # Actor
+            self.surface.SetMapper(surfaceMapper)
+            self.surface.GetProperty().SetDiffuseColor(0.8, 0.6, 0.2)
+            self.surface.GetProperty().SetAmbient(0.1)
+            # self.surface.GetProperty().SetOpacity(0.9)
+            # self.surface.GetProperty().SetDiffuseColor(1, .49, .25)
+            # self.surface.GetProperty().SetDiffuseColor(colors.GetColor3D("SkinColor"))
+            self.surface.GetProperty().SetSpecular(0.7)
+            self.surface.GetProperty().SetSpecularPower(40)
+            self.surface.GetProperty().SetDiffuse(0.7)
+            self.ren.AddActor(self.surface)
+            self.interactor.ReInitialize()
+        elif direction == 'Z':
+            # self.ren.RemoveActor(self.surface)
+            flipZFilter = vtk.vtkImageFlip()
+            flipZFilter.SetFilteredAxis(2) # flip z axis
+            flipZFilter.SetInputConnection(self.surfaceExtractor.GetOutputPort())
+            flipZFilter.Update()
+
+            self.surface.GetMapper().SetInputConnection(flipZFilter.GetOutputPort())
+            self.ren.AddActor(self.surface)
+            self.interactor.ReInitialize()
 
     class MyInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         def __init__(self, outer_instance):

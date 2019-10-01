@@ -75,10 +75,10 @@ class MainWindow(QMainWindow):
             reader = vtk.vtkDICOMImageReader()
             reader.SetDirectoryName(dirname)
 
-            reader1 = sitk.ImageSeriesReader()
-            dicom_names = reader1.GetGDCMSeriesFileNames(dirname)
+            # reader1 = sitk.ImageSeriesReader()
+            # dicom_names = reader1.GetGDCMSeriesFileNames(dirname)
             fileNames = vtk.vtkStringArray()
-            # files = os.listdir(dirname)
+            dicom_names = os.listdir(dirname)
             for f in dicom_names:
                 fileNames.InsertNextValue(f)
             reader.SetFileNames(fileNames)
