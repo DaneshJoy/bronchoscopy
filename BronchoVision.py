@@ -8,9 +8,13 @@ Created on Mon Jun  3 01:09:45 2019
 import os
 import sys
 import vtk
+import numpy.random.common # Just for PyInstaller to work
+# import numpy.random.bounded_integers
+# import numpy.random.entropy
 import numpy as np
 import time
 from scipy.io import loadmat
+import fix_qt_import_error
 from PyQt5.Qt import QApplication, QMainWindow, QColor, Qt
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog

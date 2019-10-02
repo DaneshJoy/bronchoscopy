@@ -105,6 +105,9 @@ venv.bak/
 
 # My files
 data/
+dist/
+build/
+other/
 vtk_log.txt
 
 # VS COde
