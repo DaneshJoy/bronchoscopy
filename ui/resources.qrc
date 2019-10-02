@@ -1,7 +1,13 @@
 <RCC>
   <qresource prefix="logo">
     <file>logo/logo_transparent.png</file>
-    <file>icons/Open.png</file>
+  </qresource>
+  <qresource prefix="icon">
+    <file>icons/trajectory.png</file>
     <file>icons/exit.png</file>
+    <file>icons/Open.png</file>
+    <file>icons/pause.png</file>
+    <file>icons/play.png</file>
+    <file>icons/stop.png</file>
   </qresource>
 </RCC>

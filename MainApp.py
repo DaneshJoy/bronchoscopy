@@ -10,7 +10,6 @@ import sys
 import vtk
 import numpy as np
 import time
-import SimpleITK as sitk
 from scipy.io import loadmat
 from PyQt5.Qt import QApplication, QMainWindow, QColor, Qt
 from PyQt5 import QtWidgets, QtCore, uic
@@ -31,6 +30,7 @@ class MainWindow(QMainWindow):
         self.ui = None
         self.registeredPoints = None
         self.setup(size)
+        self.paused = False
 
         self.ui.actionLoad_Image.triggered.connect(self.openFileDialog)
         self.ui.actionLoad_DICOM.triggered.connect(self.openDirDialog)
@@ -39,31 +39,61 @@ class MainWindow(QMainWindow):
         self.ui.Slider_sagittal.valueChanged.connect(self.sagittalChanged)
 
         self.ui.btn_LoadPoints.clicked.connect(self.readRegisteredPoints)
-        self.ui.btn_MoveCam.clicked.connect(self.moveCam)
+        self.ui.btn_playCam.clicked.connect(self.playCam)
+        self.ui.btn_pauseCam.clicked.connect(self.pauseCam)
+        self.ui.btn_stopCam.clicked.connect(self.stopCam)
         self.ui.slider_Frames.valueChanged.connect(self.frameChanged)
 
     def openFileDialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, filetype = QFileDialog.getOpenFileName(self, "Open Medical Image", "", "Meta (*.mhd *.mha);;Nifti (*.nii *.nii.gz);;All Files (*)", options=options)
+        fileName, filetype = QFileDialog.getOpenFileName(self, "Open Medical Image", "", "Medical Images (*.nii *.nii.gz *.mhd *.mha);;Nifti (*.nii *.nii.gz);;Meta (*.mhd *.mha);;All Files (*)", options=options)
         # QMessageBox.information(self, 'Test Message', fileName)
         if fileName:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-
-            if 'Meta' in filetype:
-                reader = vtk.vtkMetaImageReader()
-                reader.SetFileName(fileName)
-            elif 'Nifti' in filetype:
-                reader = vtk.vtkNIFTIImageReader()
-                reader.SetFileName(fileName)
-            else:
+            extension = os.path.splitext(fileName)[1].lower()
+            try:
+                if 'nii' in extension or 'gz' in extension:
+                    reader = vtk.vtkNIFTIImageReader()
+                    reader.SetFileName(fileName)
+                elif 'mhd' in extension or 'mha' in extension:
+                    reader = vtk.vtkMetaImageReader()
+                    reader.SetFileName(fileName)
+            except:
                 QApplication.restoreOverrideCursor()
                 QMessageBox.critical(self, 'Unknown File Type', 'Can not load selected image!')
                 return
+                
             reader.Update()
 
-            self.showImages(reader)
-            self.updateSubPanels(reader)
+            # Load dimensions using `GetDataExtent`
+            _extent = reader.GetDataExtent()
+            dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]
+
+            # Flip and Translate the image to the right place
+            flipXFilter = vtk.vtkImageFlip()
+            flipXFilter.SetFilteredAxis(0); # flip x axis
+            flipXFilter.SetInputConnection(reader.GetOutputPort())
+            flipXFilter.Update()
+
+            flipYFilter = vtk.vtkImageFlip()
+            flipYFilter.SetFilteredAxis(1); # flip y axis
+            flipYFilter.SetInputConnection(flipXFilter.GetOutputPort())
+            flipYFilter.Update()
+
+            if 'nii' in extension or 'gz' in extension:
+                try:
+                    _QMatrix = reader.GetQFormMatrix()
+                    origin = (-_QMatrix.GetElement(0,3), -_QMatrix.GetElement(1,3), _QMatrix.GetElement(2,3))
+                    imageInfo = vtk.vtkImageChangeInformation()
+                    imageInfo.SetOutputOrigin(origin)
+                    imageInfo.SetInputConnection(flipYFilter.GetOutputPort())
+                    self.showImages(imageInfo)
+                except:
+                    QMessageBox.warning(self, 'Wrong Header', 'Can not read Image Origin from header!\nImage position might be wrong')
+            else:
+                self.showImages(flipYFilter)
+            self.updateSubPanels(dims)
             QApplication.restoreOverrideCursor()
 
     def openDirDialog(self):
@@ -82,16 +112,38 @@ class MainWindow(QMainWindow):
             for f in dicom_names:
                 fileNames.InsertNextValue(f)
             reader.SetFileNames(fileNames)
-            # reader.SetMemoryRowOrderToFileNative()
             reader.Update()
 
-            self.showImages(reader)
-            self.updateSubPanels(reader)
-            QApplication.restoreOverrideCursor()
+            # Load dimensions using `GetDataExtent`
+            _extent = reader.GetDataExtent()
+            dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]
 
-            # Real to VTK Camera
-            # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
-            # self.vtk_widget_3D.setCamera(cam_pos)
+            # # Load spacing values
+            # ConstPixelSpacing = reader.GetPixelSpacing()
+            # ConstScalarRange = reader.GetOutput().GetScalarRange()
+
+            # Flip and Translate the image to the right place
+            flipXFilter = vtk.vtkImageFlip()
+            flipXFilter.SetFilteredAxis(0); # flip x axis
+            flipXFilter.SetInputConnection(reader.GetOutputPort())
+            flipXFilter.Update()
+
+            flipZFilter = vtk.vtkImageFlip()
+            flipZFilter.SetFilteredAxis(2); # flip z axis
+            flipZFilter.SetInputConnection(flipXFilter.GetOutputPort())
+            flipZFilter.Update()
+
+            try:
+                origin = reader.GetImagePositionPatient()
+                imageInfo = vtk.vtkImageChangeInformation()
+                imageInfo.SetOutputOrigin(origin)
+                imageInfo.SetInputConnection(flipZFilter.GetOutputPort())
+            except:
+                QMessageBox.warning(self, 'Wrong Header', 'Can not read image Origin from header!\nImage position might be wrong')
+
+            self.showImages(imageInfo)
+            self.updateSubPanels(dims)
+            QApplication.restoreOverrideCursor()
 
     def showImages(self, reader):
         self.vtk_widget_3D.removeImage()
@@ -104,10 +156,12 @@ class MainWindow(QMainWindow):
         self.vtk_widget_coronal.showImage(reader)
         self.vtk_widget_sagittal.showImage(reader)
 
-    def updateSubPanels(self, reader):
+        self.ui.btn_LoadPoints.setEnabled(True)
+        
+    def updateSubPanels(self, dims):
         self.showSubPanels()
-        image = reader.GetOutput()
-        dims = image.GetDimensions()
+        # image = reader.GetOutput()
+        # dims = image.GetDimensions()
         self.ui.Slider_axial.setRange(0, dims[2]-1)
         self.ui.Slider_coronal.setRange(0, dims[1]-1)
         self.ui.Slider_sagittal.setRange(0, dims[0]-1)
@@ -118,17 +172,17 @@ class MainWindow(QMainWindow):
     def axialChanged(self):
         self.vtk_widget_axial.setSlice(self.ui.Slider_axial.value())
         self.vtk_widget_axial.interactor.Initialize()
-        return False
+        return
 
     def coronalChanged(self):
         self.vtk_widget_coronal.setSlice(self.ui.Slider_coronal.value())
         self.vtk_widget_coronal.interactor.Initialize()
-        return False
+        return
 
     def sagittalChanged(self):
         self.vtk_widget_sagittal.setSlice(self.ui.Slider_sagittal.value())
         self.vtk_widget_sagittal.interactor.Initialize()
-        return False
+        return
     
     def hideSubPanels(self):
         self.ui.SubPanel_3D.hide()
@@ -150,17 +204,18 @@ class MainWindow(QMainWindow):
             matFile = loadmat(fileName)
             # self.registeredPoints = matFile[list(matFile.keys())[-1]]
             self.registeredPoints = matFile['EMT_cor']
-            self.ui.lbl_NumPoints.setText('Number of Points: ' + str(self.registeredPoints.shape[-1]))
             self.ui.slider_Frames.setRange(0, self.registeredPoints.shape[-1]-1)
             self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
             self.drawTrajectory(self.registeredPoints)
+            self.ui.btn_playCam.setEnabled(True)
+            self.ui.slider_Frames.setEnabled(True)
 
     def drawTrajectory(self, points):
         self.vtk_widget_3D.drawPoints(points)
         self.vtk_widget_3D.drawSphere(points[:,:,0], color=[0,1,0]) # start point
         self.vtk_widget_3D.drawSphere(points[:,:,-1], color=[1,0,0]) # end point
-        # self.moveCam(points)
-
+        # self.playCam(points)
+        
     def frameChanged(self):
         if self.registeredPoints is None:
             self.ui.slider_Frames.setValue(0)
@@ -172,17 +227,32 @@ class MainWindow(QMainWindow):
         self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
 
 
-    def moveCam(self, points):
+    def playCam(self, points):
         # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
         if self.registeredPoints is None:
             QMessageBox.critical(self, 'No Points Found', 'Please load the registered points first !')
             return
-        for i in range(0,self.registeredPoints.shape[-1]):
+        self.ui.btn_pauseCam.setEnabled(True)
+        self.ui.btn_stopCam.setEnabled(True)
+        self.paused = False
+        for i in range(self.ui.slider_Frames.value(),self.registeredPoints.shape[-1]):
+            if self.paused:
+                break
             testPoint = self.registeredPoints[:,:,i]
             self.vtk_widget_3D.setCamera(testPoint)
             self.ui.slider_Frames.setValue(i)
             self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
             time.sleep(0.1)
+            QApplication.processEvents()
+    
+    def pauseCam(self):
+        self.paused = True
+
+    def stopCam(self):
+        self.paused = True
+        self.ui.slider_Frames.setValue(0)
+        self.ui.btn_pauseCam.setEnabled(False)
+        self.ui.btn_stopCam.setEnabled(False)
 
     def setup(self, size):
         import MainWindow

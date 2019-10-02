@@ -343,7 +343,7 @@
        <property name="midLineWidth">
         <number>0</number>
        </property>
-       <layout class="QVBoxLayout" name="verticalLayout" stretch="2,2,2,1">
+       <layout class="QVBoxLayout" name="verticalLayout" stretch="2,3,3,1">
         <property name="spacing">
          <number>10</number>
         </property>
@@ -386,10 +386,28 @@ border-color: rgb(114, 171, 171);</string>
            <bool>false</bool>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_3">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>10</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>5</number>
+           </property>
            <item>
-            <layout class="QVBoxLayout" name="verticalLayout_2">
+            <layout class="QVBoxLayout" name="verticalLayout_2" stretch="2,1,1,1">
+             <property name="spacing">
+              <number>0</number>
+             </property>
              <item>
               <widget class="QToolButton" name="btn_LoadPoints">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -404,59 +422,8 @@ border-color: rgb(114, 171, 171);</string>
                <property name="cursor">
                 <cursorShape>PointingHandCursor</cursorShape>
                </property>
-               <property name="autoFillBackground">
-                <bool>false</bool>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">background-color: rgb(65, 65, 65);</string>
-               </property>
-               <property name="text">
-                <string>Load Registered Points ...</string>
-               </property>
-               <property name="autoRaise">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="lbl_NumPoints">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="font">
-                <font>
-                 <pointsize>10</pointsize>
-                </font>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">color: rgb(157, 205, 216);</string>
-               </property>
-               <property name="text">
-                <string>Number of Points: 0</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QToolButton" name="btn_MoveCam">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="font">
-                <font>
-                 <pointsize>10</pointsize>
-                </font>
-               </property>
-               <property name="cursor">
-                <cursorShape>PointingHandCursor</cursorShape>
+               <property name="layoutDirection">
+                <enum>Qt::LeftToRight</enum>
                </property>
                <property name="autoFillBackground">
                 <bool>false</bool>
@@ -465,17 +432,26 @@ border-color: rgb(114, 171, 171);</string>
                 <string notr="true">background-color: rgb(65, 65, 65);</string>
                </property>
                <property name="text">
-                <string>Start Virtual Camera</string>
+                <string>    Load Registered Points ...</string>
+               </property>
+               <property name="icon">
+                <iconset resource="resources.qrc">
+                 <normaloff>:/icon/icons/trajectory.png</normaloff>:/icon/icons/trajectory.png</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>36</width>
+                 <height>36</height>
+                </size>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+               <property name="toolButtonStyle">
+                <enum>Qt::ToolButtonTextBesideIcon</enum>
                </property>
                <property name="autoRaise">
                 <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QSlider" name="slider_Frames">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
                </property>
               </widget>
              </item>
@@ -502,6 +478,184 @@ border-color: rgb(114, 171, 171);</string>
                 <set>Qt::AlignCenter</set>
                </property>
               </widget>
+             </item>
+             <item>
+              <widget class="QSlider" name="slider_Frames">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_camButtons" stretch="0,0,0,0,0">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <property name="leftMargin">
+                <number>10</number>
+               </property>
+               <property name="rightMargin">
+                <number>10</number>
+               </property>
+               <item>
+                <spacer name="horizontalSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QToolButton" name="btn_playCam">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>10</pointsize>
+                  </font>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="autoFillBackground">
+                  <bool>false</bool>
+                 </property>
+                 <property name="text">
+                  <string>Start Virtual Camera</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="resources.qrc">
+                   <normaloff>:/icon/icons/play.png</normaloff>:/icon/icons/play.png</iconset>
+                 </property>
+                 <property name="iconSize">
+                  <size>
+                   <width>34</width>
+                   <height>34</height>
+                  </size>
+                 </property>
+                 <property name="autoRaise">
+                  <bool>true</bool>
+                 </property>
+                 <property name="arrowType">
+                  <enum>Qt::NoArrow</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QToolButton" name="btn_pauseCam">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>10</pointsize>
+                  </font>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="autoFillBackground">
+                  <bool>false</bool>
+                 </property>
+                 <property name="text">
+                  <string>Start Virtual Camera</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="resources.qrc">
+                   <normaloff>:/icon/icons/pause.png</normaloff>:/icon/icons/pause.png</iconset>
+                 </property>
+                 <property name="iconSize">
+                  <size>
+                   <width>34</width>
+                   <height>34</height>
+                  </size>
+                 </property>
+                 <property name="autoRaise">
+                  <bool>true</bool>
+                 </property>
+                 <property name="arrowType">
+                  <enum>Qt::NoArrow</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QToolButton" name="btn_stopCam">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>10</pointsize>
+                  </font>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="autoFillBackground">
+                  <bool>false</bool>
+                 </property>
+                 <property name="text">
+                  <string>Start Virtual Camera</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="resources.qrc">
+                   <normaloff>:/icon/icons/stop.png</normaloff>:/icon/icons/stop.png</iconset>
+                 </property>
+                 <property name="iconSize">
+                  <size>
+                   <width>34</width>
+                   <height>34</height>
+                  </size>
+                 </property>
+                 <property name="autoRaise">
+                  <bool>true</bool>
+                 </property>
+                 <property name="arrowType">
+                  <enum>Qt::NoArrow</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_2">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
              </item>
             </layout>
            </item>
@@ -629,7 +783,7 @@ border-color: rgb(114, 171, 171);</string>
          <height>0</height>
         </size>
        </property>
-       <layout class="QGridLayout" name="gridLayout" rowstretch="2,1" columnstretch="0,0">
+       <layout class="QGridLayout" name="gridLayout" rowstretch="0,0" columnstretch="0,0">
         <item row="1" column="0">
          <layout class="QVBoxLayout" name="verticalLayout_coronal" stretch="20,1">
           <property name="spacing">
@@ -1240,7 +1394,7 @@ border-color: rgb(114, 171, 171);</string>
   <action name="actionLoad_Image">
    <property name="icon">
     <iconset resource="resources.qrc">
-     <normaloff>:/logo/icons/Open.png</normaloff>:/logo/icons/Open.png</iconset>
+     <normaloff>:/icon/icons/Open.png</normaloff>:/icon/icons/Open.png</iconset>
    </property>
    <property name="text">
     <string>Load Image ...</string>
@@ -1269,7 +1423,7 @@ border-color: rgb(114, 171, 171);</string>
   <action name="actionExit">
    <property name="icon">
     <iconset resource="resources.qrc">
-     <normaloff>:/logo/icons/exit.png</normaloff>:/logo/icons/exit.png</iconset>
+     <normaloff>:/icon/icons/exit.png</normaloff>:/icon/icons/exit.png</iconset>
    </property>
    <property name="text">
     <string>Exit</string>
@@ -1283,7 +1437,7 @@ border-color: rgb(114, 171, 171);</string>
   <action name="actionLoad_DICOM">
    <property name="icon">
     <iconset resource="resources.qrc">
-     <normaloff>:/logo/icons/Open.png</normaloff>:/logo/icons/Open.png</iconset>
+     <normaloff>:/icon/icons/Open.png</normaloff>:/icon/icons/Open.png</iconset>
    </property>
    <property name="text">
     <string>Load DICOM ...</string>
