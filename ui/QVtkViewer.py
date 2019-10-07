@@ -112,17 +112,23 @@ class QVtkViewer3D(QFrame):
         pmap.SetInputDataObject(poly)
 
         # actor
-        actor = vtk.vtkActor()
-        actor.SetMapper(pmap)
-        actor.GetProperty().SetPointSize(2)
-        actor.GetProperty().SetColor(0.5,1,1) # (R,G,B)
+        self.points = vtk.vtkActor()
+        self.points.SetMapper(pmap)
+        self.points.GetProperty().SetPointSize(2)
+        self.points.GetProperty().SetColor(0.5,1,1) # (R,G,B)
 
         # assign actor to the renderer
-        self.ren.AddActor(actor)
+        self.ren.AddActor(self.points)
         self.interactor.ReInitialize()
-        self.ren.ResetCameraClippingRange()
+        # self.ren.ResetCameraClippingRange()
 
-    def drawSphere(self, pos, color=[0,1,0]):
+    def removePoints(self):
+        self.ren.RemoveActor(self.points)
+        self.ren.RemoveActor(self.startPoint)
+        self.ren.RemoveActor(self.endPoint)
+        self.interactor.ReInitialize()
+
+    def addStartPoint(self, pos, color=[0,1,0]):
         # create source
         sphere = vtk.vtkSphereSource()
         # source.SetCenter(pos)
@@ -148,12 +154,46 @@ class QVtkViewer3D(QFrame):
             mapper.SetInputConnection(t_sphere.GetOutputPort())
 
         # actor
-        actor = vtk.vtkActor()
-        actor.SetMapper(mapper)
-        actor.GetProperty().SetColor(color) # (R,G,B)
+        self.startPoint = vtk.vtkActor()
+        self.startPoint.SetMapper(mapper)
+        self.startPoint.GetProperty().SetColor(color) # (R,G,B)
 
         # assign actor to the renderer
-        self.ren.AddActor(actor)
+        self.ren.AddActor(self.startPoint)
+        self.interactor.ReInitialize()
+
+    def addEndPoint(self, pos, color=[1,0,0]):
+        # create source
+        sphere = vtk.vtkSphereSource()
+        # source.SetCenter(pos)
+
+        newMat = vtk.vtkMatrix4x4()
+        newMat.DeepCopy(pos.ravel())
+
+        transform = vtk.vtkTransform()
+        transform.SetMatrix(newMat)
+        t_sphere = vtk.vtkTransformFilter()
+        t_sphere.SetTransform(transform)
+        t_sphere.SetInputConnection(sphere.GetOutputPort())
+
+        sphere.SetRadius(2)
+        # sphere.SetThetaResolution(2)
+        # sphere.SetPhiResolution(2)
+
+        # mapper
+        mapper = vtk.vtkPolyDataMapper()
+        if vtk.VTK_MAJOR_VERSION <= 5:
+            mapper.SetInput(t_sphere.GetOutput())
+        else:
+            mapper.SetInputConnection(t_sphere.GetOutputPort())
+
+        # actor
+        self.endPoint = vtk.vtkActor()
+        self.endPoint.SetMapper(mapper)
+        self.endPoint.GetProperty().SetColor(color) # (R,G,B)
+
+        # assign actor to the renderer
+        self.ren.AddActor(self.endPoint)
         self.interactor.ReInitialize()
 
     def setCamera(self, cam_pos):

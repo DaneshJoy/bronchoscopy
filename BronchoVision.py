@@ -22,9 +22,9 @@ from PyQt5.QtGui import QPalette
 
 from ui.QVtkViewer import QVtkViewer3D, QVtkViewer2D
 
-import MainWindow
+from ui import MainWindow
 
-class MainWindow(QMainWindow):
+class myMainWindow(QMainWindow):
     def __init__(self, size):
         super().__init__()
         self.vtk_widget_3D = None
@@ -43,6 +43,7 @@ class MainWindow(QMainWindow):
         self.ui.Slider_sagittal.valueChanged.connect(self.sagittalChanged)
 
         self.ui.btn_LoadPoints.clicked.connect(self.readRegisteredPoints)
+        self.ui.checkBox_showPoints.stateChanged.connect(self.showHidePoints)
         self.ui.btn_playCam.clicked.connect(self.playCam)
         self.ui.btn_pauseCam.clicked.connect(self.pauseCam)
         self.ui.btn_stopCam.clicked.connect(self.stopCam)
@@ -213,12 +214,22 @@ class MainWindow(QMainWindow):
             self.drawTrajectory(self.registeredPoints)
             self.ui.btn_playCam.setEnabled(True)
             self.ui.slider_Frames.setEnabled(True)
+            self.ui.checkBox_showPoints.setEnabled(True)
+
+    def showHidePoints(self):
+        if self.ui.checkBox_showPoints.isChecked():
+            self.drawTrajectory(self.registeredPoints)
+        else:
+            self.removeTrajectory()
 
     def drawTrajectory(self, points):
         self.vtk_widget_3D.drawPoints(points)
-        self.vtk_widget_3D.drawSphere(points[:,:,0], color=[0,1,0]) # start point
-        self.vtk_widget_3D.drawSphere(points[:,:,-1], color=[1,0,0]) # end point
+        self.vtk_widget_3D.addStartPoint(points[:,:,0]) # start point
+        self.vtk_widget_3D.addEndPoint(points[:,:,-1]) # end point
         # self.playCam(points)
+
+    def removeTrajectory(self):
+        self.vtk_widget_3D.removePoints()
         
     def frameChanged(self):
         if self.registeredPoints is None:
@@ -258,7 +269,6 @@ class MainWindow(QMainWindow):
         self.ui.btn_stopCam.setEnabled(False)
 
     def setup(self, size):
-        import MainWindow
         self.ui = MainWindow.Ui_MainWindow()
         self.ui.setupUi(self)
         # sizeObject = QtWidgets.QDesktopWidget().screenGeometry(-1)
@@ -312,7 +322,7 @@ if __name__ == "__main__":
 
     screen = app.primaryScreen()
     size = screen.availableGeometry()  # size.height(), size.width()
-    main_win = MainWindow(size)
+    main_win = myMainWindow(size)
     main_win.showMaximized()
     # main_win.show()
     # main_win.initialize()
