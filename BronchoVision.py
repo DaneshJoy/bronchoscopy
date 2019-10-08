@@ -73,7 +73,7 @@ class myMainWindow(QMainWindow):
 
             # Load dimensions using `GetDataExtent`
             _extent = reader.GetDataExtent()
-            dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]
+            self.dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]
 
             # Flip and Translate the image to the right place
             flipXFilter = vtk.vtkImageFlip()
@@ -93,12 +93,18 @@ class myMainWindow(QMainWindow):
                     imageInfo = vtk.vtkImageChangeInformation()
                     imageInfo.SetOutputOrigin(origin)
                     imageInfo.SetInputConnection(flipYFilter.GetOutputPort())
-                    self.showImages(imageInfo)
+                    self.showImages(imageInfo, self.dims)
                 except:
                     QMessageBox.warning(self, 'Wrong Header', 'Can not read Image Origin from header!\nImage position might be wrong')
             else:
-                self.showImages(flipYFilter)
-            self.updateSubPanels(dims)
+                origin = (140, 140, -58)
+                imageInfo = vtk.vtkImageChangeInformation()
+                imageInfo.SetOutputOrigin(origin)
+                imageInfo.SetInputConnection(flipYFilter.GetOutputPort())
+                self.showImages(imageInfo, self.dims)
+
+                # self.showImages(flipYFilter, self.dims)
+            self.updateSubPanels(self.dims)
             QApplication.restoreOverrideCursor()
 
     def openDirDialog(self):
@@ -121,7 +127,7 @@ class myMainWindow(QMainWindow):
 
             # Load dimensions using `GetDataExtent`
             _extent = reader.GetDataExtent()
-            dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]
+            self.dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]
 
             # # Load spacing values
             # ConstPixelSpacing = reader.GetPixelSpacing()
@@ -146,20 +152,20 @@ class myMainWindow(QMainWindow):
             except:
                 QMessageBox.warning(self, 'Wrong Header', 'Can not read image Origin from header!\nImage position might be wrong')
 
-            self.showImages(imageInfo)
-            self.updateSubPanels(dims)
+            self.showImages(imageInfo, self.dims)
+            self.updateSubPanels(self.dims)
             QApplication.restoreOverrideCursor()
 
-    def showImages(self, reader):
+    def showImages(self, reader, dims):
         self.vtk_widget_3D.removeImage()
         self.vtk_widget_axial.removeImage()
         self.vtk_widget_coronal.removeImage()
         self.vtk_widget_sagittal.removeImage()
 
         self.vtk_widget_3D.showImage(reader)
-        self.vtk_widget_axial.showImage(reader)
-        self.vtk_widget_coronal.showImage(reader)
-        self.vtk_widget_sagittal.showImage(reader)
+        self.vtk_widget_axial.showImage(reader, dims)
+        self.vtk_widget_coronal.showImage(reader, dims)
+        self.vtk_widget_sagittal.showImage(reader, dims)
 
         self.ui.btn_LoadPoints.setEnabled(True)
         
@@ -175,17 +181,17 @@ class myMainWindow(QMainWindow):
         self.ui.Slider_sagittal.setValue(dims[0]//2)
 
     def axialChanged(self):
-        self.vtk_widget_axial.setSlice(self.ui.Slider_axial.value())
+        self.vtk_widget_axial.setSlice(self.ui.Slider_axial.value(), self.dims)
         self.vtk_widget_axial.interactor.Initialize()
         return
 
     def coronalChanged(self):
-        self.vtk_widget_coronal.setSlice(self.ui.Slider_coronal.value())
+        self.vtk_widget_coronal.setSlice(self.ui.Slider_coronal.value(), self.dims)
         self.vtk_widget_coronal.interactor.Initialize()
         return
 
     def sagittalChanged(self):
-        self.vtk_widget_sagittal.setSlice(self.ui.Slider_sagittal.value())
+        self.vtk_widget_sagittal.setSlice(self.ui.Slider_sagittal.value(), self.dims)
         self.vtk_widget_sagittal.interactor.Initialize()
         return
     
