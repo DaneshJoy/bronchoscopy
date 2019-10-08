@@ -7,22 +7,23 @@ PyQT + VTK in Python code for Navigation in Bronchoscopy
 
 1- Create a virtual env and activate it
 ```bash
-python venv .venv
-.venv\Scripts\activate
+> python venv .venv
+> .venv\Scripts\activate
 ```
 
 2- Install packages
+
 ```bash
-pip install -r requirements.txt
+> pip install -r requirements.txt
 ```
 
-3- Compile ui files (optional)
+3- Compile ui files (only if you changed the ui)
 ```bash
-1-compile_ui.bat
+> 1-compile_ui.bat
 ```
 
 4- Run application
 ```
-2-run.bat
+> 2-run.bat
 ```
 

@@ -253,9 +253,9 @@ class QVtkViewer3D(QFrame):
 
         self.ren.GetActiveCamera().ApplyTransform(transform)
 
-        # Use the following line to start from the start point
         self.ren.GetActiveCamera().Yaw(180)
 
+        self.ren.GetActiveCamera().Zoom(0.901)
         # Use the following two lines to have a nice start from far!
         # self.ren.GetActiveCamera().Azimuth(180)
         # self.ren.GetActiveCamera().Dolly(1.2)
