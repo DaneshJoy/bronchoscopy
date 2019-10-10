@@ -72,6 +72,7 @@ class myMainWindow(QMainWindow):
             reader.Update()
 
             # Load dimensions using `GetDataExtent`
+            # xMin, xMax, yMin, yMax, zMin, zMax = reader.GetDataExtent()
             _extent = reader.GetDataExtent()
             self.dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]
 
@@ -97,13 +98,14 @@ class myMainWindow(QMainWindow):
                 except:
                     QMessageBox.warning(self, 'Wrong Header', 'Can not read Image Origin from header!\nImage position might be wrong')
             else:
-                origin = (140, 140, -58)
-                imageInfo = vtk.vtkImageChangeInformation()
-                imageInfo.SetOutputOrigin(origin)
-                imageInfo.SetInputConnection(flipYFilter.GetOutputPort())
-                self.showImages(imageInfo, self.dims)
+                # origin = (140, 140, -58)
+                # imageInfo = vtk.vtkImageChangeInformation()
+                # imageInfo.SetOutputOrigin(origin)
+                # imageInfo.SetInputConnection(flipYFilter.GetOutputPort())
+                # self.showImages(imageInfo, self.dims)
 
-                # self.showImages(flipYFilter, self.dims)
+                self.showImages(reader, self.dims)
+
             self.updateSubPanels(self.dims)
             QApplication.restoreOverrideCursor()
 
@@ -148,7 +150,7 @@ class myMainWindow(QMainWindow):
                 origin = reader.GetImagePositionPatient()
                 imageInfo = vtk.vtkImageChangeInformation()
                 imageInfo.SetOutputOrigin(origin)
-                imageInfo.SetInputConnection(flipZFilter.GetOutputPort())
+                imageInfo.SetInputConnection(reader.GetOutputPort())
             except:
                 QMessageBox.warning(self, 'Wrong Header', 'Can not read image Origin from header!\nImage position might be wrong')
 
@@ -208,6 +210,7 @@ class myMainWindow(QMainWindow):
         self.ui.SubPanel_sagittal.show()
 
     def readRegisteredPoints(self):
+        from vtk.util.numpy_support import vtk_to_numpy
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self, "Open Matlab file", "", "Matlab (*.mat);;All Files (*)", options=options)
@@ -215,26 +218,42 @@ class myMainWindow(QMainWindow):
             matFile = loadmat(fileName)
             # self.registeredPoints = matFile[list(matFile.keys())[-1]]
             self.registeredPoints = matFile['EMT_cor']
-            self.ui.slider_Frames.setRange(0, self.registeredPoints.shape[-1]-1)
+            numPoints = self.registeredPoints.shape[-1]
+
+            for i in range(numPoints):
+                pt = self.registeredPoints[:,:,i]
+                pt_vtk = vtk.vtkMatrix4x4()
+                pt_vtk.DeepCopy(pt.ravel()) 
+                flipTrans = vtk.vtkTransform()
+                flipTrans.Scale(-1,-1,1)
+                pt_new = vtk.vtkMatrix4x4()
+                vtk.vtkMatrix4x4.Multiply4x4(flipTrans.GetMatrix(), pt_vtk, pt_new)
+
+
+                pt_t = np.zeros((4,4))
+                pt_new.DeepCopy(pt_t.ravel(), pt_new)
+                self.registeredPoints[:,:,i] = pt_t
+
+            self.ui.slider_Frames.setRange(0, numPoints-1)
             self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
-            self.drawTrajectory(self.registeredPoints)
+            self.drawPoints(self.registeredPoints)
             self.ui.btn_playCam.setEnabled(True)
             self.ui.slider_Frames.setEnabled(True)
             self.ui.checkBox_showPoints.setEnabled(True)
 
     def showHidePoints(self):
         if self.ui.checkBox_showPoints.isChecked():
-            self.drawTrajectory(self.registeredPoints)
+            self.drawPoints(self.registeredPoints)
         else:
-            self.removeTrajectory()
+            self.removePoints()
 
-    def drawTrajectory(self, points):
+    def drawPoints(self, points):
         self.vtk_widget_3D.drawPoints(points)
         self.vtk_widget_3D.addStartPoint(points[:,:,0]) # start point
         self.vtk_widget_3D.addEndPoint(points[:,:,-1]) # end point
         # self.playCam(points)
 
-    def removeTrajectory(self):
+    def removePoints(self):
         self.vtk_widget_3D.removePoints()
         
     def frameChanged(self):
@@ -242,9 +261,20 @@ class myMainWindow(QMainWindow):
             self.ui.slider_Frames.setValue(0)
             # QMessageBox.critical(self, 'No Points Found', 'Please load the registered points first !')
             return
+
         pNum = self.ui.slider_Frames.value()
-        testPoint = self.registeredPoints[:,:,pNum]
-        self.vtk_widget_3D.setCamera(testPoint)
+        cam_pos = self.registeredPoints[:,:,pNum]
+
+        # cam_pos_t = vtk.vtkMatrix4x4()
+        # cam_pos_t.DeepCopy(cam_pos.ravel()) 
+        # flipTrans = vtk.vtkTransform()
+        # flipTrans.Scale(-1,-1,1)
+        # newMat = vtk.vtkMatrix4x4()
+        # vtk.vtkMatrix4x4.Multiply4x4(flipTrans.GetMatrix(), cam_pos_t, newMat)
+        # self.vtk_widget_3D.setCamera(newMat)
+
+        self.vtk_widget_3D.setCamera(cam_pos)
+
         self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
 
     def playCam(self, points):
@@ -258,10 +288,29 @@ class myMainWindow(QMainWindow):
         for i in range(self.ui.slider_Frames.value(),self.registeredPoints.shape[-1]):
             if self.paused:
                 break
-            testPoint = self.registeredPoints[:,:,i]
-            self.vtk_widget_3D.setCamera(testPoint)
+
+            cam_pos = self.registeredPoints[:,:,i]
+
+            # cam_pos_t = vtk.vtkMatrix4x4()
+            # cam_pos_t.DeepCopy(cam_pos.ravel()) 
+            # flipTrans = vtk.vtkTransform()
+            # flipTrans.Scale(-1,-1,1)
+            # newMat = vtk.vtkMatrix4x4()
+            # vtk.vtkMatrix4x4.Multiply4x4(flipTrans.GetMatrix(), cam_pos_t, newMat)
+            # self.vtk_widget_3D.setCamera(newMat)
+
+            self.vtk_widget_3D.setCamera(cam_pos)
+
             self.ui.slider_Frames.setValue(i)
             self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
+            
+            coordinate = vtk.vtkCoordinate()
+            coordinate.SetCoordinateSystemToWorld()
+            coordinate.SetValue(cam_pos[0,3], cam_pos[1,3], cam_pos[2,3])
+            disp1 = coordinate.GetComputedDisplayValue(self.vtk_widget_axial.ren)
+            disp2 = coordinate.GetComputedDisplayValue(self.vtk_widget_coronal.ren)
+            disp3 = coordinate.GetComputedDisplayValue(self.vtk_widget_sagittal.ren)
+            
             time.sleep(0.1)
             QApplication.processEvents()
     

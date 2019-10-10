@@ -11,21 +11,22 @@ class QVtkViewer3D(QFrame):
         colors = vtk.vtkNamedColors()
         colors.SetColor("SkinColor", [255, 125, 64, 255])
         colors.SetColor("BkgColor", [51, 77, 102, 255])
-        self.axes = vtk.vtkOrientationMarkerWidget()
+
         # Make the actual QtWidget a child so that it can be reparented
         self.interactor = QVTKRenderWindowInteractor(self)
         self.layout = QtWidgets.QGridLayout()
         self.layout.addWidget(self.interactor)
         self.layout.setContentsMargins(5, 5, 5, 5)
-        self.width = (size.width()) // 2 - 100
-        self.height = (size.height()) // 2 - 50
-        self.interactor.setMinimumSize(self.width, self.height)
-        self.interactor.setMaximumSize(self.width, self.height)
+        self.width = (size.width()-370) // 2
+        self.height = (size.height()-170) // 2
+        self.interactor.setMinimumSize(self.width+30, self.height)
         self.setLayout(self.layout)
 
         # Setup VTK Environment
         self.ren = vtk.vtkRenderer()
-        self.interactor.GetRenderWindow().AddRenderer(self.ren)
+        self.ren_win = self.interactor.GetRenderWindow()
+        self.ren_win.AddRenderer(self.ren)
+        self.ren_win.SetSize(size.width(), size.height())
 
         # self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
         self.interactor.SetInteractorStyle(self.MyInteractorStyle(self))
@@ -35,7 +36,6 @@ class QVtkViewer3D(QFrame):
 
     def removeImage(self):
         self.ren.RemoveAllViewProps()
-        self.ren.ResetCamera()
 
     def showImage(self, reader):
 
@@ -68,7 +68,7 @@ class QVtkViewer3D(QFrame):
         # self.cam.SetPosition(0, 0, 0)
         # self.cam.SetFocalPoint(0, 0, 1) # look in the +Z direction of the camera coordinate system
         cam.SetViewUp(0, 0, 1)
-        cam.SetPosition(0, 1, 0)
+        cam.SetPosition(0, -1, 0)
         cam.SetFocalPoint(0, 0, 0)
         cam.ComputeViewPlaneNormal()
         # cam.Azimuth(30.0)
@@ -77,46 +77,7 @@ class QVtkViewer3D(QFrame):
 
         # self.updateTextActor()
 
-        '''Set Orientation Marker'''
-
-        # Cube Actor
-        cubeActor = vtk.vtkAnnotatedCubeActor()
-        cubeActor.SetXPlusFaceText('+X')
-        cubeActor.SetXMinusFaceText('-X')
-        cubeActor.SetYMinusFaceText('-Y')
-        cubeActor.SetYPlusFaceText('+Y')
-        cubeActor.SetZMinusFaceText('-Z')
-        cubeActor.SetZPlusFaceText('+Z')
-        cubeActor.GetTextEdgesProperty().SetColor(0,1,1)
-        cubeActor.GetTextEdgesProperty().SetLineWidth(1)
-        cubeActor.GetCubeProperty().SetColor(0.7,0.7,0.7)
-
-        # Axes Actor
-        # axesActor = vtk.vtkAxesActor()
-
-        # Human Actor.
-        readerH = vtk.vtkXMLPolyDataReader()
-        readerH.SetFileName('Human.vtp')
-        readerH.Update()
-        humanMapper = vtk.vtkPolyDataMapper()
-        humanMapper.SetInputConnection(readerH.GetOutputPort())
-        humanMapper.SetScalarModeToUsePointFieldData()
-        humanMapper.SelectColorArray("Color")
-        humanMapper.SetColorModeToDirectScalars()
-        humanActor = vtk.vtkActor()
-        humanActor.SetMapper(humanMapper)
-        bounds = self.surface.GetBounds()
-        humanActor.SetScale(max(bounds)/20.0)
-        
-        self.axes.SetOrientationMarker(humanActor)
-        self.axes.SetInteractor(self.interactor)
-        # Position lower left in the viewport.
-        self.axes.SetViewport(0.0, 0.9, 0.1, 1.0)  # (xmin,ymin,xmax,ymax)
-        self.axes.EnabledOn() # <== application freeze-crash
-        self.axes.InteractiveOn()
-
         self.ren.AddActor(self.surface)
-
         self.ren.SetActiveCamera(cam)
         self.ren.ResetCamera()
         self.ren.ResetCameraClippingRange()
@@ -146,18 +107,8 @@ class QVtkViewer3D(QFrame):
 
         poly.SetPoints(pts)
         poly.SetVerts(conn)
-
+    
         pmap = vtk.vtkPolyDataMapper()
-
-        # flipTrans = vtk.vtkTransform()
-        # flipTrans.Scale(-1,-1,1)
-        # flipFilt = vtk.vtkTransformPolyDataFilter()
-        # # flipFilt = vtk.vtkTransformFilter()
-        # flipFilt.SetTransform(flipTrans)
-        # flipFilt.SetInputData(poly)
-        # flipFilt.Update()
-        # pmap.SetInputDataObject(flipFilt.GetOutput())
-
         pmap.SetInputDataObject(poly)
 
         # actor
@@ -209,7 +160,6 @@ class QVtkViewer3D(QFrame):
 
         # assign actor to the renderer
         self.ren.AddActor(self.startPoint)
-
         self.interactor.ReInitialize()
 
     def addEndPoint(self, pos, color=[1,0,0]):
@@ -317,13 +267,7 @@ class QVtkViewer3D(QFrame):
         # self.ren.GetActiveCamera().ComputeViewPlaneNormal()
         # self.ren.GetActiveCamera().OrthogonalizeViewUp()
         # self.ren.Render()
-        
-        self.ren.SetWorldPoint(cam_pos[0,3], cam_pos[1,3], cam_pos[2,3], 1.0)
-        self.ren.WorldToDisplay()
-        displayPt = self.ren.GetDisplayPoint()
-
         self.interactor.ReInitialize()
-
         # self.updateTextActor() # This function has interactor.ReInitialize() in it
 
     def updateTextActor(self):
@@ -388,19 +332,17 @@ class QVtkViewer2D(QFrame):
         self.layout.addWidget(self.interactor)
         # self.layout.setStretchFactor(self.interactor,1)
         self.layout.setContentsMargins(0, 0, 0, 0)
-        self.axes = vtk.vtkOrientationMarkerWidget()
-        self.width = (size.width()) // 2 - 100
-        self.height = (size.height()) // 2 - 50
-        self.interactor.setMinimumSize(self.width, self.height)
-        self.interactor.setMaximumSize(self.width, self.height)
+
+        width = (size.width()) // 2
+        height = (size.height()) // 2
+        self.interactor.setMinimumSize(width, height)
         self.setLayout(self.layout)
-        
 
         # Setup VTK Environment
         self.ren = vtk.vtkRenderer()
 
         self.interactor.GetRenderWindow().AddRenderer(self.ren)
-        # self.interactor.GetRenderWindow().SetSize(self.width, self.height)
+        self.interactor.GetRenderWindow().SetSize(width, height)
         self.interactor.GetRenderWindow().SetWindowName(planeType)
 
         # self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera)
@@ -411,7 +353,7 @@ class QVtkViewer2D(QFrame):
         # ren.SetBackground(colors.GetColor3D("BkgColor"))
         self.interactor.Initialize()
 
-        self.actor = vtk.vtkImageActor()
+        self.plane = vtk.vtkImageActor()
         self.planeType = planeType
 
     def DummyFunc1(self, obj, ev):
@@ -422,144 +364,69 @@ class QVtkViewer2D(QFrame):
 
     def removeImage(self):
         self.ren.RemoveAllViewProps()
-        self.ren.ResetCamera()
 
     def showImage(self, reader, dims):
         # image = reader.GetOutput()
         # self.dims = image.GetDimensions()
 
-        # Camera
-        cam = vtk.vtkCamera()
-
-        ''' ==================== Show Planes Method 1 ==================== '''
-        # Create a greyscale lookup table
-        grLut = vtk.vtkLookupTable()
-        grLut.SetTableRange(0, 1000)  # image intensity range
-        grLut.SetValueRange(0, 1)  # from black to white
-        grLut.SetSaturationRange(0, 0)  # no color saturation
-        grLut.SetRampToLinear()
-        grLut.SetHueRange(0, 0)
-        grLut.Build()
+        # black/white lookup table
+        bwLut = vtk.vtkLookupTable()
+        bwLut.SetTableRange(0, 1000)
+        bwLut.SetSaturationRange(0, 0)
+        bwLut.SetHueRange(0, 0)
+        bwLut.SetValueRange(0, 1)
+        bwLut.Build()
 
         # plane
         planeColors = vtk.vtkImageMapToColors()
         planeColors.SetInputConnection(reader.GetOutputPort())
-        planeColors.SetLookupTable(grLut)
+        planeColors.SetLookupTable(bwLut)
         planeColors.Update()
-        self.actor.GetMapper().SetInputConnection(planeColors.GetOutputPort())
 
-        if self.planeType == "axial":
-            currSlice = dims[2]//2
-            self.actor.SetDisplayExtent(0, dims[0], 0, dims[1], currSlice, currSlice)
-            cam.SetPosition(0, 0, -1)
-            cam.Yaw(180)
-            cam.OrthogonalizeViewUp()
-            # cam.Dolly(2)
-        elif self.planeType == "coronal":
-            currSlice = dims[1]//2
-            self.actor.SetDisplayExtent(0, dims[0], currSlice, currSlice, 0, dims[2])
-            # cam.SetPosition(0, -1, 0)
-            cam.Elevation(90)
-            cam.OrthogonalizeViewUp()
-            # cam.Zoom(2)
-        else:  # self.planeType == "sagittal"
-            currSlice = dims[0]//2
-            self.actor.SetDisplayExtent(currSlice, currSlice, 0, dims[1], 0, dims[2])
-            # cam.SetPosition(-1, 0, 0)
-            cam.Azimuth(90)
-            cam.Roll(90)
-            cam.OrthogonalizeViewUp()
-            # cam.Zoom(2)
-        ''' ============================================================ '''
+        self.plane.GetMapper().SetInputConnection(planeColors.GetOutputPort())
 
-        ''' ==================== Show Planes Method 2 ==================== '''
-        # # Calculate the center of the volume
-        self.spacing = reader.GetOutput().GetSpacing()
-        self.origin = reader.GetOutput().GetOrigin()
-        # center = [self.origin[0] + self.spacing[0] * 0.5 * dims[0],
-        #         self.origin[1] + self.spacing[1] * 0.5 * dims[1],
-        #         self.origin[2] + self.spacing[2] * 0.5 * dims[2]]
-
-        # # Matrices for axial, coronal, sagittal view orientations
-        # axial = vtk.vtkMatrix4x4()
-        # axial.DeepCopy((1, 0, 0, center[0],
-        #                 0, 1, 0, center[1],
-        #                 0, 0, 1, center[2],
-        #                 0, 0, 0, 1))
-
-        # coronal = vtk.vtkMatrix4x4()
-        # coronal.DeepCopy((1, 0, 0, center[0],
-        #                 0, 0, 1, center[1],
-        #                 0,-1, 0, center[2],
-        #                 0, 0, 0, 1))
-
-        # sagittal = vtk.vtkMatrix4x4()
-        # sagittal.DeepCopy((0, 0,-1, center[0],
-        #                 1, 0, 0, center[1],
-        #                 0,-1, 0, center[2],
-        #                 0, 0, 0, 1))
-
-        # self.reslice = vtk.vtkImageReslice()
-        # self.reslice.SetInputConnection(reader.GetOutputPort())
-        # self.reslice.SetOutputDimensionality(2)
-        # if self.planeType == "axial":
-        #     self.reslice.SetResliceAxes(axial)
-        # elif self.planeType == "coronal":
-        #     self.reslice.SetResliceAxes(coronal)
-        # else:  # self.planeType == "sagittal"
-        #     self.reslice.SetResliceAxes(sagittal)
-        # self.reslice.SetInterpolationModeToCubic()
-
-        # # Map the image through the lookup table
-        # colors = vtk.vtkImageMapToColors()
-        # colors.SetInputConnection(self.reslice.GetOutputPort())
-        # colors.SetLookupTable(grLut)
-        # colors.Update()
-
-        # self.actor.GetMapper().SetInputConnection(colors.GetOutputPort())
-        ''' ============================================================ '''
-
-        self.ren.AddActor2D(self.actor)
-
-        ''' ==================== Add Orientation Widget ==================== '''
-        # Human Actor.
-        readerH = vtk.vtkXMLPolyDataReader()
-        readerH.SetFileName('Human.vtp')
-        readerH.Update()
-        humanMapper = vtk.vtkPolyDataMapper()
-        humanMapper.SetInputConnection(readerH.GetOutputPort())
-        humanMapper.SetScalarModeToUsePointFieldData()
-        humanMapper.SelectColorArray("Color")
-        humanMapper.SetColorModeToDirectScalars()
-        humanActor = vtk.vtkActor()
-        humanActor.SetMapper(humanMapper)
-        bounds = self.actor.GetBounds()
-        humanActor.SetScale(max(bounds)/20.0)
-        
-        self.axes.SetOrientationMarker(humanActor)
-        self.axes.SetInteractor(self.interactor)
-        # Position lower left in the viewport.
-        self.axes.SetViewport(0.0, 0.9, 0.1, 1.0)  # (xmin,ymin,xmax,ymax)
-        self.axes.EnabledOn() # <== application freeze-crash
-        self.axes.InteractiveOn()
-        ''' ============================================================ '''
-
-        # cam.SetFocalPoint(0, 0, 0)
+        # Camera
+        cam = vtk.vtkCamera()
+        cam.SetFocalPoint(0, 0, 0)
         # cam.SetPosition(0, -1, 0)
         cam.ComputeViewPlaneNormal()
         # cam.Azimuth(30.0)
         # cam.Elevation(30.0)
+
+        if self.planeType == "axial":
+            currSlice = dims[2]//2
+            self.plane.SetDisplayExtent(0, dims[0], 0, dims[1], currSlice, currSlice)
+            # cam.SetPosition(0, 0, -1)
+            cam.Yaw(180)
+            cam.OrthogonalizeViewUp()
+            cam.Dolly(2)
+        elif self.planeType == "coronal":
+            currSlice = dims[1]//2
+            self.plane.SetDisplayExtent(0, dims[0], currSlice, currSlice, 0, dims[2])
+            # cam.SetPosition(0, -1, 0)
+            cam.Elevation(90)
+            cam.OrthogonalizeViewUp()
+            cam.Zoom(2)
+        else:  # self.planeType == "sagittal"
+            currSlice = dims[0]//2
+            self.plane.SetDisplayExtent(currSlice, currSlice, 0, dims[1], 0, dims[2])
+            # cam.SetPosition(-1, 0, 0)
+            cam.Azimuth(90)
+            cam.Roll(90)
+            cam.OrthogonalizeViewUp()
+            cam.Zoom(2)
+
+        self.ren.AddActor(self.plane)
+
+        #drawing a Line
+        self.drawLine(currSlice, dims)
+
         # ren_win.Render()
         self.ren.SetActiveCamera(cam)
         self.ren.ResetCamera()
-        cam.Zoom(1.5)
-        # self.ren.GetActiveCamera.Zoom(2)
         # cam.Dolly(1.5)  # Moves the camera towards the FocalPoint
-
-        #drawing a Line
-        self.drawLine(0)
-
         self.ren.ResetCameraClippingRange()
+
         # self.renderer = ren
         # self.interactor = interactor
 
@@ -570,12 +437,23 @@ class QVtkViewer2D(QFrame):
         self.interactor.Initialize()
         # self.interactor.Start()
 
-    def drawLine(self, sliceNumber):
+    def drawLine(self, sliceNumber, dims):
         winSize = self.interactor.GetRenderWindow().GetSize()
-        p0 = [0, -self.height//2, 1]
-        p1 = [0, self.height//2, 1]
-        p2 = [-self.width//2, 0, 1]
-        p3 = [self.width//2, 0, 1]
+        if self.planeType == "axial":
+            p0 = [winSize[0]//2, 0, sliceNumber]
+            p1 = [winSize[0]//2, winSize[1], sliceNumber]
+            p2 = [0, winSize[1]//2, sliceNumber+58]
+            p3 = [winSize[0], winSize[1]//2, sliceNumber]
+        elif self.planeType == "coronal":
+            p0 = [dims[0]//2, 0, dims[2]//2]
+            p1 = [dims[0]//2, dims[1], dims[2]//2]
+            p2 = [0, dims[1]//2, dims[2]//2]
+            p3 = [dims[0], dims[1]//2, dims[2]//2]
+        else:  # self.planeType == "sagittal"
+            p0 = [dims[0]//2, 0, dims[2]//2]
+            p1 = [dims[0]//2, dims[1], dims[2]//2]
+            p2 = [0, dims[1]//2, dims[2]//2]
+            p3 = [dims[0], dims[1]//2, dims[2]//2]
 
         # Create a vtkPoints object and store the points in it
         pts = vtk.vtkPoints()
@@ -599,15 +477,6 @@ class QVtkViewer2D(QFrame):
         lines.InsertNextCell(line0)
         lines.InsertNextCell(line1)
 
-        # Setup the colors array
-        colors = vtk.vtkUnsignedCharArray()
-        colors.SetNumberOfComponents(3)
-        colors.SetName("Colors")
-    
-        # Add the colors we created to the colors array
-        colors.InsertNextTuple3(0, 170, 170)
-        colors.InsertNextTuple3(0, 170, 170)
-
         # Create a polydata to store everything in
         linesPolyData = vtk.vtkPolyData()
 
@@ -621,7 +490,7 @@ class QVtkViewer2D(QFrame):
         # colors array with the first component of the cell array (line 0)
         # and the second component (green) of the colors array with the
         # second component of the cell array (line 1)
-        linesPolyData.GetCellData().SetScalars(colors)
+        # linesPolyData.GetCellData().SetScalars(colors)
 
         # Visualize
         mapper = vtk.vtkPolyDataMapper()
@@ -636,41 +505,20 @@ class QVtkViewer2D(QFrame):
         self.ren.AddActor2D(self.lineActor)
 
     def setSlice(self, sliceNumber, dims):
-        # self.ren.RemoveActor(self.lineActor)
-        # self.drawLine(sliceNumber, dims)
-
-        ''' ==================== Show Planes Method 1 ==================== '''
+        self.ren.RemoveActor(self.lineActor)
+        self.drawLine(sliceNumber, dims)
         if self.planeType == "axial":
-            # sliceNumber = int(sliceNumber)
-            self.actor.SetDisplayExtent(0, dims[0], 0, dims[1], sliceNumber, sliceNumber)
+            self.plane.SetDisplayExtent(0, dims[0], 0, dims[1], sliceNumber, sliceNumber)
             # # cam.SetPosition(0, 0, -1)
             # cam.Roll(180)
         elif self.planeType == "coronal":
-            # sliceNumber = int(sliceNumber)
-            self.actor.SetDisplayExtent(0, dims[0], sliceNumber, sliceNumber, 0, dims[2])
+            self.plane.SetDisplayExtent(0, dims[0], sliceNumber, sliceNumber, 0, dims[2])
             # # cam.SetPosition(0, -1, 0)
             # cam.Elevation(90)
             # cam.OrthogonalizeViewUp()
         else:  # self.planeType == "sagittal"
-            # sliceNumber = int(sliceNumber)
-            self.actor.SetDisplayExtent(sliceNumber, sliceNumber, 0, dims[1], 0, dims[2])
+            self.plane.SetDisplayExtent(sliceNumber, sliceNumber, 0, dims[1], 0, dims[2])
             # # cam.SetPosition(-1, 0, 0)
             # cam.Azimuth(90)
             # cam.Roll(90)
             # cam.OrthogonalizeViewUp()
-
-        ''' ==================== Show Planes Method 2 ==================== '''
-        # self.reslice.Update()
-        # matrix = self.reslice.GetResliceAxes()
-        # # move the center point that we are slicing through
-        # if self.planeType == "axial":
-        #     sliceNumber = self.origin[2] + sliceNumber*self.spacing[2]
-        #     matrix.SetElement(2, 3, sliceNumber)
-        # elif self.planeType == "coronal":
-        #     sliceNumber = self.origin[1] + sliceNumber*self.spacing[1]
-        #     matrix.SetElement(1, 3, sliceNumber)
-        # else:  # self.planeType == "sagittal"
-        #     sliceNumber = self.origin[0] + sliceNumber*self.spacing[0]
-        #     matrix.SetElement(0, 3, sliceNumber)
-        # self.ren.GetRenderWindow().Render()
-
