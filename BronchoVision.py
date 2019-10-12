@@ -35,6 +35,7 @@ class myMainWindow(QMainWindow):
         self.registeredPoints = None
         self.setup(size)
         self.paused = False
+        self.size = size
 
         self.ui.actionLoad_Image.triggered.connect(self.openFileDialog)
         self.ui.actionLoad_DICOM.triggered.connect(self.openDirDialog)
@@ -83,6 +84,9 @@ class myMainWindow(QMainWindow):
             _extent = reader.GetDataExtent()
             self.dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]
 
+            self.spacing = reader.GetOutput().GetSpacing()
+            self.origin = reader.GetOutput().GetOrigin()
+
             # # Flip and Translate the image to the right place
             # flipXFilter = vtk.vtkImageFlip()
             # flipXFilter.SetFilteredAxis(0); # flip x axis
@@ -97,9 +101,9 @@ class myMainWindow(QMainWindow):
             if 'nii' in extension or 'gz' in extension:
                 try:
                     _QMatrix = reader.GetQFormMatrix()
-                    origin = (-_QMatrix.GetElement(0,3), -_QMatrix.GetElement(1,3), _QMatrix.GetElement(2,3))
+                    self.origin = (-_QMatrix.GetElement(0,3), -_QMatrix.GetElement(1,3), _QMatrix.GetElement(2,3))
                     imageInfo = vtk.vtkImageChangeInformation()
-                    imageInfo.SetOutputOrigin(origin)
+                    imageInfo.SetOutputOrigin(self.origin)
                     imageInfo.SetInputConnection(reader.GetOutputPort())
                     self.showImages(imageInfo, self.dims)
                 except:
@@ -145,6 +149,8 @@ class myMainWindow(QMainWindow):
             _extent = reader.GetDataExtent()
             self.dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]
 
+            self.spacing = reader.GetOutput().GetSpacing()
+
             # # Load spacing values
             # ConstPixelSpacing = reader.GetPixelSpacing()
             # ConstScalarRange = reader.GetOutput().GetScalarRange()
@@ -161,9 +167,9 @@ class myMainWindow(QMainWindow):
             flipZFilter.Update()
 
             try:
-                origin = reader.GetImagePositionPatient()
+                self.origin = reader.GetImagePositionPatient()
                 imageInfo = vtk.vtkImageChangeInformation()
-                imageInfo.SetOutputOrigin(origin)
+                imageInfo.SetOutputOrigin(self.origin)
                 imageInfo.SetInputConnection(flipZFilter.GetOutputPort())
             except:
                 QMessageBox.warning(self, 'Wrong Header', 'Can not read image Origin from header!\nImage position might be wrong')
@@ -287,6 +293,16 @@ class myMainWindow(QMainWindow):
         # self.vtk_widget_3D.setCamera(newMat)
 
         self.vtk_widget_3D.setCamera(cam_pos)
+        axial_slice = int((cam_pos[2,3] - self.origin[2]) / self.spacing[2])
+        coronal_slice = int((cam_pos[1,3] - self.origin[1]) / self.spacing[1])
+        sagittal_slice = int((cam_pos[0,3] - self.origin[0]) / self.spacing[0])
+        self.vtk_widget_axial.setSlice(axial_slice, self.dims)
+        self.vtk_widget_coronal.setSlice(coronal_slice, self.dims)
+        self.vtk_widget_sagittal.setSlice(sagittal_slice, self.dims)
+
+        self.vtk_widget_axial.SetCrossPosition(cam_pos[0,3], cam_pos[1,3])
+        self.vtk_widget_coronal.SetCrossPosition(cam_pos[0,3], cam_pos[2,3]-140.5)
+        self.vtk_widget_sagittal.SetCrossPosition(cam_pos[1,3], cam_pos[2,3]-140.5)
 
         self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
 
@@ -298,8 +314,7 @@ class myMainWindow(QMainWindow):
         self.ui.btn_pauseCam.setEnabled(True)
         self.ui.btn_stopCam.setEnabled(True)
         self.paused = False
-        # for i in range(self.ui.slider_Frames.value(),self.registeredPoints.shape[-1]):
-        for i in range(1):
+        for i in range(self.ui.slider_Frames.value(),self.registeredPoints.shape[-1]):
             if self.paused:
                 break
 
@@ -325,10 +340,23 @@ class myMainWindow(QMainWindow):
             disp2 = coordinate.GetComputedDisplayValue(self.vtk_widget_coronal.ren)
             disp3 = coordinate.GetComputedDisplayValue(self.vtk_widget_sagittal.ren)
 
-            print('Method 1')
+            print(cam_pos[0,3], cam_pos[1,3], cam_pos[2,3])
             print(disp1)
             print(disp2)
             print(disp3)
+
+            coordinate2 = vtk.vtkCoordinate()
+            coordinate2.SetCoordinateSystemToDisplay()
+            width = (self.size.width()) // 2 - 100
+            height = (self.size.height()) // 2 - 50
+            coordinate2.SetValue(333, 116)
+            disp1 = coordinate2.GetComputedWorldValue(self.vtk_widget_axial.ren)
+            # disp2 = coordinate2.GetComputedWorldValue(self.vtk_widget_coronal.ren)
+            # disp3 = coordinate2.GetComputedWorldValue(self.vtk_widget_sagittal.ren)
+
+            print(disp1)
+            # print(disp2)
+            # print(disp3)
 
             time.sleep(0.1)
             QApplication.processEvents()

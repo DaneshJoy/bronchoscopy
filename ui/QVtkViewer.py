@@ -317,10 +317,6 @@ class QVtkViewer3D(QFrame):
         # self.ren.GetActiveCamera().ComputeViewPlaneNormal()
         # self.ren.GetActiveCamera().OrthogonalizeViewUp()
         # self.ren.Render()
-        
-        self.ren.SetWorldPoint(cam_pos[0,3], cam_pos[1,3], cam_pos[2,3], 1.0)
-        self.ren.WorldToDisplay()
-        displayPt = self.ren.GetDisplayPoint()
 
         self.interactor.ReInitialize()
 
@@ -394,6 +390,8 @@ class QVtkViewer2D(QFrame):
         self.interactor.setMinimumSize(self.width, self.height)
         self.interactor.setMaximumSize(self.width, self.height)
         self.setLayout(self.layout)
+
+        self.cross = None
         
 
         # Setup VTK Environment
@@ -415,10 +413,40 @@ class QVtkViewer2D(QFrame):
         self.planeType = planeType
 
     def DummyFunc1(self, obj, ev):
+        clickPos = self.interactor.GetEventPosition()
+        coordinate = vtk.vtkCoordinate()
+        coordinate.SetCoordinateSystemToDisplay()
+        coordinate.SetValue(clickPos[0], clickPos[1])
+        disp1 = coordinate.GetComputedWorldValue(self.ren)
+
+        # Pick from this location.
+        picker = vtk.vtkPropPicker()
+        picker.Pick(clickPos[0], clickPos[1], 0, self.ren)
+        # Pick position (world coordinates)
+        pos = picker.GetPickPosition()
+
+        # Click on Axial:
+        # saggital_slice = (origin[0]+pos[0])/spacing[0]
+        # coronal_slice = (origin[1]+pos[1])/spacing[1]
+
+        # Click on Coronal:
+        # axial_slice = (origin[2]+pos[0])/spacing[2]
+        # saggital_slice = (origin[1]+pos[1])/spacing[1]
+
+        # Click on Saggital:
+        # coronal_slice = (origin[1]+pos[0])/spacing[1]
+        # axial_slice = (origin[2]+pos[1])/spacing[2]
+
+        self.SetCrossPosition(pos[0], pos[1])
+        # self.interactor.ReInitialize()
         print("Before Event")
 
     def DummyFunc2(self, obj, ev):
         print("After Event")
+
+    def SetCrossPosition(self, x, y):
+        self.cross.SetPosition(x, y, 1)
+        self.ren.GetRenderWindow().Render()
 
     def removeImage(self):
         self.ren.RemoveAllViewProps()
@@ -431,7 +459,6 @@ class QVtkViewer2D(QFrame):
         # Camera
         cam = vtk.vtkCamera()
 
-        ''' ==================== Show Planes Method 1 ==================== '''
         # Create a greyscale lookup table
         grLut = vtk.vtkLookupTable()
         grLut.SetTableRange(0, 1000)  # image intensity range
@@ -440,88 +467,89 @@ class QVtkViewer2D(QFrame):
         grLut.SetRampToLinear()
         grLut.SetHueRange(0, 0)
         grLut.Build()
+        ''' ==================== Show Planes Method 1 ==================== '''
 
-        # plane
-        planeColors = vtk.vtkImageMapToColors()
-        planeColors.SetInputConnection(reader.GetOutputPort())
-        planeColors.SetLookupTable(grLut)
-        planeColors.Update()
-        self.actor.GetMapper().SetInputConnection(planeColors.GetOutputPort())
+        # # plane
+        # planeColors = vtk.vtkImageMapToColors()
+        # planeColors.SetInputConnection(reader.GetOutputPort())
+        # planeColors.SetLookupTable(grLut)
+        # planeColors.Update()
+        # self.actor.GetMapper().SetInputConnection(planeColors.GetOutputPort())
 
-        if self.planeType == "axial":
-            currSlice = dims[2]//2
-            self.actor.SetDisplayExtent(0, dims[0], 0, dims[1], currSlice, currSlice)
-            # cam.SetPosition(0, 0, -1)
-            cam.Yaw(180) # Flip L/R
-            cam.Pitch(180) # Flip U/D
-            cam.OrthogonalizeViewUp()
-            # cam.Dolly(2)
-        elif self.planeType == "coronal":
-            currSlice = dims[1]//2
-            self.actor.SetDisplayExtent(0, dims[0], currSlice, currSlice, 0, dims[2])
-            # cam.SetPosition(0, -1, 0)
-            cam.Yaw(180) # Flip L/R
-            # cam.Roll(180) # Flip U/D
-            cam.Elevation(90)
-            cam.OrthogonalizeViewUp()
-            # cam.Zoom(2)
-        else:  # self.planeType == "sagittal"
-            currSlice = dims[0]//2
-            self.actor.SetDisplayExtent(currSlice, currSlice, 0, dims[1], 0, dims[2])
-            # cam.SetPosition(-1, 0, 0)
-            cam.Yaw(180) # Flip L/R
-            cam.Roll(180) # Flip U/D
-            cam.Azimuth(90)
-            cam.Roll(90)
-            cam.OrthogonalizeViewUp()
-            # cam.Zoom(2)
+        # if self.planeType == "axial":
+        #     currSlice = dims[2]//2
+        #     self.actor.SetDisplayExtent(0, dims[0], 0, dims[1], currSlice, currSlice)
+        #     # cam.SetPosition(0, 0, -1)
+        #     cam.Yaw(180) # Flip L/R
+        #     cam.Pitch(180) # Flip U/D
+        #     cam.OrthogonalizeViewUp()
+        #     # cam.Dolly(2)
+        # elif self.planeType == "coronal":
+        #     currSlice = dims[1]//2
+        #     self.actor.SetDisplayExtent(0, dims[0], currSlice, currSlice, 0, dims[2])
+        #     # cam.SetPosition(0, -1, 0)
+        #     cam.Yaw(180) # Flip L/R
+        #     # cam.Roll(180) # Flip U/D
+        #     cam.Elevation(90)
+        #     cam.OrthogonalizeViewUp()
+        #     # cam.Zoom(2)
+        # else:  # self.planeType == "sagittal"
+        #     currSlice = dims[0]//2
+        #     self.actor.SetDisplayExtent(currSlice, currSlice, 0, dims[1], 0, dims[2])
+        #     # cam.SetPosition(-1, 0, 0)
+        #     cam.Yaw(180) # Flip L/R
+        #     cam.Roll(180) # Flip U/D
+        #     cam.Azimuth(90)
+        #     cam.Roll(90)
+        #     cam.OrthogonalizeViewUp()
+        #     # cam.Zoom(2)
         ''' ============================================================ '''
 
         ''' ==================== Show Planes Method 2 ==================== '''
-        # # Calculate the center of the volume
+        # Calculate the center of the volume
         self.spacing = reader.GetOutput().GetSpacing()
         self.origin = reader.GetOutput().GetOrigin()
-        # center = [self.origin[0] + self.spacing[0] * 0.5 * dims[0],
-        #         self.origin[1] + self.spacing[1] * 0.5 * dims[1],
-        #         self.origin[2] + self.spacing[2] * 0.5 * dims[2]]
+        center = [self.origin[0] + self.spacing[0] * 0.5 * dims[0],
+                self.origin[1] + self.spacing[1] * 0.5 * dims[1],
+                self.origin[2] + self.spacing[2] * 0.5 * dims[2]]
 
-        # # Matrices for axial, coronal, sagittal view orientations
-        # axial = vtk.vtkMatrix4x4()
-        # axial.DeepCopy((1, 0, 0, center[0],
-        #                 0, 1, 0, center[1],
-        #                 0, 0, 1, center[2],
-        #                 0, 0, 0, 1))
+        # Matrices for axial, coronal, sagittal view orientations
+        axial = vtk.vtkMatrix4x4()
+        axial.DeepCopy((1, 0, 0, center[0],
+                        0, 1, 0, center[1],
+                        0, 0, 1, center[2],
+                        0, 0, 0, 1))
 
-        # coronal = vtk.vtkMatrix4x4()
-        # coronal.DeepCopy((1, 0, 0, center[0],
-        #                 0, 0, 1, center[1],
-        #                 0,-1, 0, center[2],
-        #                 0, 0, 0, 1))
+        coronal = vtk.vtkMatrix4x4()
+        coronal.DeepCopy((1, 0, 0, center[0],
+                        0, 0, -1, center[1],
+                        0, 1, 0, center[2],
+                        0, 0, 0, 1))
 
-        # sagittal = vtk.vtkMatrix4x4()
-        # sagittal.DeepCopy((0, 0,-1, center[0],
-        #                 1, 0, 0, center[1],
-        #                 0,-1, 0, center[2],
-        #                 0, 0, 0, 1))
+        sagittal = vtk.vtkMatrix4x4()
+        sagittal.DeepCopy((0, 0, -1, center[0],
+                        1, 0, 0, center[1],
+                        0, 1, 0, center[2],
+                        0, 0, 0, 1))
 
-        # self.reslice = vtk.vtkImageReslice()
-        # self.reslice.SetInputConnection(reader.GetOutputPort())
-        # self.reslice.SetOutputDimensionality(2)
-        # if self.planeType == "axial":
-        #     self.reslice.SetResliceAxes(axial)
-        # elif self.planeType == "coronal":
-        #     self.reslice.SetResliceAxes(coronal)
-        # else:  # self.planeType == "sagittal"
-        #     self.reslice.SetResliceAxes(sagittal)
-        # self.reslice.SetInterpolationModeToCubic()
+        self.reslice = vtk.vtkImageReslice()
+        self.reslice.SetInputConnection(reader.GetOutputPort())
+        self.reslice.SetOutputDimensionality(2)
+        if self.planeType == "axial":
+            self.reslice.SetResliceAxes(axial)
+        elif self.planeType == "coronal":
+            self.reslice.SetResliceAxes(coronal)
+        else:  # self.planeType == "sagittal"
+            self.reslice.SetResliceAxes(sagittal)
+        self.reslice.SetInterpolationModeToCubic()
 
-        # # Map the image through the lookup table
-        # colors = vtk.vtkImageMapToColors()
-        # colors.SetInputConnection(self.reslice.GetOutputPort())
-        # colors.SetLookupTable(grLut)
-        # colors.Update()
+        # Map the image through the lookup table
+        colors = vtk.vtkImageMapToColors()
+        colors.SetInputConnection(self.reslice.GetOutputPort())
+        colors.SetLookupTable(grLut)
+        colors.Update()
 
-        # self.actor.GetMapper().SetInputConnection(colors.GetOutputPort())
+        self.actor.GetMapper().SetInputConnection(colors.GetOutputPort())
         ''' ============================================================ '''
 
         self.ren.AddActor2D(self.actor)
@@ -562,18 +590,80 @@ class QVtkViewer2D(QFrame):
         # cam.Dolly(1.5)  # Moves the camera towards the FocalPoint
 
         #drawing a Line
-        self.drawLine(0)
+        # self.drawLine(0)
+
+        ''' Create and Show Cross '''
+        # imageData = reader.GetOutput()
+        # imageCenter = imageData.GetCenter()
+        # bounds = imageData.GetBounds()
+        # mapper = vtk.vtkPolyDataMapper()
+        # mapper.SetInputData(self.CreateCross(50))
+        # self.cross = vtk.vtkActor()
+        # self.cross.GetProperty().SetLineWidth(2)
+        # self.cross.SetPosition(imageCenter[0],imageCenter[1],imageCenter[2]);
+        # self.cross.SetMapper(mapper)
+        # self.ren.AddActor(self.cross)
+
+        # # self.interactor.RemoveObservers('LeftButtonPressEvent')
+        # self.interactor.AddObserver('LeftButtonPressEvent', self.DummyFunc1, 1.0)
+        # # self.interactor.AddObserver('LeftButtonPressEvent', self.DummyFunc2, -1.0)
+        ''' =============== '''
 
         self.ren.ResetCameraClippingRange()
         # self.renderer = ren
         # self.interactor = interactor
 
-        # self.interactor.RemoveObservers('LeftButtonPressEvent')
-        # self.interactor.AddObserver('LeftButtonPressEvent', self.DummyFunc1, 1.0)
-        # self.interactor.AddObserver('LeftButtonPressEvent', self.DummyFunc2, -1.0)
-
         self.interactor.Initialize()
         # self.interactor.Start()
+
+        # create a cross
+    def CreateCross(self, size):
+        #Create a vtkPoints object and store the points in it
+        pts = vtk.vtkPoints()
+        pts.InsertNextPoint(-size / 2, 0, 0)
+        pts.InsertNextPoint(size / 2, 0, 0)
+        pts.InsertNextPoint(0, -size / 2, 0)
+        pts.InsertNextPoint(0, size / 2, 0)
+
+        # Setup the colors array
+        color = (0, 170, 170)
+        colors = vtk.vtkUnsignedCharArray()
+        colors.SetNumberOfComponents(3)
+        colors.SetName("Colors")
+
+        # Add the colors we created to the colors array
+        colors.InsertNextValue(color[0])
+        colors.InsertNextValue(color[1])
+        colors.InsertNextValue(color[2])
+
+        colors.InsertNextValue(color[0])
+        colors.InsertNextValue(color[1])
+        colors.InsertNextValue(color[2])
+
+        # Create the first line
+        line0 = vtk.vtkLine()
+        line0.GetPointIds().SetId(0, 0)
+        line0.GetPointIds().SetId(1, 1)
+
+        # Create the second line
+        line1 = vtk.vtkLine()
+        line1.GetPointIds().SetId(0, 2)
+        line1.GetPointIds().SetId(1, 3)
+
+        # Create a cell array to store the lines in and add the lines to it
+        lines = vtk.vtkCellArray()
+        lines.InsertNextCell(line0)
+        lines.InsertNextCell(line1)
+
+        # Create a polydata to store everything in
+        linesPolyData = vtk.vtkPolyData()
+        # Add the points to the dataset
+        linesPolyData.SetPoints(pts)
+        # Add the lines to the dataset
+        linesPolyData.SetLines(lines)
+        # Color the lines
+        linesPolyData.GetCellData().SetScalars(colors)
+        return linesPolyData
 
     def drawLine(self, sliceNumber):
         winSize = self.interactor.GetRenderWindow().GetSize()
@@ -645,37 +735,37 @@ class QVtkViewer2D(QFrame):
         # self.drawLine(sliceNumber, dims)
 
         ''' ==================== Show Planes Method 1 ==================== '''
-        if self.planeType == "axial":
-            # sliceNumber = int(sliceNumber)
-            self.actor.SetDisplayExtent(0, dims[0], 0, dims[1], sliceNumber, sliceNumber)
-            # # cam.SetPosition(0, 0, -1)
-            # cam.Roll(180)
-        elif self.planeType == "coronal":
-            # sliceNumber = int(sliceNumber)
-            self.actor.SetDisplayExtent(0, dims[0], sliceNumber, sliceNumber, 0, dims[2])
-            # # cam.SetPosition(0, -1, 0)
-            # cam.Elevation(90)
-            # cam.OrthogonalizeViewUp()
-        else:  # self.planeType == "sagittal"
-            # sliceNumber = int(sliceNumber)
-            self.actor.SetDisplayExtent(sliceNumber, sliceNumber, 0, dims[1], 0, dims[2])
-            # # cam.SetPosition(-1, 0, 0)
-            # cam.Azimuth(90)
-            # cam.Roll(90)
-            # cam.OrthogonalizeViewUp()
+        # if self.planeType == "axial":
+        #     # sliceNumber = int(sliceNumber)
+        #     self.actor.SetDisplayExtent(0, dims[0], 0, dims[1], sliceNumber, sliceNumber)
+        #     # # cam.SetPosition(0, 0, -1)
+        #     # cam.Roll(180)
+        # elif self.planeType == "coronal":
+        #     # sliceNumber = int(sliceNumber)
+        #     self.actor.SetDisplayExtent(0, dims[0], sliceNumber, sliceNumber, 0, dims[2])
+        #     # # cam.SetPosition(0, -1, 0)
+        #     # cam.Elevation(90)
+        #     # cam.OrthogonalizeViewUp()
+        # else:  # self.planeType == "sagittal"
+        #     # sliceNumber = int(sliceNumber)
+        #     self.actor.SetDisplayExtent(sliceNumber, sliceNumber, 0, dims[1], 0, dims[2])
+        #     # # cam.SetPosition(-1, 0, 0)
+        #     # cam.Azimuth(90)
+        #     # cam.Roll(90)
+        #     # cam.OrthogonalizeViewUp()
 
         ''' ==================== Show Planes Method 2 ==================== '''
-        # self.reslice.Update()
-        # matrix = self.reslice.GetResliceAxes()
-        # # move the center point that we are slicing through
-        # if self.planeType == "axial":
-        #     sliceNumber = self.origin[2] + sliceNumber*self.spacing[2]
-        #     matrix.SetElement(2, 3, sliceNumber)
-        # elif self.planeType == "coronal":
-        #     sliceNumber = self.origin[1] + sliceNumber*self.spacing[1]
-        #     matrix.SetElement(1, 3, sliceNumber)
-        # else:  # self.planeType == "sagittal"
-        #     sliceNumber = self.origin[0] + sliceNumber*self.spacing[0]
-        #     matrix.SetElement(0, 3, sliceNumber)
-        # self.ren.GetRenderWindow().Render()
+        self.reslice.Update()
+        matrix = self.reslice.GetResliceAxes()
+        # move the center point that we are slicing through
+        if self.planeType == "axial":
+            sliceNumber = self.origin[2] + sliceNumber*self.spacing[2]
+            matrix.SetElement(2, 3, sliceNumber)
+        elif self.planeType == "coronal":
+            sliceNumber = self.origin[1] + sliceNumber*self.spacing[1]
+            matrix.SetElement(1, 3, sliceNumber)
+        else:  # self.planeType == "sagittal"
+            sliceNumber = self.origin[0] + sliceNumber*self.spacing[0]
+            matrix.SetElement(0, 3, sliceNumber)
+        self.ren.GetRenderWindow().Render()
 
