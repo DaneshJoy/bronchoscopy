@@ -71,21 +71,28 @@ class myMainWindow(QMainWindow):
                 
             reader.Update()
 
+            # TODO : Read image orientation and apply IJK to RAS transform (i.e. different flipping for each orientation) 
+            # import SimpleITK as sitk
+            # reader = sitk.ImageFileReader()
+            # reader.SetFileName(fileName)
+            # reader.Execute()
+            # dd = reader.GetDirection()
+
             # Load dimensions using `GetDataExtent`
             # xMin, xMax, yMin, yMax, zMin, zMax = reader.GetDataExtent()
             _extent = reader.GetDataExtent()
             self.dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]
 
-            # Flip and Translate the image to the right place
-            flipXFilter = vtk.vtkImageFlip()
-            flipXFilter.SetFilteredAxis(0); # flip x axis
-            flipXFilter.SetInputConnection(reader.GetOutputPort())
-            flipXFilter.Update()
+            # # Flip and Translate the image to the right place
+            # flipXFilter = vtk.vtkImageFlip()
+            # flipXFilter.SetFilteredAxis(0); # flip x axis
+            # flipXFilter.SetInputConnection(reader.GetOutputPort())
+            # flipXFilter.Update()
 
-            flipYFilter = vtk.vtkImageFlip()
-            flipYFilter.SetFilteredAxis(1); # flip y axis
-            flipYFilter.SetInputConnection(flipXFilter.GetOutputPort())
-            flipYFilter.Update()
+            # flipYFilter = vtk.vtkImageFlip()
+            # flipYFilter.SetFilteredAxis(1); # flip y axis
+            # flipYFilter.SetInputConnection(flipXFilter.GetOutputPort())
+            # flipYFilter.Update()
 
             if 'nii' in extension or 'gz' in extension:
                 try:
@@ -93,7 +100,7 @@ class myMainWindow(QMainWindow):
                     origin = (-_QMatrix.GetElement(0,3), -_QMatrix.GetElement(1,3), _QMatrix.GetElement(2,3))
                     imageInfo = vtk.vtkImageChangeInformation()
                     imageInfo.SetOutputOrigin(origin)
-                    imageInfo.SetInputConnection(flipYFilter.GetOutputPort())
+                    imageInfo.SetInputConnection(reader.GetOutputPort())
                     self.showImages(imageInfo, self.dims)
                 except:
                     QMessageBox.warning(self, 'Wrong Header', 'Can not read Image Origin from header!\nImage position might be wrong')
@@ -127,6 +134,13 @@ class myMainWindow(QMainWindow):
             reader.SetFileNames(fileNames)
             reader.Update()
 
+            # TODO : Read image orientation and apply IJK to RAS transform (i.e. different flipping for each orientation) 
+            # import SimpleITK as sitk
+            # reader = sitk.ImageFileReader()
+            # reader.SetFileName(fileName)
+            # reader.Execute()
+            # dd = reader.GetDirection()
+
             # Load dimensions using `GetDataExtent`
             _extent = reader.GetDataExtent()
             self.dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]
@@ -136,21 +150,21 @@ class myMainWindow(QMainWindow):
             # ConstScalarRange = reader.GetOutput().GetScalarRange()
 
             # Flip and Translate the image to the right place
-            flipXFilter = vtk.vtkImageFlip()
-            flipXFilter.SetFilteredAxis(0); # flip x axis
-            flipXFilter.SetInputConnection(reader.GetOutputPort())
-            flipXFilter.Update()
+            flipYFilter = vtk.vtkImageFlip()
+            flipYFilter.SetFilteredAxis(1); # flip y axis
+            flipYFilter.SetInputConnection(reader.GetOutputPort())
+            flipYFilter.Update()
 
             flipZFilter = vtk.vtkImageFlip()
             flipZFilter.SetFilteredAxis(2); # flip z axis
-            flipZFilter.SetInputConnection(flipXFilter.GetOutputPort())
+            flipZFilter.SetInputConnection(flipYFilter.GetOutputPort())
             flipZFilter.Update()
 
             try:
                 origin = reader.GetImagePositionPatient()
                 imageInfo = vtk.vtkImageChangeInformation()
                 imageInfo.SetOutputOrigin(origin)
-                imageInfo.SetInputConnection(reader.GetOutputPort())
+                imageInfo.SetInputConnection(flipZFilter.GetOutputPort())
             except:
                 QMessageBox.warning(self, 'Wrong Header', 'Can not read image Origin from header!\nImage position might be wrong')
 
@@ -229,7 +243,6 @@ class myMainWindow(QMainWindow):
                 pt_new = vtk.vtkMatrix4x4()
                 vtk.vtkMatrix4x4.Multiply4x4(flipTrans.GetMatrix(), pt_vtk, pt_new)
 
-
                 pt_t = np.zeros((4,4))
                 pt_new.DeepCopy(pt_t.ravel(), pt_new)
                 self.registeredPoints[:,:,i] = pt_t
@@ -285,7 +298,8 @@ class myMainWindow(QMainWindow):
         self.ui.btn_pauseCam.setEnabled(True)
         self.ui.btn_stopCam.setEnabled(True)
         self.paused = False
-        for i in range(self.ui.slider_Frames.value(),self.registeredPoints.shape[-1]):
+        # for i in range(self.ui.slider_Frames.value(),self.registeredPoints.shape[-1]):
+        for i in range(1):
             if self.paused:
                 break
 
@@ -299,7 +313,7 @@ class myMainWindow(QMainWindow):
             # vtk.vtkMatrix4x4.Multiply4x4(flipTrans.GetMatrix(), cam_pos_t, newMat)
             # self.vtk_widget_3D.setCamera(newMat)
 
-            self.vtk_widget_3D.setCamera(cam_pos)
+            # self.vtk_widget_3D.setCamera(cam_pos)
 
             self.ui.slider_Frames.setValue(i)
             self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
@@ -310,7 +324,12 @@ class myMainWindow(QMainWindow):
             disp1 = coordinate.GetComputedDisplayValue(self.vtk_widget_axial.ren)
             disp2 = coordinate.GetComputedDisplayValue(self.vtk_widget_coronal.ren)
             disp3 = coordinate.GetComputedDisplayValue(self.vtk_widget_sagittal.ren)
-            
+
+            print('Method 1')
+            print(disp1)
+            print(disp2)
+            print(disp3)
+
             time.sleep(0.1)
             QApplication.processEvents()
     

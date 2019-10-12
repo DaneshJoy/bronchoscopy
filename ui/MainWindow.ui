@@ -809,6 +809,9 @@ border-color: rgb(114, 171, 171);</string>
         </size>
        </property>
        <layout class="QGridLayout" name="gridLayout" rowstretch="0,0" columnstretch="0,0">
+        <property name="spacing">
+         <number>2</number>
+        </property>
         <item row="0" column="1">
          <layout class="QVBoxLayout" name="verticalLayout_axial" stretch="20,1">
           <property name="spacing">
@@ -857,7 +860,7 @@ border-color: rgb(114, 171, 171);</string>
              <bool>false</bool>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-color: rgba(50, 50, 50, 50);</string>
+             <string notr="true">background-color: rgb(0, 0, 0);</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -1014,7 +1017,7 @@ border-color: rgb(114, 171, 171);</string>
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-color: rgba(50, 50, 50,50);</string>
+             <string notr="true">background-color: rgb(0, 0, 0);</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -1156,7 +1159,7 @@ border-color: rgb(114, 171, 171);</string>
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-color: rgba(50, 50, 50,50);</string>
+             <string notr="true">background-color: rgb(0, 0, 0);</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -1282,7 +1285,7 @@ border-color: rgb(114, 171, 171);</string>
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-color: rgba(50, 50, 50,50);</string>
+             <string notr="true">background-color: rgb(0, 0, 0);</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>

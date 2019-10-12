@@ -106,12 +106,12 @@ class QVtkViewer3D(QFrame):
         humanActor = vtk.vtkActor()
         humanActor.SetMapper(humanMapper)
         bounds = self.surface.GetBounds()
-        humanActor.SetScale(max(bounds)/20.0)
+        humanActor.SetScale(max(bounds)/10.0)
         
         self.axes.SetOrientationMarker(humanActor)
         self.axes.SetInteractor(self.interactor)
         # Position lower left in the viewport.
-        self.axes.SetViewport(0.0, 0.9, 0.1, 1.0)  # (xmin,ymin,xmax,ymax)
+        self.axes.SetViewport(0.0, 0.85, 0.15, 1.0)  # (xmin,ymin,xmax,ymax)
         self.axes.EnabledOn() # <== application freeze-crash
         self.axes.InteractiveOn()
 
@@ -451,14 +451,17 @@ class QVtkViewer2D(QFrame):
         if self.planeType == "axial":
             currSlice = dims[2]//2
             self.actor.SetDisplayExtent(0, dims[0], 0, dims[1], currSlice, currSlice)
-            cam.SetPosition(0, 0, -1)
-            cam.Yaw(180)
+            # cam.SetPosition(0, 0, -1)
+            cam.Yaw(180) # Flip L/R
+            cam.Pitch(180) # Flip U/D
             cam.OrthogonalizeViewUp()
             # cam.Dolly(2)
         elif self.planeType == "coronal":
             currSlice = dims[1]//2
             self.actor.SetDisplayExtent(0, dims[0], currSlice, currSlice, 0, dims[2])
             # cam.SetPosition(0, -1, 0)
+            cam.Yaw(180) # Flip L/R
+            # cam.Roll(180) # Flip U/D
             cam.Elevation(90)
             cam.OrthogonalizeViewUp()
             # cam.Zoom(2)
@@ -466,6 +469,8 @@ class QVtkViewer2D(QFrame):
             currSlice = dims[0]//2
             self.actor.SetDisplayExtent(currSlice, currSlice, 0, dims[1], 0, dims[2])
             # cam.SetPosition(-1, 0, 0)
+            cam.Yaw(180) # Flip L/R
+            cam.Roll(180) # Flip U/D
             cam.Azimuth(90)
             cam.Roll(90)
             cam.OrthogonalizeViewUp()
@@ -534,13 +539,13 @@ class QVtkViewer2D(QFrame):
         humanActor = vtk.vtkActor()
         humanActor.SetMapper(humanMapper)
         bounds = self.actor.GetBounds()
-        humanActor.SetScale(max(bounds)/20.0)
+        humanActor.SetScale(max(bounds)/10.0)
         
         self.axes.SetOrientationMarker(humanActor)
         self.axes.SetInteractor(self.interactor)
         # Position lower left in the viewport.
-        self.axes.SetViewport(0.0, 0.9, 0.1, 1.0)  # (xmin,ymin,xmax,ymax)
-        self.axes.EnabledOn() # <== application freeze-crash
+        self.axes.SetViewport(0.0, 0.85, 0.15, 1.0)  # (xmin,ymin,xmax,ymax)
+        self.axes.EnabledOn()
         self.axes.InteractiveOn()
         ''' ============================================================ '''
 
