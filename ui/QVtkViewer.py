@@ -23,6 +23,12 @@ class QVtkViewer3D(QFrame):
         self.interactor.setMaximumSize(self.width, self.height)
         self.setLayout(self.layout)
 
+        self.initCamViewUp = (0, 0, 1)
+        self.initCamPosition = (0, 1, 0)
+        self.initCamFocalPoint = (0, 0, 0)
+
+        self.points = None
+
         # Setup VTK Environment
         self.ren = vtk.vtkRenderer()
         self.interactor.GetRenderWindow().AddRenderer(self.ren)
@@ -33,7 +39,7 @@ class QVtkViewer3D(QFrame):
         # ren.SetBackground(colors.GetColor3D("BkgColor"))
         self.interactor.Initialize()
 
-    def removeImage(self):
+    def RemoveImage(self):
         self.ren.RemoveAllViewProps()
         self.ren.ResetCamera()
 
@@ -117,16 +123,31 @@ class QVtkViewer3D(QFrame):
 
         self.ren.AddActor(self.surface)
 
+
         self.ren.SetActiveCamera(cam)
         self.ren.ResetCamera()
         self.ren.ResetCameraClippingRange()
+
+        self.initCamViewUp = self.ren.GetActiveCamera().GetViewUp()
+        self.initCamPosition = self.ren.GetActiveCamera().GetPosition()
+        self.initCamFocalPoint = self.ren.GetActiveCamera().GetFocalPoint()
 
         # self.renderer = ren
         # self.interactor = interactor
         self.interactor.Initialize()
         # self.interactor.Start()
 
-    def drawPoints(self, points):
+    def ResetView(self):
+        self.ren.ResetCamera()
+        self.ren.GetActiveCamera().SetViewUp(self.initCamViewUp)
+        self.ren.GetActiveCamera().SetPosition(self.initCamPosition)
+        self.ren.GetActiveCamera().SetFocalPoint(self.initCamFocalPoint)
+        self.ren.GetActiveCamera().ComputeViewPlaneNormal()
+        # self.ren.GetActiveCamera().Dolly(1.5)
+        self.ren.ResetCameraClippingRange()
+        self.interactor.ReInitialize()
+
+    def DrawPoints(self, points):
         from vtk.util.numpy_support import numpy_to_vtkIdTypeArray
 
         pts = vtk.vtkPoints()
@@ -171,13 +192,18 @@ class QVtkViewer3D(QFrame):
         self.interactor.ReInitialize()
         # self.ren.ResetCameraClippingRange()
 
-    def removePoints(self):
+    def RemovePoints(self):
+        if self.points == None:
+            return
         self.ren.RemoveActor(self.points)
         self.ren.RemoveActor(self.startPoint)
         self.ren.RemoveActor(self.endPoint)
         self.interactor.ReInitialize()
+        self.points = None
+        self.startPoint = None
+        self.endPoint = None
 
-    def addStartPoint(self, pos, color=[0,1,0]):
+    def AddStartPoint(self, pos, color=[0,1,0]):
         # create source
         sphere = vtk.vtkSphereSource()
         # source.SetCenter(pos)
@@ -212,7 +238,7 @@ class QVtkViewer3D(QFrame):
 
         self.interactor.ReInitialize()
 
-    def addEndPoint(self, pos, color=[1,0,0]):
+    def AddEndPoint(self, pos, color=[1,0,0]):
         # create source
         sphere = vtk.vtkSphereSource()
         # source.SetCenter(pos)
@@ -393,7 +419,6 @@ class QVtkViewer2D(QFrame):
 
         self.cross = None
         
-
         # Setup VTK Environment
         self.ren = vtk.vtkRenderer()
 
@@ -445,12 +470,25 @@ class QVtkViewer2D(QFrame):
         print("After Event")
 
     def SetCrossPosition(self, x, y):
+        if self.cross == None:
+            mapper = vtk.vtkPolyDataMapper()
+            mapper.SetInputData(self.CreateCross(50))
+            self.cross = vtk.vtkActor()
+            self.cross.GetProperty().SetLineWidth(2)
+            self.cross.SetMapper(mapper)
+            self.ren.AddActor(self.cross)
         self.cross.SetPosition(x, y, 1)
         self.ren.GetRenderWindow().Render()
 
-    def removeImage(self):
+    def RemoveImage(self):
         self.ren.RemoveAllViewProps()
+        self.cross = None
         self.ren.ResetCamera()
+
+    def RemoveCross(self):
+        self.ren.RemoveActor(self.cross)
+        self.ren.GetRenderWindow().Render()
+        self.cross = None
 
     def showImage(self, reader, dims):
         # image = reader.GetOutput()
@@ -555,26 +593,26 @@ class QVtkViewer2D(QFrame):
         self.ren.AddActor2D(self.actor)
 
         ''' ==================== Add Orientation Widget ==================== '''
-        # Human Actor.
-        readerH = vtk.vtkXMLPolyDataReader()
-        readerH.SetFileName('Human.vtp')
-        readerH.Update()
-        humanMapper = vtk.vtkPolyDataMapper()
-        humanMapper.SetInputConnection(readerH.GetOutputPort())
-        humanMapper.SetScalarModeToUsePointFieldData()
-        humanMapper.SelectColorArray("Color")
-        humanMapper.SetColorModeToDirectScalars()
-        humanActor = vtk.vtkActor()
-        humanActor.SetMapper(humanMapper)
-        bounds = self.actor.GetBounds()
-        humanActor.SetScale(max(bounds)/10.0)
+        # # Human Actor.
+        # readerH = vtk.vtkXMLPolyDataReader()
+        # readerH.SetFileName('Human.vtp')
+        # readerH.Update()
+        # humanMapper = vtk.vtkPolyDataMapper()
+        # humanMapper.SetInputConnection(readerH.GetOutputPort())
+        # humanMapper.SetScalarModeToUsePointFieldData()
+        # humanMapper.SelectColorArray("Color")
+        # humanMapper.SetColorModeToDirectScalars()
+        # humanActor = vtk.vtkActor()
+        # humanActor.SetMapper(humanMapper)
+        # bounds = self.actor.GetBounds()
+        # humanActor.SetScale(max(bounds)/10.0)
         
-        self.axes.SetOrientationMarker(humanActor)
-        self.axes.SetInteractor(self.interactor)
-        # Position lower left in the viewport.
-        self.axes.SetViewport(0.0, 0.85, 0.15, 1.0)  # (xmin,ymin,xmax,ymax)
-        self.axes.EnabledOn()
-        self.axes.InteractiveOn()
+        # self.axes.SetOrientationMarker(humanActor)
+        # self.axes.SetInteractor(self.interactor)
+        # # Position lower left in the viewport.
+        # self.axes.SetViewport(0.0, 0.85, 0.15, 1.0)  # (xmin,ymin,xmax,ymax)
+        # self.axes.EnabledOn()
+        # self.axes.InteractiveOn()
         ''' ============================================================ '''
 
         # cam.SetFocalPoint(0, 0, 0)
@@ -768,4 +806,11 @@ class QVtkViewer2D(QFrame):
             sliceNumber = self.origin[0] + sliceNumber*self.spacing[0]
             matrix.SetElement(0, 3, sliceNumber)
         self.ren.GetRenderWindow().Render()
+
+    def ResetView(self):
+        self.ren.ResetCamera()
+        self.ren.GetActiveCamera().Zoom(1.5)
+        self.actor.GetProperty().SetColorWindow(255)
+        self.actor.GetProperty().SetColorLevel(127.5)
+        self.interactor.ReInitialize()
 

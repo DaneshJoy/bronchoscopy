@@ -6,6 +6,8 @@
     <file>icons/trajectory.png</file>
     <file>icons/exit.png</file>
     <file>icons/Open.png</file>
+    <file>icons/resetViews.png</file>
+    <file>icons/reset.png</file>
     <file>icons/pause.png</file>
     <file>icons/play.png</file>
     <file>icons/stop.png</file>

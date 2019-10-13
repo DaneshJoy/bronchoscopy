@@ -49,6 +49,8 @@ class myMainWindow(QMainWindow):
         self.ui.btn_pauseCam.clicked.connect(self.pauseCam)
         self.ui.btn_stopCam.clicked.connect(self.stopCam)
         self.ui.slider_Frames.valueChanged.connect(self.frameChanged)
+        self.ui.btn_ResetViewports.clicked.connect(self.ResetViewports)
+        self.ui.btn_ResetVB.clicked.connect(self.ResetVB)
 
     def openFileDialog(self):
         options = QFileDialog.Options()
@@ -179,10 +181,10 @@ class myMainWindow(QMainWindow):
             QApplication.restoreOverrideCursor()
 
     def showImages(self, reader, dims):
-        self.vtk_widget_3D.removeImage()
-        self.vtk_widget_axial.removeImage()
-        self.vtk_widget_coronal.removeImage()
-        self.vtk_widget_sagittal.removeImage()
+        self.vtk_widget_3D.RemoveImage()
+        self.vtk_widget_axial.RemoveImage()
+        self.vtk_widget_coronal.RemoveImage()
+        self.vtk_widget_sagittal.RemoveImage()
 
         self.vtk_widget_3D.showImage(reader)
         self.vtk_widget_axial.showImage(reader, dims)
@@ -230,6 +232,8 @@ class myMainWindow(QMainWindow):
         self.ui.SubPanel_sagittal.show()
 
     def readRegisteredPoints(self):
+        self.registeredPoints = None
+        self.RemovePoints()
         from vtk.util.numpy_support import vtk_to_numpy
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -255,25 +259,27 @@ class myMainWindow(QMainWindow):
 
             self.ui.slider_Frames.setRange(0, numPoints-1)
             self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
-            self.drawPoints(self.registeredPoints)
+            if self.ui.checkBox_showPoints.isChecked():
+                self.DrawPoints(self.registeredPoints)
             self.ui.btn_playCam.setEnabled(True)
             self.ui.slider_Frames.setEnabled(True)
             self.ui.checkBox_showPoints.setEnabled(True)
+            self.ui.btn_ResetVB.setEnabled(True)
 
     def showHidePoints(self):
         if self.ui.checkBox_showPoints.isChecked():
-            self.drawPoints(self.registeredPoints)
+            self.DrawPoints(self.registeredPoints)
         else:
-            self.removePoints()
+            self.RemovePoints()
 
-    def drawPoints(self, points):
-        self.vtk_widget_3D.drawPoints(points)
-        self.vtk_widget_3D.addStartPoint(points[:,:,0]) # start point
-        self.vtk_widget_3D.addEndPoint(points[:,:,-1]) # end point
+    def DrawPoints(self, points):
+        self.vtk_widget_3D.DrawPoints(points)
+        self.vtk_widget_3D.AddStartPoint(points[:,:,0]) # start point
+        self.vtk_widget_3D.AddEndPoint(points[:,:,-1]) # end point
         # self.playCam(points)
 
-    def removePoints(self):
-        self.vtk_widget_3D.removePoints()
+    def RemovePoints(self):
+        self.vtk_widget_3D.RemovePoints()
         
     def frameChanged(self):
         if self.registeredPoints is None:
@@ -332,31 +338,6 @@ class myMainWindow(QMainWindow):
 
             self.ui.slider_Frames.setValue(i)
             self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
-            
-            coordinate = vtk.vtkCoordinate()
-            coordinate.SetCoordinateSystemToWorld()
-            coordinate.SetValue(cam_pos[0,3], cam_pos[1,3], cam_pos[2,3])
-            disp1 = coordinate.GetComputedDisplayValue(self.vtk_widget_axial.ren)
-            disp2 = coordinate.GetComputedDisplayValue(self.vtk_widget_coronal.ren)
-            disp3 = coordinate.GetComputedDisplayValue(self.vtk_widget_sagittal.ren)
-
-            print(cam_pos[0,3], cam_pos[1,3], cam_pos[2,3])
-            print(disp1)
-            print(disp2)
-            print(disp3)
-
-            coordinate2 = vtk.vtkCoordinate()
-            coordinate2.SetCoordinateSystemToDisplay()
-            width = (self.size.width()) // 2 - 100
-            height = (self.size.height()) // 2 - 50
-            coordinate2.SetValue(333, 116)
-            disp1 = coordinate2.GetComputedWorldValue(self.vtk_widget_axial.ren)
-            # disp2 = coordinate2.GetComputedWorldValue(self.vtk_widget_coronal.ren)
-            # disp3 = coordinate2.GetComputedWorldValue(self.vtk_widget_sagittal.ren)
-
-            print(disp1)
-            # print(disp2)
-            # print(disp3)
 
             time.sleep(0.1)
             QApplication.processEvents()
@@ -369,6 +350,27 @@ class myMainWindow(QMainWindow):
         self.ui.slider_Frames.setValue(0)
         self.ui.btn_pauseCam.setEnabled(False)
         self.ui.btn_stopCam.setEnabled(False)
+    
+    def ResetViewports(self):
+        self.vtk_widget_3D.ResetView()
+        self.vtk_widget_axial.ResetView()
+        self.vtk_widget_coronal.ResetView()
+        self.vtk_widget_sagittal.ResetView()
+
+    def ResetVB(self):
+        self.RemovePoints()
+        self.registeredPoints = None
+        self.stopCam()
+        self.vtk_widget_axial.RemoveCross()
+        self.vtk_widget_coronal.RemoveCross()
+        self.vtk_widget_sagittal.RemoveCross()
+        self.ui.btn_ResetVB.setEnabled(False)
+        self.ui.btn_playCam.setEnabled(False)
+        self.ui.btn_pauseCam.setEnabled(False)
+        self.ui.btn_stopCam.setEnabled(False)
+        self.ui.slider_Frames.setEnabled(False)
+        self.ui.checkBox_showPoints.setEnabled(False)
+        self.ResetViewports()
 
     def setup(self, size):
         self.ui = MainWindow.Ui_MainWindow()
