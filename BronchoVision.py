@@ -306,9 +306,14 @@ class myMainWindow(QMainWindow):
         self.vtk_widget_coronal.setSlice(coronal_slice, self.dims)
         self.vtk_widget_sagittal.setSlice(sagittal_slice, self.dims)
 
+        self.ui.Slider_axial.setValue(axial_slice)
+        self.ui.Slider_coronal.setValue(coronal_slice)
+        self.ui.Slider_sagittal.setValue(sagittal_slice)
+
         self.vtk_widget_axial.SetCrossPosition(cam_pos[0,3], cam_pos[1,3])
         self.vtk_widget_coronal.SetCrossPosition(cam_pos[0,3], cam_pos[2,3]-140.5)
         self.vtk_widget_sagittal.SetCrossPosition(cam_pos[1,3], cam_pos[2,3]-140.5)
+
 
         self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
 

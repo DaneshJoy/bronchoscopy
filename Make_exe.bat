@@ -1,4 +1,7 @@
 @ECHO OFF
+ECHO.
 ECHO Starting PyInstaller ...
-CALL .venv\Scripts\activate
+ECHO ========================
+ECHO.
+CALL venv_installer\Scripts\activate
 CALL PyInstaller BronchoVision.spec

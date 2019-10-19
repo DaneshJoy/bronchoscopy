@@ -83,19 +83,35 @@ class QVtkViewer3D(QFrame):
 
         # self.updateTextActor()
 
-        '''Set Orientation Marker'''
+        self.ShowOrientationWidget()
 
-        # Cube Actor
-        cubeActor = vtk.vtkAnnotatedCubeActor()
-        cubeActor.SetXPlusFaceText('+X')
-        cubeActor.SetXMinusFaceText('-X')
-        cubeActor.SetYMinusFaceText('-Y')
-        cubeActor.SetYPlusFaceText('+Y')
-        cubeActor.SetZMinusFaceText('-Z')
-        cubeActor.SetZPlusFaceText('+Z')
-        cubeActor.GetTextEdgesProperty().SetColor(0,1,1)
-        cubeActor.GetTextEdgesProperty().SetLineWidth(1)
-        cubeActor.GetCubeProperty().SetColor(0.7,0.7,0.7)
+        self.ren.AddActor(self.surface)
+
+        self.ren.SetActiveCamera(cam)
+        self.ren.ResetCamera()
+        self.ren.ResetCameraClippingRange()
+
+        self.initCamViewUp = self.ren.GetActiveCamera().GetViewUp()
+        self.initCamPosition = self.ren.GetActiveCamera().GetPosition()
+        self.initCamFocalPoint = self.ren.GetActiveCamera().GetFocalPoint()
+
+        # self.renderer = ren
+        # self.interactor = interactor
+        self.interactor.Initialize()
+        # self.interactor.Start()
+
+    def ShowOrientationWidget(self):
+        # # Cube Actor
+        # cubeActor = vtk.vtkAnnotatedCubeActor()
+        # cubeActor.SetXPlusFaceText('+X')
+        # cubeActor.SetXMinusFaceText('-X')
+        # cubeActor.SetYMinusFaceText('-Y')
+        # cubeActor.SetYPlusFaceText('+Y')
+        # cubeActor.SetZMinusFaceText('-Z')
+        # cubeActor.SetZPlusFaceText('+Z')
+        # cubeActor.GetTextEdgesProperty().SetColor(0,1,1)
+        # cubeActor.GetTextEdgesProperty().SetLineWidth(1)
+        # cubeActor.GetCubeProperty().SetColor(0.7,0.7,0.7)
 
         # Axes Actor
         # axesActor = vtk.vtkAxesActor()
@@ -120,22 +136,6 @@ class QVtkViewer3D(QFrame):
         self.axes.SetViewport(0.0, 0.85, 0.15, 1.0)  # (xmin,ymin,xmax,ymax)
         self.axes.EnabledOn() # <== application freeze-crash
         self.axes.InteractiveOn()
-
-        self.ren.AddActor(self.surface)
-
-
-        self.ren.SetActiveCamera(cam)
-        self.ren.ResetCamera()
-        self.ren.ResetCameraClippingRange()
-
-        self.initCamViewUp = self.ren.GetActiveCamera().GetViewUp()
-        self.initCamPosition = self.ren.GetActiveCamera().GetPosition()
-        self.initCamFocalPoint = self.ren.GetActiveCamera().GetFocalPoint()
-
-        # self.renderer = ren
-        # self.interactor = interactor
-        self.interactor.Initialize()
-        # self.interactor.Start()
 
     def ResetView(self):
         self.ren.ResetCamera()
