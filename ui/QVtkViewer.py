@@ -48,7 +48,7 @@ class QVtkViewer3D(QFrame):
         # Isosurface
         self.surfaceExtractor = vtk.vtkMarchingCubes()
         self.surfaceExtractor.SetInputConnection(reader.GetOutputPort())
-        self.surfaceExtractor.SetValue(0, 300)
+        self.surfaceExtractor.SetValue(-600, -500)
 
         # Mapper
         surfaceMapper = vtk.vtkPolyDataMapper()

@@ -88,6 +88,7 @@ class myMainWindow(QMainWindow):
 
             self.spacing = reader.GetOutput().GetSpacing()
             self.origin = reader.GetOutput().GetOrigin()
+            # self.origin = (0, 0, 0)
 
             # # Flip and Translate the image to the right place
             # flipXFilter = vtk.vtkImageFlip()
@@ -103,6 +104,7 @@ class myMainWindow(QMainWindow):
             if 'nii' in extension or 'gz' in extension:
                 try:
                     _QMatrix = reader.GetQFormMatrix()
+                    # self.origin = (0, 0, 0)
                     self.origin = (-_QMatrix.GetElement(0,3), -_QMatrix.GetElement(1,3), _QMatrix.GetElement(2,3))
                     imageInfo = vtk.vtkImageChangeInformation()
                     imageInfo.SetOutputOrigin(self.origin)
@@ -113,8 +115,8 @@ class myMainWindow(QMainWindow):
             else:
                 # origin = (140, 140, -58)
                 # imageInfo = vtk.vtkImageChangeInformation()
-                # imageInfo.SetOutputOrigin(origin)
-                # imageInfo.SetInputConnection(flipYFilter.GetOutputPort())
+                # imageInfo.SetOutputOrigin(self.origin)
+                # imageInfo.SetInputConnection(reader.GetOutputPort())
                 # self.showImages(imageInfo, self.dims)
 
                 self.showImages(reader, self.dims)
@@ -244,6 +246,7 @@ class myMainWindow(QMainWindow):
             self.registeredPoints = matFile['EMT_cor']
             numPoints = self.registeredPoints.shape[-1]
 
+            # Flip/Rotate points to match the orientation of the image
             for i in range(numPoints):
                 pt = self.registeredPoints[:,:,i]
                 pt_vtk = vtk.vtkMatrix4x4()
