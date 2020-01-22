@@ -15,14 +15,28 @@ import numpy as np
 import time
 from scipy.io import loadmat
 import fix_qt_import_error
-from PyQt5.Qt import QApplication, QMainWindow, QColor, Qt
+from PyQt5.Qt import QApplication, QMainWindow, QDialog, QColor, Qt
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog
 from PyQt5.QtGui import QPalette
-
 from ui.QVtkViewer import QVtkViewer3D, QVtkViewer2D
+from ui import MainWindow, ToolsWindow
+from sksurgerynditracker.nditracker import NDITracker
 
-from ui import MainWindow
+class myToolsWindow(QDialog):
+    def __init__(self, parent=None):
+        super(myToolsWindow, self).__init__(parent)
+
+    def setData(self, refData, toolData):
+        self.ui.r11_tool.setText(toolData)
+        self.ui.r11_ref.setText(refData)
+
+    def setup(self):
+        self.ui = ToolsWindow.Ui_ToolsWindow()
+        self.ui.setupUi(self)
+
+    # def initialize(self):
+    #     pass
 
 class myMainWindow(QMainWindow):
     def __init__(self, size):
@@ -36,6 +50,10 @@ class myMainWindow(QMainWindow):
         self.setup(size)
         self.paused = False
         self.size = size
+        self.toolsWindow = myToolsWindow(self)
+        self.toolsWindow.setup()
+        self.tracker = None
+        self.tracker_connected = False
 
         self.ui.actionLoad_Image.triggered.connect(self.openFileDialog)
         self.ui.actionLoad_DICOM.triggered.connect(self.openDirDialog)
@@ -51,6 +69,43 @@ class myMainWindow(QMainWindow):
         self.ui.slider_Frames.valueChanged.connect(self.frameChanged)
         self.ui.btn_ResetViewports.clicked.connect(self.ResetViewports)
         self.ui.btn_ResetVB.clicked.connect(self.ResetVB)
+
+        self.ui.btn_Connect.clicked.connect(self.connectTracker)
+        self.ui.btn_ToolsWindow.clicked.connect(self.showToolsWindow)
+
+    def connectTracker(self):
+        if self.tracker_connected == False:
+            if self.tracker is None:
+                # settings_aurora = { "tracker type": "aurora", "ports to use" : [5]}
+                settings_aurora = { "tracker type": "aurora"}
+                try:
+                    self.tracker = NDITracker(settings_aurora)
+                except:
+                    msg = 'Please check the following:\n' \
+                            '  1) Is an NDI device connected to your computer?\n' \
+                            '  2) Is the NDI device switched on?\n' \
+                            '  3) Do you have sufficient privilege to connect to the device?\n' \
+                            '     (e.g. on Linux are you part of the \"dialout\" group?)'
+                    QMessageBox.critical(self, 'Tracker Connection Failed', f'Can not connect to the tracker!\n{msg}')
+                    return
+            # self.tracker.start_tracking()
+            # tool_desc = self.tracker.get_tool_descriptions()
+            # TODO: Infinite while loop here
+            # data = tracker.get_frame()
+            # Data is numpy.ndarray(4x4)
+            # self.refData = data[3][0]  # Ref must be attached to the 1st port
+            # self.toolData = data[3][1]  # Tool must be attached to the 2nd port
+            self.tracker_connected = True
+            self.ui.btn_Connect.setText('Disconnect')
+        else:
+            # self.tracker.stop_tracking()
+            # self.tracker.close()
+            self.tracker_connected = False
+            self.ui.btn_Connect.setText('Connect')
+
+    def showToolsWindow(self):
+        self.toolsWindow.setData('1.1', '2.2')
+        self.toolsWindow.show()
 
     def openFileDialog(self):
         options = QFileDialog.Options()

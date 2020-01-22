@@ -3,5 +3,5 @@ ECHO.
 ECHO Starting BronchoVision...
 ECHO =========================
 ECHO.
-CALL .venv\Scripts\activate
+CALL conda activate bronchovision
 CALL python BronchoVision.py
