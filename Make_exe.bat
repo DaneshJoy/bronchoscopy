@@ -3,5 +3,6 @@ ECHO.
 ECHO Starting PyInstaller ...
 ECHO ========================
 ECHO.
-CALL venv_installer\Scripts\activate
+CALL conda activate bronchovision
 CALL PyInstaller BronchoVision.spec
+PAUSE
