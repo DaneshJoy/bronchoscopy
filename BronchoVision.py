@@ -28,12 +28,64 @@ class myToolsWindow(QDialog):
         super(myToolsWindow, self).__init__(parent)
 
     def setData(self, refData, toolData):
-        self.ui.r11_tool.setText(toolData)
-        self.ui.r11_ref.setText(refData)
+        if np.asarray(toolData).any():
+            self.ui.r11_tool.setText('-')
+            self.ui.r12_tool.setText(str(round(toolData[0,1], 3)))
+            self.ui.r13_tool.setText(str(round(toolData[0,2], 3)))
+            self.ui.r21_tool.setText(str(round(toolData[1,0], 3)))
+            self.ui.r22_tool.setText(str(round(toolData[1,1], 3)))
+            self.ui.r23_tool.setText(str(round(toolData[1,2], 3)))
+            self.ui.r31_tool.setText(str(round(toolData[2,0], 3)))
+            self.ui.r32_tool.setText(str(round(toolData[2,1], 3)))
+            self.ui.r33_tool.setText(str(round(toolData[2,2], 3)))
+            self.ui.t1_tool.setText(str(round(toolData[0,3], 2)))
+            self.ui.t2_tool.setText(str(round(toolData[1,3], 2)))
+            self.ui.t3_tool.setText(str(round(toolData[2,3], 2)))
+        else:
+            self.ui.r11_tool.setText('-')
+            self.ui.r12_tool.setText('-')
+            self.ui.r13_tool.setText('-')
+            self.ui.r21_tool.setText('-')
+            self.ui.r22_tool.setText('-')
+            self.ui.r23_tool.setText('-')
+            self.ui.r31_tool.setText('-')
+            self.ui.r32_tool.setText('-')
+            self.ui.r33_tool.setText('-')
+            self.ui.t1_tool.setText('-')
+            self.ui.t2_tool.setText('-')
+            self.ui.t3_tool.setText('-')
+        if np.asarray(refData).any():
+            self.ui.r11_ref.setText(str(round(refData[0,0], 3)))
+            self.ui.r12_ref.setText(str(round(refData[0,1], 3)))
+            self.ui.r13_ref.setText(str(round(refData[0,2], 3)))
+            self.ui.r21_ref.setText(str(round(refData[1,0], 3)))
+            self.ui.r22_ref.setText(str(round(refData[1,1], 3)))
+            self.ui.r23_ref.setText(str(round(refData[1,2], 3)))
+            self.ui.r31_ref.setText(str(round(refData[2,0], 3)))
+            self.ui.r32_ref.setText(str(round(refData[2,1], 3)))
+            self.ui.r33_ref.setText(str(round(refData[2,2], 3)))
+            self.ui.t1_ref.setText(str(round(refData[0,3], 2)))
+            self.ui.t2_ref.setText(str(round(refData[1,3], 2)))
+            self.ui.t3_ref.setText(str(round(refData[2,3], 2)))
+        else:
+            self.ui.r11_ref.setText('-')
+            self.ui.r12_ref.setText('-')
+            self.ui.r13_ref.setText('-')
+            self.ui.r21_ref.setText('-')
+            self.ui.r22_ref.setText('-')
+            self.ui.r23_ref.setText('-')
+            self.ui.r31_ref.setText('-')
+            self.ui.r32_ref.setText('-')
+            self.ui.r33_ref.setText('-')
+            self.ui.t1_ref.setText('-')
+            self.ui.t2_ref.setText('-')
+            self.ui.t3_ref.setText('-')
 
     def setup(self):
         self.ui = ToolsWindow.Ui_ToolsWindow()
         self.ui.setupUi(self)
+
+    # TODO: On close set a flag to false
 
     # def initialize(self):
     #     pass
@@ -50,6 +102,7 @@ class myMainWindow(QMainWindow):
         self.setup(size)
         self.paused = False
         self.size = size
+        self.cam_pos = None
         self.toolsWindow = myToolsWindow(self)
         self.toolsWindow.setup()
         self.tracker = None
@@ -78,33 +131,45 @@ class myMainWindow(QMainWindow):
             if self.tracker is None:
                 # settings_aurora = { "tracker type": "aurora", "ports to use" : [5]}
                 settings_aurora = { "tracker type": "aurora"}
-                try:
-                    self.tracker = NDITracker(settings_aurora)
-                except:
-                    msg = 'Please check the following:\n' \
-                            '  1) Is an NDI device connected to your computer?\n' \
-                            '  2) Is the NDI device switched on?\n' \
-                            '  3) Do you have sufficient privilege to connect to the device?\n' \
-                            '     (e.g. on Linux are you part of the \"dialout\" group?)'
-                    QMessageBox.critical(self, 'Tracker Connection Failed', f'Can not connect to the tracker!\n{msg}')
-                    return
+                # try:
+                #     self.tracker = NDITracker(settings_aurora)
+                # except:
+                #     msg = 'Please check the following:\n' \
+                #             '  1) Is an NDI device connected to your computer?\n' \
+                #             '  2) Is the NDI device switched on?\n' \
+                #             '  3) Do you have sufficient privilege to connect to the device?\n' \
+                #             '     (e.g. on Linux are you part of the \"dialout\" group?)'
+                #     QMessageBox.critical(self, 'Tracker Connection Failed', f'Can not connect to the tracker!\n{msg}')
+                #     return
+
             # self.tracker.start_tracking()
             # tool_desc = self.tracker.get_tool_descriptions()
-            # TODO: Infinite while loop here
-            # data = tracker.get_frame()
-            # Data is numpy.ndarray(4x4)
-            # self.refData = data[3][0]  # Ref must be attached to the 1st port
-            # self.toolData = data[3][1]  # Tool must be attached to the 2nd port
+
+            self.ui.btn_Connect.setText('Disconnect Tracker')
+            self.ui.btn_ToolsWindow.setEnabled(True)
             self.tracker_connected = True
-            self.ui.btn_Connect.setText('Disconnect')
+
+            while True:
+                # data = tracker.get_frame()
+                # Data is numpy.ndarray(4x4)
+                # self.refData = data[3][0]  # Ref must be attached to the 1st port
+                # self.toolData = data[3][1]  # Tool must be attached to the 2nd port
+                self.toolsWindow.setData(self.cam_pos, self.cam_pos)
+
+                time.sleep(0.03)
+                QApplication.processEvents()
         else:
+            self.disconnectTracker()
+
+    def disconnectTracker(self):
             # self.tracker.stop_tracking()
             # self.tracker.close()
             self.tracker_connected = False
-            self.ui.btn_Connect.setText('Connect')
+            self.ui.btn_Connect.setText('Connect Tracker')
+            self.ui.btn_ToolsWindow.setEnabled(False)
 
     def showToolsWindow(self):
-        self.toolsWindow.setData('1.1', '2.2')
+        self.toolsWindow.setData(self.cam_pos, self.cam_pos)
         self.toolsWindow.show()
 
     def openFileDialog(self):
@@ -346,7 +411,7 @@ class myMainWindow(QMainWindow):
             return
 
         pNum = self.ui.slider_Frames.value()
-        cam_pos = self.registeredPoints[:,:,pNum]
+        self.cam_pos = self.registeredPoints[:,:,pNum]
 
         # cam_pos_t = vtk.vtkMatrix4x4()
         # cam_pos_t.DeepCopy(cam_pos.ravel()) 
@@ -356,10 +421,10 @@ class myMainWindow(QMainWindow):
         # vtk.vtkMatrix4x4.Multiply4x4(flipTrans.GetMatrix(), cam_pos_t, newMat)
         # self.vtk_widget_3D.setCamera(newMat)
 
-        self.vtk_widget_3D.setCamera(cam_pos)
-        axial_slice = int((cam_pos[2,3] - self.origin[2]) / self.spacing[2])
-        coronal_slice = int((cam_pos[1,3] - self.origin[1]) / self.spacing[1])
-        sagittal_slice = int((cam_pos[0,3] - self.origin[0]) / self.spacing[0])
+        self.vtk_widget_3D.setCamera(self.cam_pos)
+        axial_slice = int((self.cam_pos[2,3] - self.origin[2]) / self.spacing[2])
+        coronal_slice = int((self.cam_pos[1,3] - self.origin[1]) / self.spacing[1])
+        sagittal_slice = int((self.cam_pos[0,3] - self.origin[0]) / self.spacing[0])
         self.vtk_widget_axial.setSlice(axial_slice, self.dims)
         self.vtk_widget_coronal.setSlice(coronal_slice, self.dims)
         self.vtk_widget_sagittal.setSlice(sagittal_slice, self.dims)
@@ -368,9 +433,9 @@ class myMainWindow(QMainWindow):
         self.ui.Slider_coronal.setValue(coronal_slice)
         self.ui.Slider_sagittal.setValue(sagittal_slice)
 
-        self.vtk_widget_axial.SetCrossPosition(cam_pos[0,3], cam_pos[1,3])
-        self.vtk_widget_coronal.SetCrossPosition(cam_pos[0,3], cam_pos[2,3]-140.5)
-        self.vtk_widget_sagittal.SetCrossPosition(cam_pos[1,3], cam_pos[2,3]-140.5)
+        self.vtk_widget_axial.SetCrossPosition(self.cam_pos[0,3], self.cam_pos[1,3])
+        self.vtk_widget_coronal.SetCrossPosition(self.cam_pos[0,3], self.cam_pos[2,3]-140.5)
+        self.vtk_widget_sagittal.SetCrossPosition(self.cam_pos[1,3], self.cam_pos[2,3]-140.5)
 
 
         self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
@@ -387,17 +452,17 @@ class myMainWindow(QMainWindow):
             if self.paused:
                 break
 
-            cam_pos = self.registeredPoints[:,:,i]
+            self.cam_pos = self.registeredPoints[:,:,i]
 
             # cam_pos_t = vtk.vtkMatrix4x4()
-            # cam_pos_t.DeepCopy(cam_pos.ravel()) 
+            # cam_pos_t.DeepCopy(self.cam_pos.ravel()) 
             # flipTrans = vtk.vtkTransform()
             # flipTrans.Scale(-1,-1,1)
             # newMat = vtk.vtkMatrix4x4()
             # vtk.vtkMatrix4x4.Multiply4x4(flipTrans.GetMatrix(), cam_pos_t, newMat)
             # self.vtk_widget_3D.setCamera(newMat)
 
-            # self.vtk_widget_3D.setCamera(cam_pos)
+            # self.vtk_widget_3D.setCamera(self.cam_pos)
 
             self.ui.slider_Frames.setValue(i)
             self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
@@ -493,4 +558,7 @@ if __name__ == "__main__":
     main_win.showMaximized()
     # main_win.show()
     # main_win.initialize()
+
+    if main_win.tracker_connected == True:
+        main_win.disconnectTracker()
     sys.exit(app.exec())

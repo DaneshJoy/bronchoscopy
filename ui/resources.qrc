@@ -4,6 +4,7 @@
   </qresource>
   <qresource prefix="icon">
     <file>icons/trajectory.png</file>
+    <file>icons/Tools_info.png</file>
     <file>icons/exit.png</file>
     <file>icons/Open.png</file>
     <file>icons/resetViews.png</file>
