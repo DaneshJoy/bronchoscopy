@@ -29,7 +29,7 @@ class myToolsWindow(QDialog):
 
     def setData(self, refData, toolData):
         if np.asarray(toolData).any():
-            self.ui.r11_tool.setText('-')
+            self.ui.r11_tool.setText(str(round(toolData[0,0], 3)))
             self.ui.r12_tool.setText(str(round(toolData[0,1], 3)))
             self.ui.r13_tool.setText(str(round(toolData[0,2], 3)))
             self.ui.r21_tool.setText(str(round(toolData[1,0], 3)))
@@ -93,6 +93,9 @@ class myToolsWindow(QDialog):
 class myMainWindow(QMainWindow):
     def __init__(self, size):
         super().__init__()
+        self.trackerReady = True
+        self.captureCoordinates = False
+
         self.vtk_widget_3D = None
         self.vtk_widget_axial = None
         self.vtk_widget_coronal = None
@@ -128,33 +131,49 @@ class myMainWindow(QMainWindow):
 
     def connectTracker(self):
         if self.tracker_connected == False:
+            self.ui.btn_Connect.setText('Connecting...')
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
             if self.tracker is None:
                 # settings_aurora = { "tracker type": "aurora", "ports to use" : [5]}
                 settings_aurora = { "tracker type": "aurora"}
-                # try:
-                #     self.tracker = NDITracker(settings_aurora)
-                # except:
-                #     msg = 'Please check the following:\n' \
-                #             '  1) Is an NDI device connected to your computer?\n' \
-                #             '  2) Is the NDI device switched on?\n' \
-                #             '  3) Do you have sufficient privilege to connect to the device?\n' \
-                #             '     (e.g. on Linux are you part of the \"dialout\" group?)'
-                #     QMessageBox.critical(self, 'Tracker Connection Failed', f'Can not connect to the tracker!\n{msg}')
-                #     return
+                if self.trackerReady:
+                    try:
+                        self.tracker = NDITracker(settings_aurora)
+                        self.captureCoordinates = True
+                    except:
+                        msg = 'Please check the following:\n' \
+                                '  1) Is an NDI device connected to your computer?\n' \
+                                '  2) Is the NDI device switched on?\n' \
+                                '  3) Do you have sufficient privilege to connect to the device?\n' \
+                                '     (e.g. on Linux are you part of the \"dialout\" group?)'
+                        QMessageBox.critical(self, 'Tracker Connection Failed', f'Can not connect to the tracker!\n{msg}')
+                        return
 
-            # self.tracker.start_tracking()
-            # tool_desc = self.tracker.get_tool_descriptions()
+                    self.tracker.start_tracking()
+                    tool_desc = self.tracker.get_tool_descriptions()
+
+                    
 
             self.ui.btn_Connect.setText('Disconnect Tracker')
             self.ui.btn_ToolsWindow.setEnabled(True)
             self.tracker_connected = True
 
-            while True:
-                # data = tracker.get_frame()
-                # Data is numpy.ndarray(4x4)
-                # self.refData = data[3][0]  # Ref must be attached to the 1st port
-                # self.toolData = data[3][1]  # Tool must be attached to the 2nd port
-                self.toolsWindow.setData(self.cam_pos, self.cam_pos)
+            QApplication.restoreOverrideCursor()
+
+            while self.captureCoordinates:
+                if self.trackerReady:
+                    data = self.tracker.get_frame()
+                    # Data is numpy.ndarray(4x4)
+                    self.refData = data[3][1]  # Ref must be attached to the 1st port
+                    self.toolData = data[3][0]  # Tool must be attached to the 2nd port
+                    if np.isnan(self.toolData.sum()) or np.isnan(self.refData.sum()):
+                        # TODO: Show some messages or info
+                        continue
+                    self.showToolOnViews(self.toolData)
+                    self.toolsWindow.setData(self.refData, self.toolData)
+                else:
+                    self.toolsWindow.setData(self.cam_pos, self.cam_pos)
 
                 time.sleep(0.03)
                 QApplication.processEvents()
@@ -162,9 +181,10 @@ class myMainWindow(QMainWindow):
             self.disconnectTracker()
 
     def disconnectTracker(self):
-            # self.tracker.stop_tracking()
-            # self.tracker.close()
+            self.tracker.stop_tracking()
+            self.tracker.close()
             self.tracker_connected = False
+            self.captureCoordinates = False
             self.ui.btn_Connect.setText('Connect Tracker')
             self.ui.btn_ToolsWindow.setEnabled(False)
 
@@ -421,10 +441,15 @@ class myMainWindow(QMainWindow):
         # vtk.vtkMatrix4x4.Multiply4x4(flipTrans.GetMatrix(), cam_pos_t, newMat)
         # self.vtk_widget_3D.setCamera(newMat)
 
-        self.vtk_widget_3D.setCamera(self.cam_pos)
-        axial_slice = int((self.cam_pos[2,3] - self.origin[2]) / self.spacing[2])
-        coronal_slice = int((self.cam_pos[1,3] - self.origin[1]) / self.spacing[1])
-        sagittal_slice = int((self.cam_pos[0,3] - self.origin[0]) / self.spacing[0])
+        showToolOnViews(self.cam_pos)
+
+        self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
+
+    def showToolOnViews(self, toolMatrix):
+        self.vtk_widget_3D.setCamera(toolMatrix)
+        axial_slice = int((toolMatrix[2,3] - self.origin[2]) / self.spacing[2])
+        coronal_slice = int((toolMatrix[1,3] - self.origin[1]) / self.spacing[1])
+        sagittal_slice = int((toolMatrix[0,3] - self.origin[0]) / self.spacing[0])
         self.vtk_widget_axial.setSlice(axial_slice, self.dims)
         self.vtk_widget_coronal.setSlice(coronal_slice, self.dims)
         self.vtk_widget_sagittal.setSlice(sagittal_slice, self.dims)
@@ -433,12 +458,9 @@ class myMainWindow(QMainWindow):
         self.ui.Slider_coronal.setValue(coronal_slice)
         self.ui.Slider_sagittal.setValue(sagittal_slice)
 
-        self.vtk_widget_axial.SetCrossPosition(self.cam_pos[0,3], self.cam_pos[1,3])
-        self.vtk_widget_coronal.SetCrossPosition(self.cam_pos[0,3], self.cam_pos[2,3]-140.5)
-        self.vtk_widget_sagittal.SetCrossPosition(self.cam_pos[1,3], self.cam_pos[2,3]-140.5)
-
-
-        self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
+        self.vtk_widget_axial.SetCrossPosition(toolMatrix[0,3], toolMatrix[1,3])
+        self.vtk_widget_coronal.SetCrossPosition(toolMatrix[0,3], toolMatrix[2,3]-140.5)
+        self.vtk_widget_sagittal.SetCrossPosition(toolMatrix[1,3], toolMatrix[2,3]-140.5)
 
     def playCam(self, points):
         # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
