@@ -768,7 +768,8 @@ class QVtkViewer2D(QFrame):
         self.lineActor.SetMapper(mapper)
         self.ren.AddActor2D(self.lineActor)
 
-    def setSlice(self, sliceNumber, dims):
+    # def setSlice(self, sliceNumber, dims):
+    def setSlice(self, sliceNumber):
         # self.ren.RemoveActor(self.lineActor)
         # self.drawLine(sliceNumber, dims)
 

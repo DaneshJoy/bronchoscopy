@@ -15,7 +15,7 @@ import numpy as np
 import time
 from scipy.io import loadmat
 import fix_qt_import_error
-from PyQt5.Qt import QApplication, QMainWindow, QDialog, QColor, Qt
+from PyQt5.Qt import QApplication, QMainWindow, QDialog, QColor, Qt, QIcon
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog
 from PyQt5.QtGui import QPalette
@@ -93,8 +93,11 @@ class myToolsWindow(QDialog):
 class myMainWindow(QMainWindow):
     def __init__(self, size):
         super().__init__()
-        self.trackerReady = True
+        self.trackerReady = False
         self.captureCoordinates = False
+
+        self.trackerRawCoords_ref = []
+        self.trackerRawCoords_tool = []
 
         self.vtk_widget_3D = None
         self.vtk_widget_axial = None
@@ -117,7 +120,7 @@ class myMainWindow(QMainWindow):
         self.ui.Slider_coronal.valueChanged.connect(self.coronalChanged)
         self.ui.Slider_sagittal.valueChanged.connect(self.sagittalChanged)
 
-        self.ui.btn_LoadPoints.clicked.connect(self.readRegisteredPoints)
+        self.ui.btn_LoadPoints.clicked.connect(self.readPoints)
         self.ui.checkBox_showPoints.stateChanged.connect(self.showHidePoints)
         self.ui.btn_playCam.clicked.connect(self.playCam)
         self.ui.btn_pauseCam.clicked.connect(self.pauseCam)
@@ -153,11 +156,11 @@ class myMainWindow(QMainWindow):
                     self.tracker.start_tracking()
                     tool_desc = self.tracker.get_tool_descriptions()
 
-                    
-
             self.ui.btn_Connect.setText('Disconnect Tracker')
             self.ui.btn_ToolsWindow.setEnabled(True)
             self.tracker_connected = True
+            icon = QIcon(":/icon/icons/tracker_connected.png")
+            self.ui.btn_Connect.setIcon(icon)
 
             QApplication.restoreOverrideCursor()
 
@@ -170,6 +173,9 @@ class myMainWindow(QMainWindow):
                     if np.isnan(self.toolData.sum()) or np.isnan(self.refData.sum()):
                         # TODO: Show some messages or info
                         continue
+                    
+                    self.trackerRawCoords_ref.append(self.refData) 
+                    self.trackerRawCoords_tool.append(self.toolData)    
                     self.showToolOnViews(self.toolData)
                     self.toolsWindow.setData(self.refData, self.toolData)
                 else:
@@ -181,12 +187,18 @@ class myMainWindow(QMainWindow):
             self.disconnectTracker()
 
     def disconnectTracker(self):
+        if self.trackerReady:
             self.tracker.stop_tracking()
             self.tracker.close()
-            self.tracker_connected = False
-            self.captureCoordinates = False
-            self.ui.btn_Connect.setText('Connect Tracker')
-            self.ui.btn_ToolsWindow.setEnabled(False)
+
+            np.save('trackerRawCoords_ref', self.trackerRawCoords_ref)
+            np.save('trackerRawCoords_tool', self.trackerRawCoords_tool)
+        self.tracker_connected = False
+        self.captureCoordinates = False
+        self.ui.btn_Connect.setText('Connect Tracker')
+        self.ui.btn_ToolsWindow.setEnabled(False)
+        icon = QIcon(":/icon/icons/tracker_disconnected.png")
+        self.ui.btn_Connect.setIcon(icon)
 
     def showToolsWindow(self):
         self.toolsWindow.setData(self.cam_pos, self.cam_pos)
@@ -195,7 +207,7 @@ class myMainWindow(QMainWindow):
     def openFileDialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, filetype = QFileDialog.getOpenFileName(self, "Open Medical Image", "", "Medical Images (*.nii *.nii.gz *.mhd *.mha);;Nifti (*.nii *.nii.gz);;Meta (*.mhd *.mha);;All Files (*)", options=options)
+        fileName, _ = QFileDialog.getOpenFileName(self, "Open Medical Image", "", "Medical Images (*.nii *.nii.gz *.mhd *.mha);;Nifti (*.nii *.nii.gz);;Meta (*.mhd *.mha);;All Files (*)", options=options)
         # QMessageBox.information(self, 'Test Message', fileName)
         if fileName:
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -347,17 +359,18 @@ class myMainWindow(QMainWindow):
         self.ui.Slider_sagittal.setValue(dims[0]//2)
 
     def axialChanged(self):
-        self.vtk_widget_axial.setSlice(self.ui.Slider_axial.value(), self.dims)
+        # self.vtk_widget_axial.setSlice(self.ui.Slider_axial.value(), self.dims)
+        self.vtk_widget_axial.setSlice(self.ui.Slider_axial.value())
         self.vtk_widget_axial.interactor.Initialize()
         return
 
     def coronalChanged(self):
-        self.vtk_widget_coronal.setSlice(self.ui.Slider_coronal.value(), self.dims)
+        self.vtk_widget_coronal.setSlice(self.ui.Slider_coronal.value())
         self.vtk_widget_coronal.interactor.Initialize()
         return
 
     def sagittalChanged(self):
-        self.vtk_widget_sagittal.setSlice(self.ui.Slider_sagittal.value(), self.dims)
+        self.vtk_widget_sagittal.setSlice(self.ui.Slider_sagittal.value())
         self.vtk_widget_sagittal.interactor.Initialize()
         return
     
@@ -373,17 +386,31 @@ class myMainWindow(QMainWindow):
         self.ui.SubPanel_coronal.show()
         self.ui.SubPanel_sagittal.show()
 
-    def readRegisteredPoints(self):
+    def applyRegistration(self, toolMat, refMat, regMat):
+        # TODO: Calculate tool coords in ref space and apply registration matrix
+        # tool2ref = inv(inv(refMat) * toolMat)
+        # registeredTool = inv(regMat) * tool2ref
+        pass
+
+    def readPoints(self):
         self.registeredPoints = None
         self.RemovePoints()
         from vtk.util.numpy_support import vtk_to_numpy
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, "Open Matlab file", "", "Matlab (*.mat);;All Files (*)", options=options)
+        fileName, _ = QFileDialog.getOpenFileName(self, "Open Matlab file", "", "All Data Types (*.mat *.npy *.npz);;Matlab (*.mat);;Numpy (*.npy *.npz);;All Files (*)", options=options)
+
         if fileName:
-            matFile = loadmat(fileName)
-            # self.registeredPoints = matFile[list(matFile.keys())[-1]]
-            self.registeredPoints = matFile['EMT_cor']
+            extension = os.path.splitext(fileName)[1].lower()
+
+            if 'mat' in extension:
+                matFile = loadmat(fileName)
+                # self.registeredPoints = matFile[list(matFile.keys())[-1]]
+                self.registeredPoints = matFile['EMT_cor']
+            elif 'np' in extension:
+                self.registeredPoints = np.swapaxes(np.load(fileName), 0, 2)
+                self.registeredPoints = np.swapaxes(self.registeredPoints, 0, 1)
+
             numPoints = self.registeredPoints.shape[-1]
 
             # Flip/Rotate points to match the orientation of the image
@@ -441,7 +468,7 @@ class myMainWindow(QMainWindow):
         # vtk.vtkMatrix4x4.Multiply4x4(flipTrans.GetMatrix(), cam_pos_t, newMat)
         # self.vtk_widget_3D.setCamera(newMat)
 
-        showToolOnViews(self.cam_pos)
+        self.showToolOnViews(self.cam_pos)
 
         self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
 
@@ -450,9 +477,10 @@ class myMainWindow(QMainWindow):
         axial_slice = int((toolMatrix[2,3] - self.origin[2]) / self.spacing[2])
         coronal_slice = int((toolMatrix[1,3] - self.origin[1]) / self.spacing[1])
         sagittal_slice = int((toolMatrix[0,3] - self.origin[0]) / self.spacing[0])
-        self.vtk_widget_axial.setSlice(axial_slice, self.dims)
-        self.vtk_widget_coronal.setSlice(coronal_slice, self.dims)
-        self.vtk_widget_sagittal.setSlice(sagittal_slice, self.dims)
+        # self.vtk_widget_axial.setSlice(axial_slice, self.dims)
+        self.vtk_widget_axial.setSlice(axial_slice)
+        self.vtk_widget_coronal.setSlice(coronal_slice)
+        self.vtk_widget_sagittal.setSlice(sagittal_slice)
 
         self.ui.Slider_axial.setValue(axial_slice)
         self.ui.Slider_coronal.setValue(coronal_slice)
@@ -506,6 +534,8 @@ class myMainWindow(QMainWindow):
         self.vtk_widget_axial.ResetView()
         self.vtk_widget_coronal.ResetView()
         self.vtk_widget_sagittal.ResetView()
+
+        self.updateSubPanels(self.dims)
 
     def ResetVB(self):
         self.RemovePoints()

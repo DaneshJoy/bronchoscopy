@@ -5,8 +5,10 @@
   <qresource prefix="icon">
     <file>icons/trajectory.png</file>
     <file>icons/Tools_info.png</file>
+    <file>icons/tracker_connected.png</file>
     <file>icons/exit.png</file>
     <file>icons/Open.png</file>
+    <file>icons/tracker_disconnected.png</file>
     <file>icons/resetViews.png</file>
     <file>icons/reset.png</file>
     <file>icons/pause.png</file>

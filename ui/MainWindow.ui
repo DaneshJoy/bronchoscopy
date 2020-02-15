@@ -754,7 +754,7 @@ border-color: rgb(114, 171, 171);</string>
              </property>
              <property name="icon">
               <iconset resource="resources.qrc">
-               <normaloff>:/icon/icons/reset.png</normaloff>:/icon/icons/reset.png</iconset>
+               <normaloff>:/icon/icons/tracker_disconnected.png</normaloff>:/icon/icons/tracker_disconnected.png</iconset>
              </property>
              <property name="iconSize">
               <size>
