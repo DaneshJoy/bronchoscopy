@@ -8,9 +8,9 @@ class QVtkViewer3D(QFrame):
     def __init__(self, parent, size):
         super().__init__(parent)
 
-        colors = vtk.vtkNamedColors()
-        colors.SetColor("SkinColor", [255, 125, 64, 255])
-        colors.SetColor("BkgColor", [51, 77, 102, 255])
+        self.colors = vtk.vtkNamedColors()
+        self.colors.SetColor("SkinColor", [204, 153, 51, 255]) # rgba
+        self.colors.SetColor("BkgColor", [51, 77, 102, 255])
         self.axes = vtk.vtkOrientationMarkerWidget()
         # Make the actual QtWidget a child so that it can be reparented
         self.interactor = QVTKRenderWindowInteractor(self)
@@ -48,7 +48,16 @@ class QVtkViewer3D(QFrame):
         # Isosurface
         self.surfaceExtractor = vtk.vtkMarchingCubes()
         self.surfaceExtractor.SetInputConnection(reader.GetOutputPort())
-        self.surfaceExtractor.SetValue(-600, -500)
+        ''' 
+        Marching Cubes is used to build a surface from iso-values field
+        It thresholds the data into binary information,
+        such that if an iso-value is above it gets 1 and 0 otherwise.
+        Finally, it computes the surface interpolating triangles near the iso-value.
+        SetValue(i, isoVal) is used to select which iso-value you want to threshold for the Marching Cubes algorithm.
+        i = contour number and isoVal = the iso-value representing the contour you looking for.
+        You can build multiple surfaces by setting different contour number i, for different iso-value.
+        '''
+        self.surfaceExtractor.SetValue(0, -600)
 
         # Mapper
         surfaceMapper = vtk.vtkPolyDataMapper()
@@ -59,11 +68,11 @@ class QVtkViewer3D(QFrame):
         # Actor
         self.surface = vtk.vtkActor()
         self.surface.SetMapper(surfaceMapper)
-        self.surface.GetProperty().SetDiffuseColor(0.8, 0.6, 0.2)
+        # self.surface.GetProperty().SetDiffuseColor(0.8, 0.6, 0.2)
         self.surface.GetProperty().SetAmbient(0.1)
         # self.surface.GetProperty().SetOpacity(0.9)
         # self.surface.GetProperty().SetDiffuseColor(1, .49, .25)
-        # self.surface.GetProperty().SetDiffuseColor(colors.GetColor3D("SkinColor"))
+        self.surface.GetProperty().SetDiffuseColor(self.colors.GetColor3d("SkinColor"))
         self.surface.GetProperty().SetSpecular(0.7)
         self.surface.GetProperty().SetSpecularPower(40)
         self.surface.GetProperty().SetDiffuse(0.7)
@@ -404,6 +413,9 @@ class QVtkViewer2D(QFrame):
     def __init__(self, parent, size, planeType):
         super().__init__(parent)
 
+        self.colors = vtk.vtkNamedColors()
+        self.colors.SetColor("BkgColor", [0, 0, 0, 255])
+
         # Make the actual QtWidget a child so that it can be reparented
         self.interactor = QVTKRenderWindowInteractor(self)
         self.layout = QtWidgets.QVBoxLayout()
@@ -430,8 +442,8 @@ class QVtkViewer2D(QFrame):
         # self.interactor.SetInteractorStyle(MyInteractorStyle())
         self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleImage())
 
-        self.ren.SetBackground(0, 0, 0)
-        # ren.SetBackground(colors.GetColor3D("BkgColor"))
+        # self.ren.SetBackground(0, 0, 0)
+        self.ren.SetBackground(self.colors.GetColor3d("BkgColor"))
         self.interactor.Initialize()
 
         self.actor = vtk.vtkImageActor()
@@ -499,7 +511,8 @@ class QVtkViewer2D(QFrame):
 
         # Create a greyscale lookup table
         grLut = vtk.vtkLookupTable()
-        grLut.SetTableRange(0, 1000)  # image intensity range
+        # grLut.SetTableRange(0, 1000)  # image intensity range
+        grLut.SetTableRange(-1300, 100)  # image intensity range
         grLut.SetValueRange(0, 1)  # from black to white
         grLut.SetSaturationRange(0, 0)  # no color saturation
         grLut.SetRampToLinear()

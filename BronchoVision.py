@@ -105,6 +105,8 @@ class myMainWindow(QMainWindow):
         self.vtk_widget_sagittal = None
         self.ui = None
         self.registeredPoints = None
+        self.toolCoords = None
+        self.refCoords = None
         self.setup(size)
         self.paused = False
         self.size = size
@@ -398,18 +400,36 @@ class myMainWindow(QMainWindow):
         from vtk.util.numpy_support import vtk_to_numpy
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, "Open Matlab file", "", "All Data Types (*.mat *.npy *.npz);;Matlab (*.mat);;Numpy (*.npy *.npz);;All Files (*)", options=options)
+        fileName, _ = QFileDialog.getOpenFileName(self, "Read Points from File", "", "All Data Types (*.mat *.npy *.npz);;Matlab (*.mat);;Numpy (*.npy *.npz);;All Files (*)", options=options)
 
         if fileName:
             extension = os.path.splitext(fileName)[1].lower()
 
             if 'mat' in extension:
                 matFile = loadmat(fileName)
-                # self.registeredPoints = matFile[list(matFile.keys())[-1]]
-                self.registeredPoints = matFile['EMT_cor']
+                # self.registeredPoints = matFile['EMT_cor']
+                self.registeredPoints = matFile[list(matFile)[-1]]
             elif 'np' in extension:
-                self.registeredPoints = np.swapaxes(np.load(fileName), 0, 2)
-                self.registeredPoints = np.swapaxes(self.registeredPoints, 0, 1)
+                self.toolCoords = np.load(fileName)
+                self.registeredPoints = np.zeros_like(self.toolCoords)
+                self.registeredPoints = np.swapaxes(self.registeredPoints, 0, 2)
+                # self.toolCoords = np.swapaxes(self.toolCoords, 0, 2)
+                # self.toolCoords = np.swapaxes(self.toolCoords, 0, 1)
+
+                # self.toolCoords = np.swapaxes(self.toolCoords, 1, 2)
+
+                self.regMat = np.array([[0.84, 0.09, -0.53, -35.67],
+                                        [-0.51, -0.14, -0.85, -202.98],
+                                        [-0.15, 0.99, -0.07, -22.7],
+                                        [0, 0, 0, 1]])
+                regMat_inv = np.linalg.inv(self.regMat)
+                ii = 0
+                for ref, tool in zip(self.refCoords, self.toolCoords):
+                    ref_inv = np.linalg.inv(ref)
+                    tool2ref = np.dot(ref_inv, tool)
+                    reg = np.dot(regMat_inv, tool2ref)
+                    self.registeredPoints[:,:,ii] = reg
+                    ii += 1
 
             numPoints = self.registeredPoints.shape[-1]
 
@@ -534,8 +554,23 @@ class myMainWindow(QMainWindow):
         self.vtk_widget_axial.ResetView()
         self.vtk_widget_coronal.ResetView()
         self.vtk_widget_sagittal.ResetView()
-
         self.updateSubPanels(self.dims)
+
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(self, "Read Points from File", "", "All Data Types (*.mat *.npy *.npz);;Matlab (*.mat);;Numpy (*.npy *.npz);;All Files (*)", options=options)
+
+        if fileName:
+            extension = os.path.splitext(fileName)[1].lower()
+
+            if 'mat' in extension:
+                matFile = loadmat(fileName)
+                # self.registeredPoints = matFile['EMT_cor']
+                self.refCoords = matFile[list(matFile)[-1]]
+            elif 'np' in extension:
+                self.refCoords = np.load(fileName)
+                # self.refCoords = np.swapaxes(self.refCoords, 1, 2)
+
 
     def ResetVB(self):
         self.RemovePoints()
