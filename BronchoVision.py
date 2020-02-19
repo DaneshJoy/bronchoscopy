@@ -101,9 +101,7 @@ class myMainWindow(QMainWindow):
 
         self.vtk_widget_3D = None
         self.vtk_widget_3D_2 = None
-        self.vtk_widget_axial = None
-        self.vtk_widget_coronal = None
-        self.vtk_widget_sagittal = None
+        self.vtk_widget_2D = None
         self.ui = None
         self.registeredPoints = None
         self.toolCoords = None
@@ -119,9 +117,7 @@ class myMainWindow(QMainWindow):
 
         self.ui.actionLoad_Image.triggered.connect(self.openFileDialog)
         self.ui.actionLoad_DICOM.triggered.connect(self.openDirDialog)
-        self.ui.Slider_axial.valueChanged.connect(self.axialChanged)
-        self.ui.Slider_coronal.valueChanged.connect(self.coronalChanged)
-        self.ui.Slider_sagittal.valueChanged.connect(self.sagittalChanged)
+        self.ui.Slider_2D.valueChanged.connect(self.sliderChanged)
 
         self.ui.btn_LoadPoints.clicked.connect(self.readPoints)
         self.ui.checkBox_showPoints.stateChanged.connect(self.showHidePoints)
@@ -131,6 +127,7 @@ class myMainWindow(QMainWindow):
         self.ui.slider_Frames.valueChanged.connect(self.frameChanged)
         self.ui.btn_ResetViewports.clicked.connect(self.ResetViewports)
         self.ui.btn_ResetVB.clicked.connect(self.ResetVB)
+        self.ui.comboBox_2DView.currentIndexChanged.connect(self.change2DView)
 
         self.ui.btn_Connect.clicked.connect(self.connectTracker)
         self.ui.btn_ToolsWindow.clicked.connect(self.showToolsWindow)
@@ -264,7 +261,8 @@ class myMainWindow(QMainWindow):
                     imageInfo = vtk.vtkImageChangeInformation()
                     imageInfo.SetOutputOrigin(self.origin)
                     imageInfo.SetInputConnection(reader.GetOutputPort())
-                    self.showImages(imageInfo, self.dims)
+                    self.imgReader = imageInfo
+                    self.showImages(self.imgReader, self.dims)
                 except:
                     QMessageBox.warning(self, 'Wrong Header', 'Can not read Image Origin from header!\nImage position might be wrong')
             else:
@@ -273,8 +271,8 @@ class myMainWindow(QMainWindow):
                 # imageInfo.SetOutputOrigin(self.origin)
                 # imageInfo.SetInputConnection(reader.GetOutputPort())
                 # self.showImages(imageInfo, self.dims)
-
-                self.showImages(reader, self.dims)
+                self.imgReader = reader
+                self.showImages(self.imgReader, self.dims)
 
             self.updateSubPanels(self.dims)
             QApplication.restoreOverrideCursor()
@@ -333,22 +331,19 @@ class myMainWindow(QMainWindow):
             except:
                 QMessageBox.warning(self, 'Wrong Header', 'Can not read image Origin from header!\nImage position might be wrong')
 
-            self.showImages(imageInfo, self.dims)
+            self.imgReader = imageInfo
+            self.showImages(self.imgReader, self.dims)
             self.updateSubPanels(self.dims)
             QApplication.restoreOverrideCursor()
 
     def showImages(self, reader, dims):
         self.vtk_widget_3D.RemoveImage()
-        # self.vtk_widget_3D_2.RemoveImage()
-        self.vtk_widget_axial.RemoveImage()
-        self.vtk_widget_coronal.RemoveImage()
-        self.vtk_widget_sagittal.RemoveImage()
+        self.vtk_widget_3D_2.RemoveImage()
+        self.vtk_widget_2D.RemoveImage()
 
         self.vtk_widget_3D.showImage(reader)
-        # self.vtk_widget_3D_2.showImage(reader)
-        self.vtk_widget_axial.showImage(reader, dims)
-        self.vtk_widget_coronal.showImage(reader, dims)
-        self.vtk_widget_sagittal.showImage(reader, dims)
+        self.vtk_widget_3D_2.showImage(reader)
+        self.vtk_widget_2D.showImage(reader, dims)
 
         self.ui.btn_LoadPoints.setEnabled(True)
         
@@ -356,40 +351,32 @@ class myMainWindow(QMainWindow):
         self.showSubPanels()
         # image = reader.GetOutput()
         # dims = image.GetDimensions()
-        self.ui.Slider_axial.setRange(0, dims[2]-1)
-        self.ui.Slider_coronal.setRange(0, dims[1]-1)
-        self.ui.Slider_sagittal.setRange(0, dims[0]-1)
-        self.ui.Slider_axial.setValue(dims[2]//2)
-        self.ui.Slider_coronal.setValue(dims[1]//2)
-        self.ui.Slider_sagittal.setValue(dims[0]//2)
+        if self.ui.comboBox_2DView.currentText() == 'Axial':
+            self.ui.Slider_2D.setRange(0, dims[2]-1)
+            self.ui.Slider_2D.setValue(dims[2]//2)
+        elif self.ui.comboBox_2DView.currentText() == 'Coronal':
+            self.ui.Slider_2D.setRange(0, dims[1]-1)
+            self.ui.Slider_2D.setValue(dims[1]//2)
+        else: # if self.ui.comboBox_2DView.currentText() == 'Sagittal':
+            self.ui.Slider_2D.setRange(0, dims[0]-1)
+            self.ui.Slider_2D.setValue(dims[0]//2)
 
-    def axialChanged(self):
-        # self.vtk_widget_axial.setSlice(self.ui.Slider_axial.value(), self.dims)
-        self.vtk_widget_axial.setSlice(self.ui.Slider_axial.value())
-        self.vtk_widget_axial.interactor.Initialize()
-        return
-
-    def coronalChanged(self):
-        self.vtk_widget_coronal.setSlice(self.ui.Slider_coronal.value())
-        self.vtk_widget_coronal.interactor.Initialize()
-        return
-
-    def sagittalChanged(self):
-        self.vtk_widget_sagittal.setSlice(self.ui.Slider_sagittal.value())
-        self.vtk_widget_sagittal.interactor.Initialize()
+    def sliderChanged(self):
+        self.vtk_widget_2D.setSlice(self.ui.Slider_2D.value())
+        self.vtk_widget_2D.interactor.Initialize()
         return
     
     def hideSubPanels(self):
         self.ui.SubPanel_3D.hide()
-        self.ui.SubPanel_axial.hide()
-        self.ui.SubPanel_coronal.hide()
-        self.ui.SubPanel_sagittal.hide()
+        self.ui.SubPanel_3D_2.hide()
+        self.ui.SubPanel_2D.hide()
+        self.ui.SubPanel_endoscope.hide()
 
     def showSubPanels(self):
         self.ui.SubPanel_3D.show()
-        self.ui.SubPanel_axial.show()
-        self.ui.SubPanel_coronal.show()
-        self.ui.SubPanel_sagittal.show()
+        self.ui.SubPanel_3D_2.show()
+        self.ui.SubPanel_2D.show()
+        self.ui.SubPanel_endoscope.show()
 
     def applyRegistration(self, toolMat, refMat, regMat):
         # TODO: Calculate tool coords in ref space and apply registration matrix
@@ -497,23 +484,26 @@ class myMainWindow(QMainWindow):
 
     def showToolOnViews(self, toolMatrix):
         self.vtk_widget_3D.setCamera(toolMatrix)
-        axial_slice = int((toolMatrix[2,3] - self.origin[2]) / self.spacing[2])
-        coronal_slice = int((toolMatrix[1,3] - self.origin[1]) / self.spacing[1])
-        sagittal_slice = int((toolMatrix[0,3] - self.origin[0]) / self.spacing[0])
-        # self.vtk_widget_axial.setSlice(axial_slice, self.dims)
-        self.vtk_widget_axial.setSlice(axial_slice)
-        self.vtk_widget_coronal.setSlice(coronal_slice)
-        self.vtk_widget_sagittal.setSlice(sagittal_slice)
 
-        self.ui.Slider_axial.setValue(axial_slice)
-        self.ui.Slider_coronal.setValue(coronal_slice)
-        self.ui.Slider_sagittal.setValue(sagittal_slice)
+        if self.ui.comboBox_2DView.currentText() == 'Axial':
+            axial_slice = int((toolMatrix[2,3] - self.origin[2]) / self.spacing[2])
+            self.vtk_widget_2D.setSlice(axial_slice)
+            self.ui.Slider_2D.setValue(axial_slice)
+        elif self.ui.comboBox_2DView.currentText() == 'Coronal':
+            coronal_slice = int((toolMatrix[1,3] - self.origin[1]) / self.spacing[1])
+            self.vtk_widget_2D.setSlice(coronal_slice)
+            self.ui.Slider_2D.setValue(coronal_slice)
+        else: # self.ui.comboBox_2DView.currentText() == 'Sagittal'
+            sagittal_slice = int((toolMatrix[0,3] - self.origin[0]) / self.spacing[0])
+            self.vtk_widget_2D.setSlice(sagittal_slice)
+            self.ui.Slider_2D.setValue(sagittal_slice)
 
-        # self.vtk_widget_axial.SetCrossPosition(toolMatrix[0,3], toolMatrix[1,3])
-        # self.vtk_widget_coronal.SetCrossPosition(toolMatrix[0,3], toolMatrix[2,3]-140.5)
-        # self.vtk_widget_sagittal.SetCrossPosition(toolMatrix[1,3], toolMatrix[2,3]-140.5)
-        self.vtk_widget_coronal.SetCrossPosition(toolMatrix[0,3], toolMatrix[2,3]+self.origin[1])
-        self.vtk_widget_sagittal.SetCrossPosition(toolMatrix[1,3], toolMatrix[2,3]+self.origin[0])
+        if self.ui.comboBox_2DView.currentText() == 'Axial':
+            self.vtk_widget_2D.SetCrossPosition(toolMatrix[0,3], toolMatrix[1,3])
+        elif self.ui.comboBox_2DView.currentText() == 'Coronal':
+            self.vtk_widget_2D.SetCrossPosition(toolMatrix[0,3], toolMatrix[2,3]+self.origin[1])
+        else: # if self.ui.comboBox_2DView.currentText() == 'Sagittal':
+            self.vtk_widget_2D.SetCrossPosition(toolMatrix[1,3], toolMatrix[2,3]+self.origin[0])
 
     def playCam(self, points):
         # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
@@ -554,12 +544,24 @@ class myMainWindow(QMainWindow):
         self.ui.btn_pauseCam.setEnabled(False)
         self.ui.btn_stopCam.setEnabled(False)
     
+    def change2DView(self):
+        self.vtk_widget_2D.ResetView()
+        # self.vtk_widget_2D.RemoveImage()
+        self.vtk_widget_2D.planeType = self.ui.comboBox_2DView.currentText()
+        self.vtk_widget_2D.showImage(self.imgReader, self.dims)
+        self.updateSubPanels(self.dims)
+
+        if not self.vtk_widget_2D.cross == None:
+            self.vtk_widget_2D.RemoveCross()
+            if self.trackerReady:
+                self.showToolOnViews(self.toolData)
+            else:
+                self.showToolOnViews(self.cam_pos)
+
     def ResetViewports(self):
         self.vtk_widget_3D.ResetView()
-        # self.vtk_widget_3D_2.ResetView()
-        self.vtk_widget_axial.ResetView()
-        self.vtk_widget_coronal.ResetView()
-        self.vtk_widget_sagittal.ResetView()
+        self.vtk_widget_3D_2.ResetView()
+        self.vtk_widget_2D.ResetView()
         self.updateSubPanels(self.dims)
 
         options = QFileDialog.Options()
@@ -582,9 +584,7 @@ class myMainWindow(QMainWindow):
         self.RemovePoints()
         self.registeredPoints = None
         self.stopCam()
-        self.vtk_widget_axial.RemoveCross()
-        self.vtk_widget_coronal.RemoveCross()
-        self.vtk_widget_sagittal.RemoveCross()
+        self.vtk_widget_2D.RemoveCross()
         self.ui.btn_ResetVB.setEnabled(False)
         self.ui.btn_playCam.setEnabled(False)
         self.ui.btn_pauseCam.setEnabled(False)
@@ -599,11 +599,9 @@ class myMainWindow(QMainWindow):
         # sizeObject = QtWidgets.QDesktopWidget().screenGeometry(-1)
         # self.resize(sizeObject.width(), sizeObject.height())
         # self.resize(size.width(), size.height())
-        self.vtk_widget_3D = QVtkViewer3D(self.ui.vtk_panel_3D, size)
-        # self.vtk_widget_3D_2 =  QVtkViewer3D(self.ui.vtk_panel_axial, size)
-        self.vtk_widget_axial = QVtkViewer2D(self.ui.vtk_panel_axial, size, 'axial')
-        self.vtk_widget_coronal = QVtkViewer2D(self.ui.vtk_panel_coronal, size, 'coronal')
-        self.vtk_widget_sagittal = QVtkViewer2D(self.ui.vtk_panel_sagittal, size, 'sagittal')
+        self.vtk_widget_3D = QVtkViewer3D(self.ui.vtk_panel_3D_1, size, 'Virtual')
+        self.vtk_widget_3D_2 =  QVtkViewer3D(self.ui.vtk_panel_3D_2, size, 'Prespective')
+        self.vtk_widget_2D = QVtkViewer2D(self.ui.vtk_panel_2D, size, self.ui.comboBox_2DView.currentText())
         self.hideSubPanels()
 
     def initialize(self):

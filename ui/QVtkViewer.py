@@ -5,9 +5,10 @@ from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 import numpy as np
 
 class QVtkViewer3D(QFrame):
-    def __init__(self, parent, size):
+    def __init__(self, parent, size, viewType):
         super().__init__(parent)
 
+        self.viewType = viewType
         self.colors = vtk.vtkNamedColors()
         self.colors.SetColor("SkinColor", [204, 153, 51, 255]) # rgba
         self.colors.SetColor("BkgColor", [51, 77, 102, 255])
@@ -26,6 +27,7 @@ class QVtkViewer3D(QFrame):
         self.initCamViewUp = (0, 0, 1)
         self.initCamPosition = (0, 1, 0)
         self.initCamFocalPoint = (0, 0, 0)
+
 
         self.points = None
 
@@ -82,8 +84,12 @@ class QVtkViewer3D(QFrame):
         # self.cam.SetViewUp(0,-1,0) # the camera Y axis points down
         # self.cam.SetPosition(0, 0, 0)
         # self.cam.SetFocalPoint(0, 0, 1) # look in the +Z direction of the camera coordinate system
-        cam.SetViewUp(0, 0, 1)
-        cam.SetPosition(0, 1, 0)
+        if self.viewType == 'Virtual':
+            cam.SetViewUp(0, 1, 0)
+            cam.SetPosition(0, 1, 0)
+        else:
+            cam.SetViewUp(1, 0, 1)
+            cam.SetPosition(0, 0, 1)
         cam.SetFocalPoint(0, 0, 0)
         cam.ComputeViewPlaneNormal()
         # cam.Azimuth(30.0)
@@ -527,7 +533,7 @@ class QVtkViewer2D(QFrame):
         # planeColors.Update()
         # self.actor.GetMapper().SetInputConnection(planeColors.GetOutputPort())
 
-        # if self.planeType == "axial":
+        # if self.planeType == "Axial":
         #     currSlice = dims[2]//2
         #     self.actor.SetDisplayExtent(0, dims[0], 0, dims[1], currSlice, currSlice)
         #     # cam.SetPosition(0, 0, -1)
@@ -535,7 +541,7 @@ class QVtkViewer2D(QFrame):
         #     cam.Pitch(180) # Flip U/D
         #     cam.OrthogonalizeViewUp()
         #     # cam.Dolly(2)
-        # elif self.planeType == "coronal":
+        # elif self.planeType == "Coronal":
         #     currSlice = dims[1]//2
         #     self.actor.SetDisplayExtent(0, dims[0], currSlice, currSlice, 0, dims[2])
         #     # cam.SetPosition(0, -1, 0)
@@ -544,7 +550,7 @@ class QVtkViewer2D(QFrame):
         #     cam.Elevation(90)
         #     cam.OrthogonalizeViewUp()
         #     # cam.Zoom(2)
-        # else:  # self.planeType == "sagittal"
+        # else:  # self.planeType == "Sagittal"
         #     currSlice = dims[0]//2
         #     self.actor.SetDisplayExtent(currSlice, currSlice, 0, dims[1], 0, dims[2])
         #     # cam.SetPosition(-1, 0, 0)
@@ -586,11 +592,11 @@ class QVtkViewer2D(QFrame):
         self.reslice = vtk.vtkImageReslice()
         self.reslice.SetInputConnection(reader.GetOutputPort())
         self.reslice.SetOutputDimensionality(2)
-        if self.planeType == "axial":
+        if self.planeType == "Axial":
             self.reslice.SetResliceAxes(axial)
-        elif self.planeType == "coronal":
+        elif self.planeType == "Coronal":
             self.reslice.SetResliceAxes(coronal)
-        else:  # self.planeType == "sagittal"
+        else:  # self.planeType == "Sagittal"
             self.reslice.SetResliceAxes(sagittal)
         self.reslice.SetInterpolationModeToCubic()
 
@@ -787,18 +793,18 @@ class QVtkViewer2D(QFrame):
         # self.drawLine(sliceNumber, dims)
 
         ''' ==================== Show Planes Method 1 ==================== '''
-        # if self.planeType == "axial":
+        # if self.planeType == "Axial":
         #     # sliceNumber = int(sliceNumber)
         #     self.actor.SetDisplayExtent(0, dims[0], 0, dims[1], sliceNumber, sliceNumber)
         #     # # cam.SetPosition(0, 0, -1)
         #     # cam.Roll(180)
-        # elif self.planeType == "coronal":
+        # elif self.planeType == "Coronal":
         #     # sliceNumber = int(sliceNumber)
         #     self.actor.SetDisplayExtent(0, dims[0], sliceNumber, sliceNumber, 0, dims[2])
         #     # # cam.SetPosition(0, -1, 0)
         #     # cam.Elevation(90)
         #     # cam.OrthogonalizeViewUp()
-        # else:  # self.planeType == "sagittal"
+        # else:  # self.planeType == "Sagittal"
         #     # sliceNumber = int(sliceNumber)
         #     self.actor.SetDisplayExtent(sliceNumber, sliceNumber, 0, dims[1], 0, dims[2])
         #     # # cam.SetPosition(-1, 0, 0)
@@ -810,13 +816,13 @@ class QVtkViewer2D(QFrame):
         self.reslice.Update()
         matrix = self.reslice.GetResliceAxes()
         # move the center point that we are slicing through
-        if self.planeType == "axial":
+        if self.planeType == "Axial":
             sliceNumber = self.origin[2] + sliceNumber*self.spacing[2]
             matrix.SetElement(2, 3, sliceNumber)
-        elif self.planeType == "coronal":
+        elif self.planeType == "Coronal":
             sliceNumber = self.origin[1] + sliceNumber*self.spacing[1]
             matrix.SetElement(1, 3, sliceNumber)
-        else:  # self.planeType == "sagittal"
+        else:  # self.planeType == "Sagittal"
             sliceNumber = self.origin[0] + sliceNumber*self.spacing[0]
             matrix.SetElement(0, 3, sliceNumber)
         self.ren.GetRenderWindow().Render()
