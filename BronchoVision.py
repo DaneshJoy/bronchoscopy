@@ -85,7 +85,7 @@ class myToolsWindow(QDialog):
         self.ui = ToolsWindow.Ui_ToolsWindow()
         self.ui.setupUi(self)
 
-    # TODO: On close set a flag to false
+    # TODO: On close, set a flag to false
 
     # def initialize(self):
     #     pass
@@ -100,6 +100,7 @@ class myMainWindow(QMainWindow):
         self.trackerRawCoords_tool = []
 
         self.vtk_widget_3D = None
+        self.vtk_widget_3D_2 = None
         self.vtk_widget_axial = None
         self.vtk_widget_coronal = None
         self.vtk_widget_sagittal = None
@@ -338,11 +339,13 @@ class myMainWindow(QMainWindow):
 
     def showImages(self, reader, dims):
         self.vtk_widget_3D.RemoveImage()
+        # self.vtk_widget_3D_2.RemoveImage()
         self.vtk_widget_axial.RemoveImage()
         self.vtk_widget_coronal.RemoveImage()
         self.vtk_widget_sagittal.RemoveImage()
 
         self.vtk_widget_3D.showImage(reader)
+        # self.vtk_widget_3D_2.showImage(reader)
         self.vtk_widget_axial.showImage(reader, dims)
         self.vtk_widget_coronal.showImage(reader, dims)
         self.vtk_widget_sagittal.showImage(reader, dims)
@@ -506,9 +509,11 @@ class myMainWindow(QMainWindow):
         self.ui.Slider_coronal.setValue(coronal_slice)
         self.ui.Slider_sagittal.setValue(sagittal_slice)
 
-        self.vtk_widget_axial.SetCrossPosition(toolMatrix[0,3], toolMatrix[1,3])
-        self.vtk_widget_coronal.SetCrossPosition(toolMatrix[0,3], toolMatrix[2,3]-140.5)
-        self.vtk_widget_sagittal.SetCrossPosition(toolMatrix[1,3], toolMatrix[2,3]-140.5)
+        # self.vtk_widget_axial.SetCrossPosition(toolMatrix[0,3], toolMatrix[1,3])
+        # self.vtk_widget_coronal.SetCrossPosition(toolMatrix[0,3], toolMatrix[2,3]-140.5)
+        # self.vtk_widget_sagittal.SetCrossPosition(toolMatrix[1,3], toolMatrix[2,3]-140.5)
+        self.vtk_widget_coronal.SetCrossPosition(toolMatrix[0,3], toolMatrix[2,3]+self.origin[1])
+        self.vtk_widget_sagittal.SetCrossPosition(toolMatrix[1,3], toolMatrix[2,3]+self.origin[0])
 
     def playCam(self, points):
         # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
@@ -551,6 +556,7 @@ class myMainWindow(QMainWindow):
     
     def ResetViewports(self):
         self.vtk_widget_3D.ResetView()
+        # self.vtk_widget_3D_2.ResetView()
         self.vtk_widget_axial.ResetView()
         self.vtk_widget_coronal.ResetView()
         self.vtk_widget_sagittal.ResetView()
@@ -594,6 +600,7 @@ class myMainWindow(QMainWindow):
         # self.resize(sizeObject.width(), sizeObject.height())
         # self.resize(size.width(), size.height())
         self.vtk_widget_3D = QVtkViewer3D(self.ui.vtk_panel_3D, size)
+        # self.vtk_widget_3D_2 =  QVtkViewer3D(self.ui.vtk_panel_axial, size)
         self.vtk_widget_axial = QVtkViewer2D(self.ui.vtk_panel_axial, size, 'axial')
         self.vtk_widget_coronal = QVtkViewer2D(self.ui.vtk_panel_coronal, size, 'coronal')
         self.vtk_widget_sagittal = QVtkViewer2D(self.ui.vtk_panel_sagittal, size, 'sagittal')
