@@ -360,19 +360,19 @@ border-color: rgb(114, 171, 171);</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1">
            <property name="spacing">
-            <number>3</number>
+            <number>6</number>
            </property>
            <property name="leftMargin">
-            <number>0</number>
+            <number>9</number>
            </property>
            <property name="topMargin">
-            <number>3</number>
+            <number>9</number>
            </property>
            <property name="rightMargin">
-            <number>3</number>
+            <number>9</number>
            </property>
            <property name="bottomMargin">
-            <number>3</number>
+            <number>9</number>
            </property>
            <item>
             <widget class="QTabWidget" name="tabWidget">
@@ -389,7 +389,7 @@ border-color: rgb(114, 171, 171);</string>
               <enum>QTabWidget::Triangular</enum>
              </property>
              <property name="currentIndex">
-              <number>1</number>
+              <number>0</number>
              </property>
              <property name="iconSize">
               <size>
@@ -412,12 +412,121 @@ border-color: rgb(114, 171, 171);</string>
              <property name="tabBarAutoHide">
               <bool>false</bool>
              </property>
-             <widget class="QWidget" name="tabWidgetPage1" native="true">
+             <widget class="QWidget" name="tabWidgetPage1">
               <attribute name="title">
                <string>Online</string>
               </attribute>
+              <layout class="QVBoxLayout" name="verticalLayout_6">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QFrame" name="frame_2">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QVBoxLayout" name="verticalLayout_9">
+                  <property name="spacing">
+                   <number>3</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>3</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>3</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>3</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>3</number>
+                  </property>
+                  <item>
+                   <widget class="QToolButton" name="btn_regMat">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="font">
+                     <font>
+                      <pointsize>10</pointsize>
+                     </font>
+                    </property>
+                    <property name="cursor">
+                     <cursorShape>PointingHandCursor</cursorShape>
+                    </property>
+                    <property name="layoutDirection">
+                     <enum>Qt::LeftToRight</enum>
+                    </property>
+                    <property name="autoFillBackground">
+                     <bool>false</bool>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true">background-color: rgb(65, 65, 65);</string>
+                    </property>
+                    <property name="text">
+                     <string>Registration Matrix ...</string>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="resources.qrc">
+                      <normaloff>:/icon/icons/trajectory.png</normaloff>:/icon/icons/trajectory.png</iconset>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>false</bool>
+                    </property>
+                    <property name="toolButtonStyle">
+                     <enum>Qt::ToolButtonTextBesideIcon</enum>
+                    </property>
+                    <property name="autoRaise">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="verticalSpacer_2">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
              </widget>
-             <widget class="QWidget" name="tabWidgetPage2" native="true">
+             <widget class="QWidget" name="tabWidgetPage2">
               <attribute name="title">
                <string>Offline</string>
               </attribute>
@@ -787,7 +896,7 @@ border-color: rgb(114, 171, 171);</string>
               <string notr="true">background-color: rgb(65, 65, 65);</string>
              </property>
              <property name="text">
-              <string>   Reset</string>
+              <string>   Reset VB</string>
              </property>
              <property name="icon">
               <iconset resource="resources.qrc">
@@ -926,7 +1035,7 @@ border-color: rgb(114, 171, 171);</string>
               <string notr="true">background-color: rgb(65, 65, 65);</string>
              </property>
              <property name="text">
-              <string>Tools Info</string>
+              <string>Tools Info ...</string>
              </property>
              <property name="icon">
               <iconset resource="resources.qrc">
@@ -985,19 +1094,19 @@ border-color: rgb(114, 171, 171);</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,0,0">
            <property name="spacing">
-            <number>3</number>
+            <number>6</number>
            </property>
            <property name="leftMargin">
-            <number>3</number>
+            <number>9</number>
            </property>
            <property name="topMargin">
-            <number>3</number>
+            <number>9</number>
            </property>
            <property name="rightMargin">
-            <number>3</number>
+            <number>9</number>
            </property>
            <property name="bottomMargin">
-            <number>3</number>
+            <number>9</number>
            </property>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_11" stretch="1,3">

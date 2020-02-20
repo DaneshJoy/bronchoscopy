@@ -498,6 +498,7 @@ class myMainWindow(QMainWindow):
             self.vtk_widget_2D.setSlice(sagittal_slice)
             self.ui.Slider_2D.setValue(sagittal_slice)
 
+        self.vtk_widget_3D_2.SetCrossPosition(toolMatrix[0,3], toolMatrix[1,3], toolMatrix[2,3])
         if self.ui.comboBox_2DView.currentText() == 'Axial':
             self.vtk_widget_2D.SetCrossPosition(toolMatrix[0,3], toolMatrix[1,3])
         elif self.ui.comboBox_2DView.currentText() == 'Coronal':

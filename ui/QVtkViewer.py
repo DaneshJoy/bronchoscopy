@@ -28,7 +28,7 @@ class QVtkViewer3D(QFrame):
         self.initCamPosition = (0, 1, 0)
         self.initCamFocalPoint = (0, 0, 0)
 
-
+        self.cross = None
         self.points = None
 
         # Setup VTK Environment
@@ -41,8 +41,86 @@ class QVtkViewer3D(QFrame):
         # ren.SetBackground(colors.GetColor3D("BkgColor"))
         self.interactor.Initialize()
 
+            # create a cross
+    def CreateCross(self, size):
+        #Create a vtkPoints object and store the points in it
+        pts = vtk.vtkPoints()
+        pts.InsertNextPoint(-size / 2, 0, 0)
+        pts.InsertNextPoint(size / 2, 0, 0)
+        pts.InsertNextPoint(0, -size / 2, 0)
+        pts.InsertNextPoint(0, size / 2, 0)
+        pts.InsertNextPoint(0, 0, -size / 2)
+        pts.InsertNextPoint(0, 0, size / 2)
+
+        # Setup the colors array
+        color = (0, 170, 170)
+        colors = vtk.vtkUnsignedCharArray()
+        colors.SetNumberOfComponents(3)
+        colors.SetName("Colors")
+
+        # Add the colors we created to the colors array
+        colors.InsertNextValue(color[0])
+        colors.InsertNextValue(color[1])
+        colors.InsertNextValue(color[2])
+
+        colors.InsertNextValue(color[0])
+        colors.InsertNextValue(color[1])
+        colors.InsertNextValue(color[2])
+
+        colors.InsertNextValue(color[0])
+        colors.InsertNextValue(color[1])
+        colors.InsertNextValue(color[2])
+
+        # Create the first line
+        line0 = vtk.vtkLine()
+        line0.GetPointIds().SetId(0, 0)
+        line0.GetPointIds().SetId(1, 1)
+
+        # Create the second line
+        line1 = vtk.vtkLine()
+        line1.GetPointIds().SetId(0, 2)
+        line1.GetPointIds().SetId(1, 3)
+
+        # Create the third line
+        line2 = vtk.vtkLine()
+        line2.GetPointIds().SetId(0, 4)
+        line2.GetPointIds().SetId(1, 5)
+
+        # Create a cell array to store the lines in and add the lines to it
+        lines = vtk.vtkCellArray()
+        lines.InsertNextCell(line0)
+        lines.InsertNextCell(line1)
+        lines.InsertNextCell(line2)
+
+        # Create a polydata to store everything in
+        linesPolyData = vtk.vtkPolyData()
+        # Add the points to the dataset
+        linesPolyData.SetPoints(pts)
+        # Add the lines to the dataset
+        linesPolyData.SetLines(lines)
+        # Color the lines
+        linesPolyData.GetCellData().SetScalars(colors)
+        return linesPolyData
+
+    def SetCrossPosition(self, x, y, z):
+        if self.cross == None:
+            mapper = vtk.vtkPolyDataMapper()
+            mapper.SetInputData(self.CreateCross(50))
+            self.cross = vtk.vtkActor()
+            self.cross.GetProperty().SetLineWidth(2)
+            self.cross.SetMapper(mapper)
+            self.ren.AddActor(self.cross)
+        self.cross.SetPosition(x, y, z)
+        self.ren.GetRenderWindow().Render()
+
+    def RemoveCross(self):
+        self.ren.RemoveActor(self.cross)
+        self.ren.GetRenderWindow().Render()
+        self.cross = None
+
     def RemoveImage(self):
         self.ren.RemoveAllViewProps()
+        self.cross = None
         self.ren.ResetCamera()
 
     def showImage(self, reader):
@@ -72,7 +150,8 @@ class QVtkViewer3D(QFrame):
         self.surface.SetMapper(surfaceMapper)
         # self.surface.GetProperty().SetDiffuseColor(0.8, 0.6, 0.2)
         self.surface.GetProperty().SetAmbient(0.1)
-        # self.surface.GetProperty().SetOpacity(0.9)
+        if self.viewType == 'Prespective':
+            self.surface.GetProperty().SetOpacity(0.5)
         # self.surface.GetProperty().SetDiffuseColor(1, .49, .25)
         self.surface.GetProperty().SetDiffuseColor(self.colors.GetColor3d("SkinColor"))
         self.surface.GetProperty().SetSpecular(0.7)
@@ -84,17 +163,20 @@ class QVtkViewer3D(QFrame):
         # self.cam.SetViewUp(0,-1,0) # the camera Y axis points down
         # self.cam.SetPosition(0, 0, 0)
         # self.cam.SetFocalPoint(0, 0, 1) # look in the +Z direction of the camera coordinate system
-        if self.viewType == 'Virtual':
-            cam.SetViewUp(0, 1, 0)
-            cam.SetPosition(0, 1, 0)
-        else:
-            cam.SetViewUp(1, 0, 1)
-            cam.SetPosition(0, 0, 1)
         cam.SetFocalPoint(0, 0, 0)
         cam.ComputeViewPlaneNormal()
+
+        if self.viewType == 'Virtual':
+            cam.SetViewUp(0, -1, 0)
+            cam.SetPosition(0, 0, 1)
+        else:
+            cam.SetViewUp(0, 1, 0)
+            cam.SetPosition(0, -5, 1)
+
         # cam.Azimuth(30.0)
         # cam.Elevation(30.0)
-        cam.Dolly(1.5) # Moves the camera towards the FocalPoint
+        # cam.Zoom(1.5)
+        # cam.Dolly(1.5) # Moves the camera towards the FocalPoint
 
         # self.updateTextActor()
 
@@ -104,6 +186,8 @@ class QVtkViewer3D(QFrame):
 
         self.ren.SetActiveCamera(cam)
         self.ren.ResetCamera()
+        cam.Zoom(1.5)
+        cam.Dolly(1.5)
         self.ren.ResetCameraClippingRange()
 
         self.initCamViewUp = self.ren.GetActiveCamera().GetViewUp()
@@ -637,12 +721,13 @@ class QVtkViewer2D(QFrame):
         # cam.SetFocalPoint(0, 0, 0)
         # cam.SetPosition(0, -1, 0)
         cam.ComputeViewPlaneNormal()
+        cam.SetViewUp(0, -1, 0)
         # cam.Azimuth(30.0)
         # cam.Elevation(30.0)
         # ren_win.Render()
         self.ren.SetActiveCamera(cam)
         self.ren.ResetCamera()
-        cam.Zoom(1.5)
+        cam.Zoom(2)
         # self.ren.GetActiveCamera.Zoom(2)
         # cam.Dolly(1.5)  # Moves the camera towards the FocalPoint
 
