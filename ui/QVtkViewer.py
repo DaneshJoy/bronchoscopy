@@ -145,6 +145,25 @@ class QVtkViewer3D(QFrame):
         surfaceMapper.ScalarVisibilityOff()
         # skinMapper.UseLookupTableScalarRangeOn()
 
+        ''' Decimate points for registration
+        self.surfaceExtractor.Update()
+        inputPolyData = self.surfaceExtractor.GetOutput()
+
+        print(inputPolyData.GetNumberOfPoints())
+        print(inputPolyData.GetNumberOfPolys())
+
+        deci = vtk.vtkDecimatePro()
+        deci.SetInputData(inputPolyData)
+        deci.SetTargetReduction(0.9)
+        deci.PreserveTopologyOn()
+        deci.Update()
+
+        deciPol = vtk.vtkPolyData()
+        deciPol.ShallowCopy(deci.GetOutput())
+        print(deciPol.GetNumberOfPoints())
+        print(deciPol.GetNumberOfPolys())
+        '''
+
         # Actor
         self.surface = vtk.vtkActor()
         self.surface.SetMapper(surfaceMapper)
