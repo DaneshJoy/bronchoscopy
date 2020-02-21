@@ -1938,6 +1938,7 @@ border-color: rgb(114, 171, 171);</string>
  </widget>
  <resources>
   <include location="resources.qrc"/>
+  <include location="C:/Users/Saeed/.designer/backup/resources.qrc"/>
  </resources>
  <connections>
   <connection>

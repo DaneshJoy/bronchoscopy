@@ -408,19 +408,32 @@ class myMainWindow(QMainWindow):
 
                 # self.toolCoords = np.swapaxes(self.toolCoords, 1, 2)
 
-                self.regMat = np.array([[0.84, 0.09, -0.53, -35.67],
-                                        [-0.51, -0.14, -0.85, -202.98],
-                                        [-0.15, 0.99, -0.07, -22.7],
+                # self.regMat = np.array([[0.3, 0.03, -0.95, 9.09],
+                #                         [0.86, 0.42, 0.28, -1.49],
+                #                         [0.41, -0.91, 0.098, -27.97],
+                #                         [0, 0, 0, 1]])
+
+                self.regMat = np.array([[0.3, 0.86, 0.41, 9.09],
+                                        [0.03, 0.42, -0.91, -1.49],
+                                        [-0.95, 0.28, 0.098, -27.97],
                                         [0, 0, 0, 1]])
+
+                # self.regMat = np.array([[0.84, 0.09, -0.53, -35.67],
+                #                         [-0.51, -0.14, -0.85, -202.98],
+                #                         [-0.15, 0.99, -0.07, -22.7],
+                #                         [0, 0, 0, 1]])
                 regMat_inv = np.linalg.inv(self.regMat)
                 ii = 0
+                pt_tracker = np.zeros([len(self.toolCoords), 3], dtype='float')
                 for ref, tool in zip(self.refCoords, self.toolCoords):
                     ref_inv = np.linalg.inv(ref)
                     tool2ref = np.dot(ref_inv, tool)
+                    pt_tracker[ii, :] = tool2ref[:,3][:-1]
                     reg = np.dot(regMat_inv, tool2ref)
                     self.registeredPoints[:,:,ii] = reg
                     ii += 1
 
+                # self.vtk_widget_3D.register(pt_tracker)
             numPoints = self.registeredPoints.shape[-1]
 
             # Flip/Rotate points to match the orientation of the image

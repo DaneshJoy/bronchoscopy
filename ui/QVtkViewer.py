@@ -2,6 +2,7 @@ import vtk
 from PyQt5.QtWidgets import QFrame
 from PyQt5 import QtWidgets, QtCore
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+from vtk.util.numpy_support import vtk_to_numpy
 import numpy as np
 
 class QVtkViewer3D(QFrame):
@@ -137,32 +138,16 @@ class QVtkViewer3D(QFrame):
         i = contour number and isoVal = the iso-value representing the contour you looking for.
         You can build multiple surfaces by setting different contour number i, for different iso-value.
         '''
-        self.surfaceExtractor.SetValue(0, -600)
+        if self.viewType == 'Virtual':
+            self.surfaceExtractor.SetValue(0, -600)
+        else:
+            self.surfaceExtractor.SetValue(0, 250)
 
         # Mapper
         surfaceMapper = vtk.vtkPolyDataMapper()
         surfaceMapper.SetInputConnection(self.surfaceExtractor.GetOutputPort())
         surfaceMapper.ScalarVisibilityOff()
         # skinMapper.UseLookupTableScalarRangeOn()
-
-        ''' Decimate points for registration
-        self.surfaceExtractor.Update()
-        inputPolyData = self.surfaceExtractor.GetOutput()
-
-        print(inputPolyData.GetNumberOfPoints())
-        print(inputPolyData.GetNumberOfPolys())
-
-        deci = vtk.vtkDecimatePro()
-        deci.SetInputData(inputPolyData)
-        deci.SetTargetReduction(0.9)
-        deci.PreserveTopologyOn()
-        deci.Update()
-
-        deciPol = vtk.vtkPolyData()
-        deciPol.ShallowCopy(deci.GetOutput())
-        print(deciPol.GetNumberOfPoints())
-        print(deciPol.GetNumberOfPolys())
-        '''
 
         # Actor
         self.surface = vtk.vtkActor()
@@ -217,6 +202,34 @@ class QVtkViewer3D(QFrame):
         # self.interactor = interactor
         self.interactor.Initialize()
         # self.interactor.Start()
+
+    def register(self, pt_tracker):
+        ### Decimate points for registration
+        self.surfaceExtractor.Update()
+        inputPolyData = self.surfaceExtractor.GetOutput()
+
+        # print(inputPolyData.GetNumberOfPoints())
+        # print(inputPolyData.GetNumberOfPolys())
+
+        deci = vtk.vtkDecimatePro()
+        deci.SetInputData(inputPolyData)
+        deci.SetTargetReduction(0.9)
+        deci.PreserveTopologyOn()
+        deci.Update()
+
+        deciPol = vtk.vtkPolyData()
+        deciPol.ShallowCopy(deci.GetOutput())
+        # print(deciPol.GetNumberOfPoints())
+        # print(deciPol.GetNumberOfPolys())
+
+        pt_ct = vtk_to_numpy(deciPol.GetPoints().GetData())
+
+        from pycpd import rigid_registration
+        reg = rigid_registration(**{ 'X': pt_tracker, 'Y':pt_ct })
+        reg.register()
+        print(reg.R)
+        print(reg.t)
+
 
     def ShowOrientationWidget(self):
         # # Cube Actor
