@@ -229,6 +229,11 @@ class QVtkViewer3D(QFrame):
         reg.register()
         print(reg.R)
         print(reg.t)
+        # R R R 0
+        # R R R 0
+        # R R R 0
+        # t t t 1
+        # then transpose
 
 
     def ShowOrientationWidget(self):

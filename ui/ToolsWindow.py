@@ -529,7 +529,7 @@ class Ui_ToolsWindow(object):
 
     def retranslateUi(self, ToolsWindow):
         _translate = QtCore.QCoreApplication.translate
-        ToolsWindow.setWindowTitle(_translate("ToolsWindow", "Dialog"))
+        ToolsWindow.setWindowTitle(_translate("ToolsWindow", "Tool/Ref Coordinates"))
         self.label_33.setText(_translate("ToolsWindow", "Tool"))
         self.r13_tool.setText(_translate("ToolsWindow", "-"))
         self.r11_tool.setText(_translate("ToolsWindow", "-"))

@@ -17,11 +17,32 @@ from scipy.io import loadmat
 import fix_qt_import_error
 from PyQt5.Qt import QApplication, QMainWindow, QDialog, QColor, Qt, QIcon
 from PyQt5 import QtWidgets, QtCore, uic
-from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog
+from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QTableWidgetItem
 from PyQt5.QtGui import QPalette
 from ui.QVtkViewer import QVtkViewer3D, QVtkViewer2D
-from ui import MainWindow, ToolsWindow
+from ui import MainWindow, ToolsWindow, RegMatWindow
 from sksurgerynditracker.nditracker import NDITracker
+
+class myRegMatWindow(QDialog):
+    def __init__(self, parent=None):
+        super(myRegMatWindow, self).__init__(parent)
+    
+    def setData(self, regMat):
+        for i in range(4):
+            for j in range(4):
+                newitem = QTableWidgetItem(str(regMat[i, j]))
+                self.ui.table_regMat.setItem(i, j, newitem)
+
+    def getData(self):
+        regMat_new = np.zeros([4, 4], dtype='float')
+        for i in range(4):
+            for j in range(4):
+                regMat_new[i, j] = float(self.ui.table_regMat.takeItem(i, j).text())
+        return regMat_new
+
+    def setup(self):
+        self.ui = RegMatWindow.Ui_RegMatWindow()
+        self.ui.setupUi(self)
 
 class myToolsWindow(QDialog):
     def __init__(self, parent=None):
@@ -112,8 +133,15 @@ class myMainWindow(QMainWindow):
         self.cam_pos = None
         self.toolsWindow = myToolsWindow(self)
         self.toolsWindow.setup()
+        self.regMatWindow = myRegMatWindow(self)
+        self.regMatWindow.setup()
         self.tracker = None
         self.tracker_connected = False
+
+        self.regMat = np.array([[0.84,      0.09,   -0.53,  -35.67],
+                                [-0.51,     -0.14,  -0.85,  -202.98],
+                                [-0.15,     0.99,   -0.07,  -22.7],
+                                [0,         0,      0,          1]])
 
         self.ui.actionLoad_Image.triggered.connect(self.openFileDialog)
         self.ui.actionLoad_DICOM.triggered.connect(self.openDirDialog)
@@ -131,6 +159,7 @@ class myMainWindow(QMainWindow):
 
         self.ui.btn_Connect.clicked.connect(self.connectTracker)
         self.ui.btn_ToolsWindow.clicked.connect(self.showToolsWindow)
+        self.ui.btn_regMat.clicked.connect(self.showRegMatWindow)
 
     def connectTracker(self):
         if self.tracker_connected == False:
@@ -203,6 +232,13 @@ class myMainWindow(QMainWindow):
     def showToolsWindow(self):
         self.toolsWindow.setData(self.cam_pos, self.cam_pos)
         self.toolsWindow.show()
+
+    def showRegMatWindow(self):
+        self.regMatWindow.setData(self.regMat)
+        res = self.regMatWindow.exec()
+        if (res == QDialog.Accepted):
+            self.regMat = self.regMatWindow.getData()
+        print(self.regMat)
 
     def openFileDialog(self):
         options = QFileDialog.Options()
@@ -408,20 +444,13 @@ class myMainWindow(QMainWindow):
 
                 # self.toolCoords = np.swapaxes(self.toolCoords, 1, 2)
 
-                # self.regMat = np.array([[0.3, 0.03, -0.95, 9.09],
-                #                         [0.86, 0.42, 0.28, -1.49],
-                #                         [0.41, -0.91, 0.098, -27.97],
+
+                # self.regMat = np.array([[0.3, 0.86, 0.41, 9.09],
+                #                         [0.03, 0.42, -0.91, -1.49],
+                #                         [-0.95, 0.28, 0.098, -27.97],
                 #                         [0, 0, 0, 1]])
 
-                self.regMat = np.array([[0.3, 0.86, 0.41, 9.09],
-                                        [0.03, 0.42, -0.91, -1.49],
-                                        [-0.95, 0.28, 0.098, -27.97],
-                                        [0, 0, 0, 1]])
-
-                # self.regMat = np.array([[0.84, 0.09, -0.53, -35.67],
-                #                         [-0.51, -0.14, -0.85, -202.98],
-                #                         [-0.15, 0.99, -0.07, -22.7],
-                #                         [0, 0, 0, 1]])
+                
                 regMat_inv = np.linalg.inv(self.regMat)
                 ii = 0
                 pt_tracker = np.zeros([len(self.toolCoords), 3], dtype='float')
