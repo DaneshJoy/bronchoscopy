@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>1278</width>
-    <height>631</height>
+    <height>700</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -316,12 +316,21 @@
        <property name="midLineWidth">
         <number>0</number>
        </property>
-       <layout class="QVBoxLayout" name="verticalLayout" stretch="0,2,3,1">
+       <layout class="QVBoxLayout" name="verticalLayout" stretch="2,2,1,0">
         <property name="spacing">
-         <number>10</number>
+         <number>6</number>
+        </property>
+        <property name="leftMargin">
+         <number>6</number>
         </property>
         <property name="topMargin">
-         <number>9</number>
+         <number>6</number>
+        </property>
+        <property name="rightMargin">
+         <number>6</number>
+        </property>
+        <property name="bottomMargin">
+         <number>6</number>
         </property>
         <item>
          <widget class="QGroupBox" name="groupBox_VB">
@@ -358,7 +367,7 @@ border-color: rgb(114, 171, 171);</string>
           <property name="checkable">
            <bool>false</bool>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1">
+          <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1,0">
            <property name="spacing">
             <number>6</number>
            </property>
@@ -386,7 +395,7 @@ border-color: rgb(114, 171, 171);</string>
               <enum>QTabWidget::North</enum>
              </property>
              <property name="tabShape">
-              <enum>QTabWidget::Triangular</enum>
+              <enum>QTabWidget::Rounded</enum>
              </property>
              <property name="currentIndex">
               <number>0</number>
@@ -398,7 +407,7 @@ border-color: rgb(114, 171, 171);</string>
               </size>
              </property>
              <property name="elideMode">
-              <enum>Qt::ElideNone</enum>
+              <enum>Qt::ElideMiddle</enum>
              </property>
              <property name="usesScrollButtons">
               <bool>false</bool>
@@ -434,11 +443,17 @@ border-color: rgb(114, 171, 171);</string>
                </property>
                <item>
                 <widget class="QFrame" name="frame_2">
+                 <property name="styleSheet">
+                  <string notr="true"/>
+                 </property>
                  <property name="frameShape">
                   <enum>QFrame::StyledPanel</enum>
                  </property>
                  <property name="frameShadow">
-                  <enum>QFrame::Raised</enum>
+                  <enum>QFrame::Plain</enum>
+                 </property>
+                 <property name="lineWidth">
+                  <number>1</number>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_9">
                   <property name="spacing">
@@ -489,12 +504,12 @@ border-color: rgb(114, 171, 171);</string>
                     </property>
                     <property name="icon">
                      <iconset resource="resources.qrc">
-                      <normaloff>:/icon/icons/trajectory.png</normaloff>:/icon/icons/trajectory.png</iconset>
+                      <normaloff>:/icon/icons/matrix.png</normaloff>:/icon/icons/matrix.png</iconset>
                     </property>
                     <property name="iconSize">
                      <size>
                       <width>36</width>
-                      <height>36</height>
+                      <height>28</height>
                      </size>
                     </property>
                     <property name="checkable">
@@ -564,7 +579,7 @@ border-color: rgb(114, 171, 171);</string>
                   <enum>QFrame::StyledPanel</enum>
                  </property>
                  <property name="frameShadow">
-                  <enum>QFrame::Raised</enum>
+                  <enum>QFrame::Plain</enum>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,3,1">
                   <property name="spacing">
@@ -620,7 +635,7 @@ border-color: rgb(114, 171, 171);</string>
                     <property name="iconSize">
                      <size>
                       <width>36</width>
-                      <height>36</height>
+                      <height>28</height>
                      </size>
                     </property>
                     <property name="checkable">
@@ -905,7 +920,7 @@ border-color: rgb(114, 171, 171);</string>
              <property name="iconSize">
               <size>
                <width>36</width>
-               <height>36</height>
+               <height>28</height>
               </size>
              </property>
              <property name="checkable">
@@ -918,6 +933,19 @@ border-color: rgb(114, 171, 171);</string>
               <bool>true</bool>
              </property>
             </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_5">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
            </item>
           </layout>
          </widget>
@@ -992,7 +1020,7 @@ border-color: rgb(114, 171, 171);</string>
              <property name="iconSize">
               <size>
                <width>36</width>
-               <height>36</height>
+               <height>28</height>
               </size>
              </property>
              <property name="checkable">
@@ -1044,7 +1072,7 @@ border-color: rgb(114, 171, 171);</string>
              <property name="iconSize">
               <size>
                <width>36</width>
-               <height>36</height>
+               <height>28</height>
               </size>
              </property>
              <property name="checkable">
@@ -1058,13 +1086,133 @@ border-color: rgb(114, 171, 171);</string>
              </property>
             </widget>
            </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="4,1">
+             <property name="spacing">
+              <number>3</number>
+             </property>
+             <item>
+              <widget class="QToolButton" name="btn_recordToolRef">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                </font>
+               </property>
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+               <property name="layoutDirection">
+                <enum>Qt::LeftToRight</enum>
+               </property>
+               <property name="autoFillBackground">
+                <bool>false</bool>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background-color: rgb(65, 65, 65);</string>
+               </property>
+               <property name="text">
+                <string>Start Record</string>
+               </property>
+               <property name="icon">
+                <iconset resource="resources.qrc">
+                 <normaloff>:/icon/icons/rec_start.png</normaloff>:/icon/icons/rec_start.png</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>36</width>
+                 <height>28</height>
+                </size>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+               <property name="toolButtonStyle">
+                <enum>Qt::ToolButtonTextBesideIcon</enum>
+               </property>
+               <property name="autoRaise">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QToolButton" name="btn_saveToolRefCoords">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                </font>
+               </property>
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+               <property name="layoutDirection">
+                <enum>Qt::LeftToRight</enum>
+               </property>
+               <property name="autoFillBackground">
+                <bool>false</bool>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background-color: rgb(65, 65, 65);</string>
+               </property>
+               <property name="text">
+                <string>Save ...</string>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>36</width>
+                 <height>28</height>
+                </size>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+               <property name="toolButtonStyle">
+                <enum>Qt::ToolButtonTextBesideIcon</enum>
+               </property>
+               <property name="autoRaise">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_3">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
           </layout>
          </widget>
         </item>
         <item>
          <widget class="QGroupBox" name="groupBox_Viewports">
           <property name="enabled">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <property name="font">
            <font>
@@ -1185,7 +1333,7 @@ border-color: rgb(114, 171, 171);</string>
            <item>
             <widget class="QToolButton" name="btn_ResetViewports">
              <property name="enabled">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -1220,7 +1368,7 @@ border-color: rgb(114, 171, 171);</string>
              <property name="iconSize">
               <size>
                <width>36</width>
-               <height>36</height>
+               <height>28</height>
               </size>
              </property>
              <property name="checkable">
@@ -1463,6 +1611,7 @@ border-color: rgb(114, 171, 171);</string>
             <property name="lineWidth">
              <number>0</number>
             </property>
+            <layout class="QVBoxLayout" name="verticalLayout_10"/>
            </widget>
           </item>
           <item>

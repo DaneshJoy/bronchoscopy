@@ -17,7 +17,7 @@ from scipy.io import loadmat
 import fix_qt_import_error
 from PyQt5.Qt import QApplication, QMainWindow, QDialog, QColor, Qt, QIcon
 from PyQt5 import QtWidgets, QtCore, uic
-from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QTableWidgetItem
+from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QTableWidgetItem, QLabel
 from PyQt5.QtGui import QPalette
 from ui.QVtkViewer import QVtkViewer3D, QVtkViewer2D
 from ui import MainWindow, ToolsWindow, RegMatWindow
@@ -380,8 +380,9 @@ class myMainWindow(QMainWindow):
         self.vtk_widget_3D.showImage(reader)
         self.vtk_widget_3D_2.showImage(reader)
         self.vtk_widget_2D.showImage(reader, dims)
-
+        
         self.ui.btn_LoadPoints.setEnabled(True)
+        self.ui.groupBox_Viewports.setEnabled(True)
         
     def updateSubPanels(self, dims):
         self.showSubPanels()

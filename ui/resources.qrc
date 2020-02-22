@@ -3,7 +3,10 @@
     <file>logo/logo_transparent.png</file>
   </qresource>
   <qresource prefix="icon">
+    <file>icons/rec_start.png</file>
     <file>icons/trajectory.png</file>
+    <file>icons/matrix.png</file>
+    <file>icons/rec_stop.png</file>
     <file>icons/Tools_info.png</file>
     <file>icons/tracker_connected.png</file>
     <file>icons/exit.png</file>
