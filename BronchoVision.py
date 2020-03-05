@@ -13,6 +13,7 @@ import numpy.random.common # Just for PyInstaller to work
 # import numpy.random.entropy
 import numpy as np
 import time
+import threading
 from scipy.io import loadmat
 import fix_qt_import_error
 from PyQt5.Qt import QApplication, QMainWindow, QDialog, QColor, Qt, QIcon
@@ -193,27 +194,36 @@ class myMainWindow(QMainWindow):
 
             QApplication.restoreOverrideCursor()
 
-            while self.captureCoordinates:
-                if self.trackerReady:
-                    data = self.tracker.get_frame()
-                    # Data is numpy.ndarray(4x4)
-                    self.refData = data[3][1]  # Ref must be attached to the 1st port
-                    self.toolData = data[3][0]  # Tool must be attached to the 2nd port
-                    if np.isnan(self.toolData.sum()) or np.isnan(self.refData.sum()):
-                        # TODO: Show some messages or info
-                        continue
-                    
-                    self.trackerRawCoords_ref.append(self.refData) 
-                    self.trackerRawCoords_tool.append(self.toolData)    
-                    self.showToolOnViews(self.toolData)
-                    self.toolsWindow.setData(self.refData, self.toolData)
-                else:
-                    self.toolsWindow.setData(self.cam_pos, self.cam_pos)
+            # Multithreading Method 1 (recomended)
+            thread_tracker = threading.Thread(target=self.trackerLoop)
+            thread_tracker.start()
 
-                time.sleep(0.03)
-                QApplication.processEvents()
+            # Multithreading Method 2 (not recomended)
+            # Use QApplication.processEvents() inside the loop
         else:
             self.disconnectTracker()
+
+    def trackerLoop(self):
+        while self.captureCoordinates:
+            if self.trackerReady:
+                data = self.tracker.get_frame()
+                # Data is numpy.ndarray(4x4)
+                self.refData = data[3][1]  # Ref must be attached to the 1st port
+                self.toolData = data[3][0]  # Tool must be attached to the 2nd port
+                if np.isnan(self.toolData.sum()) or np.isnan(self.refData.sum()):
+                    # TODO: Show some messages or info
+                    continue
+                
+                self.trackerRawCoords_ref.append(self.refData) 
+                self.trackerRawCoords_tool.append(self.toolData)    
+                self.showToolOnViews(self.toolData)
+                self.toolsWindow.setData(self.refData, self.toolData)
+            else:
+                self.toolsWindow.setData(self.cam_pos, self.cam_pos)
+
+            time.sleep(0.03)
+        return
+            
 
     def disconnectTracker(self):
         if self.trackerReady:
@@ -230,7 +240,7 @@ class myMainWindow(QMainWindow):
         self.ui.btn_Connect.setIcon(icon)
 
     def showToolsWindow(self):
-        self.toolsWindow.setData(self.cam_pos, self.cam_pos)
+        # self.toolsWindow.setData(self.cam_pos, self.cam_pos)
         self.toolsWindow.show()
 
     def showRegMatWindow(self):
@@ -549,7 +559,7 @@ class myMainWindow(QMainWindow):
         else: # if self.ui.comboBox_2DView.currentText() == 'Sagittal':
             self.vtk_widget_2D.SetCrossPosition(toolMatrix[1,3], toolMatrix[2,3]+self.origin[0])
 
-    def playCam(self, points):
+    def playCam(self):
         # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
         if self.registeredPoints is None:
             QMessageBox.critical(self, 'No Points Found', 'Please load the registered points first !')
@@ -557,6 +567,15 @@ class myMainWindow(QMainWindow):
         self.ui.btn_pauseCam.setEnabled(True)
         self.ui.btn_stopCam.setEnabled(True)
         self.paused = False
+
+        # Multithreading Method 1 (recomended)
+        thread_cam = threading.Thread(target=self.playCamLoop)
+        thread_cam.start()
+
+        # Multithreading Method 2 (not recomended)
+        # use QApplication.processEvents() inside the loop
+
+    def playCamLoop(self):
         for i in range(self.ui.slider_Frames.value(),self.registeredPoints.shape[-1]):
             if self.paused:
                 break
@@ -577,7 +596,7 @@ class myMainWindow(QMainWindow):
             self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
 
             time.sleep(0.1)
-            QApplication.processEvents()
+        return
     
     def pauseCam(self):
         self.paused = True
