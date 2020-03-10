@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>MainWin</class>
+ <widget class="QMainWindow" name="MainWin">
   <property name="windowModality">
    <enum>Qt::NonModal</enum>
   </property>
@@ -2087,13 +2087,13 @@ border-color: rgb(114, 171, 171);</string>
  </widget>
  <resources>
   <include location="resources.qrc"/>
-  <include location="C:/Users/Saeed/.designer/backup/resources.qrc"/>
+  <include location="resources.qrc"/>
  </resources>
  <connections>
   <connection>
    <sender>actionExit</sender>
    <signal>triggered()</signal>
-   <receiver>MainWindow</receiver>
+   <receiver>MainWin</receiver>
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">

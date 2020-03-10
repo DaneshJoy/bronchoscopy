@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui/ToolsWindow.ui'
+# Form implementation generated from reading ui file 'ui/ToolsWin.ui'
 #
 # Created by: PyQt5 UI code generator 5.14.1
 #
@@ -10,10 +10,10 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class Ui_ToolsWindow(object):
-    def setupUi(self, ToolsWindow):
-        ToolsWindow.setObjectName("ToolsWindow")
-        ToolsWindow.resize(561, 355)
+class Ui_ToolsWin(object):
+    def setupUi(self, ToolsWin):
+        ToolsWin.setObjectName("ToolsWin")
+        ToolsWin.resize(561, 355)
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
         brush.setStyle(QtCore.Qt.SolidPattern)
@@ -150,13 +150,13 @@ class Ui_ToolsWindow(object):
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.ToolTipText, brush)
-        ToolsWindow.setPalette(palette)
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout(ToolsWindow)
+        ToolsWin.setPalette(palette)
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(ToolsWin)
         self.verticalLayout_2.setSpacing(6)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
-        self.frame = QtWidgets.QFrame(ToolsWindow)
+        self.frame = QtWidgets.QFrame(ToolsWin)
         self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.frame.setObjectName("frame")
@@ -511,7 +511,7 @@ class Ui_ToolsWindow(object):
         self.verticalLayout_3.setStretch(1, 6)
         self.horizontalLayout.addLayout(self.verticalLayout_3)
         self.verticalLayout.addWidget(self.frame)
-        self.buttonBox = QtWidgets.QDialogButtonBox(ToolsWindow)
+        self.buttonBox = QtWidgets.QDialogButtonBox(ToolsWin)
         self.buttonBox.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.buttonBox.setStyleSheet("background-color: rgb(65, 65, 65);\n"
 "color: rgb(236, 236, 236);")
@@ -522,55 +522,55 @@ class Ui_ToolsWindow(object):
         self.verticalLayout.addWidget(self.buttonBox)
         self.verticalLayout_2.addLayout(self.verticalLayout)
 
-        self.retranslateUi(ToolsWindow)
-        self.buttonBox.accepted.connect(ToolsWindow.accept)
-        self.buttonBox.rejected.connect(ToolsWindow.reject)
-        QtCore.QMetaObject.connectSlotsByName(ToolsWindow)
+        self.retranslateUi(ToolsWin)
+        self.buttonBox.accepted.connect(ToolsWin.accept)
+        self.buttonBox.rejected.connect(ToolsWin.reject)
+        QtCore.QMetaObject.connectSlotsByName(ToolsWin)
 
-    def retranslateUi(self, ToolsWindow):
+    def retranslateUi(self, ToolsWin):
         _translate = QtCore.QCoreApplication.translate
-        ToolsWindow.setWindowTitle(_translate("ToolsWindow", "Tool/Ref Coordinates"))
-        self.label_33.setText(_translate("ToolsWindow", "Tool"))
-        self.r13_tool.setText(_translate("ToolsWindow", "-"))
-        self.r11_tool.setText(_translate("ToolsWindow", "-"))
-        self.r12_tool.setText(_translate("ToolsWindow", "-"))
-        self.t1_tool.setText(_translate("ToolsWindow", "-"))
-        self.r21_tool.setText(_translate("ToolsWindow", "-"))
-        self.r23_tool.setText(_translate("ToolsWindow", "-"))
-        self.r32_tool.setText(_translate("ToolsWindow", "-"))
-        self.r33_tool.setText(_translate("ToolsWindow", "-"))
-        self.r22_tool.setText(_translate("ToolsWindow", "-"))
-        self.t2_tool.setText(_translate("ToolsWindow", "-"))
-        self.t3_tool.setText(_translate("ToolsWindow", "-"))
-        self.r31_tool.setText(_translate("ToolsWindow", "-"))
-        self.label_13.setText(_translate("ToolsWindow", "0"))
-        self.label_16.setText(_translate("ToolsWindow", "1"))
-        self.label_15.setText(_translate("ToolsWindow", "0"))
-        self.label_14.setText(_translate("ToolsWindow", "0"))
-        self.label_34.setText(_translate("ToolsWindow", "Reference"))
-        self.r12_ref.setText(_translate("ToolsWindow", "-"))
-        self.r23_ref.setText(_translate("ToolsWindow", "-"))
-        self.t2_ref.setText(_translate("ToolsWindow", "-"))
-        self.r32_ref.setText(_translate("ToolsWindow", "-"))
-        self.r11_ref.setText(_translate("ToolsWindow", "-"))
-        self.r21_ref.setText(_translate("ToolsWindow", "-"))
-        self.r33_ref.setText(_translate("ToolsWindow", "-"))
-        self.t3_ref.setText(_translate("ToolsWindow", "-"))
-        self.r22_ref.setText(_translate("ToolsWindow", "-"))
-        self.r31_ref.setText(_translate("ToolsWindow", "-"))
-        self.label_27.setText(_translate("ToolsWindow", "0"))
-        self.label_30.setText(_translate("ToolsWindow", "1"))
-        self.t1_ref.setText(_translate("ToolsWindow", "-"))
-        self.label_28.setText(_translate("ToolsWindow", "0"))
-        self.r13_ref.setText(_translate("ToolsWindow", "-"))
-        self.label_29.setText(_translate("ToolsWindow", "0"))
+        ToolsWin.setWindowTitle(_translate("ToolsWin", "Tool/Ref Coordinates"))
+        self.label_33.setText(_translate("ToolsWin", "Tool"))
+        self.r13_tool.setText(_translate("ToolsWin", "-"))
+        self.r11_tool.setText(_translate("ToolsWin", "-"))
+        self.r12_tool.setText(_translate("ToolsWin", "-"))
+        self.t1_tool.setText(_translate("ToolsWin", "-"))
+        self.r21_tool.setText(_translate("ToolsWin", "-"))
+        self.r23_tool.setText(_translate("ToolsWin", "-"))
+        self.r32_tool.setText(_translate("ToolsWin", "-"))
+        self.r33_tool.setText(_translate("ToolsWin", "-"))
+        self.r22_tool.setText(_translate("ToolsWin", "-"))
+        self.t2_tool.setText(_translate("ToolsWin", "-"))
+        self.t3_tool.setText(_translate("ToolsWin", "-"))
+        self.r31_tool.setText(_translate("ToolsWin", "-"))
+        self.label_13.setText(_translate("ToolsWin", "0"))
+        self.label_16.setText(_translate("ToolsWin", "1"))
+        self.label_15.setText(_translate("ToolsWin", "0"))
+        self.label_14.setText(_translate("ToolsWin", "0"))
+        self.label_34.setText(_translate("ToolsWin", "Reference"))
+        self.r12_ref.setText(_translate("ToolsWin", "-"))
+        self.r23_ref.setText(_translate("ToolsWin", "-"))
+        self.t2_ref.setText(_translate("ToolsWin", "-"))
+        self.r32_ref.setText(_translate("ToolsWin", "-"))
+        self.r11_ref.setText(_translate("ToolsWin", "-"))
+        self.r21_ref.setText(_translate("ToolsWin", "-"))
+        self.r33_ref.setText(_translate("ToolsWin", "-"))
+        self.t3_ref.setText(_translate("ToolsWin", "-"))
+        self.r22_ref.setText(_translate("ToolsWin", "-"))
+        self.r31_ref.setText(_translate("ToolsWin", "-"))
+        self.label_27.setText(_translate("ToolsWin", "0"))
+        self.label_30.setText(_translate("ToolsWin", "1"))
+        self.t1_ref.setText(_translate("ToolsWin", "-"))
+        self.label_28.setText(_translate("ToolsWin", "0"))
+        self.r13_ref.setText(_translate("ToolsWin", "-"))
+        self.label_29.setText(_translate("ToolsWin", "0"))
 
 
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    ToolsWindow = QtWidgets.QDialog()
-    ui = Ui_ToolsWindow()
-    ui.setupUi(ToolsWindow)
-    ToolsWindow.show()
+    ToolsWin = QtWidgets.QDialog()
+    ui = Ui_ToolsWin()
+    ui.setupUi(ToolsWin)
+    ToolsWin.show()
     sys.exit(app.exec_())

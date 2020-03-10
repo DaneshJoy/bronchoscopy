@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ToolsWindow</class>
- <widget class="QDialog" name="ToolsWindow">
+ <class>ToolsWin</class>
+ <widget class="QDialog" name="ToolsWin">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -1059,7 +1059,7 @@ color: rgb(236, 236, 236);</string>
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>ToolsWindow</receiver>
+   <receiver>ToolsWin</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -1075,7 +1075,7 @@ color: rgb(236, 236, 236);</string>
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>ToolsWindow</receiver>
+   <receiver>ToolsWin</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

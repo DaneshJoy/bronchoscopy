@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui/RegMatWindow.ui'
+# Form implementation generated from reading ui file 'ui/RegMatWin.ui'
 #
 # Created by: PyQt5 UI code generator 5.14.1
 #
@@ -10,14 +10,14 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class Ui_RegMatWindow(object):
-    def setupUi(self, RegMatWindow):
-        RegMatWindow.setObjectName("RegMatWindow")
-        RegMatWindow.resize(261, 170)
-        RegMatWindow.setStyleSheet("background-color: rgb(65, 65, 65);")
-        self.verticalLayout = QtWidgets.QVBoxLayout(RegMatWindow)
+class Ui_RegMatWin(object):
+    def setupUi(self, RegMatWin):
+        RegMatWin.setObjectName("RegMatWin")
+        RegMatWin.resize(261, 170)
+        RegMatWin.setStyleSheet("background-color: rgb(65, 65, 65);")
+        self.verticalLayout = QtWidgets.QVBoxLayout(RegMatWin)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.table_regMat = QtWidgets.QTableWidget(RegMatWindow)
+        self.table_regMat = QtWidgets.QTableWidget(RegMatWin)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -92,63 +92,63 @@ class Ui_RegMatWindow(object):
         self.table_regMat.verticalHeader().setDefaultSectionSize(30)
         self.table_regMat.verticalHeader().setMinimumSectionSize(10)
         self.verticalLayout.addWidget(self.table_regMat)
-        self.buttonBox = QtWidgets.QDialogButtonBox(RegMatWindow)
+        self.buttonBox = QtWidgets.QDialogButtonBox(RegMatWin)
         self.buttonBox.setStyleSheet("color: rgb(170, 255, 255);")
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
         self.verticalLayout.addWidget(self.buttonBox)
 
-        self.retranslateUi(RegMatWindow)
-        self.buttonBox.accepted.connect(RegMatWindow.accept)
-        self.buttonBox.rejected.connect(RegMatWindow.reject)
-        QtCore.QMetaObject.connectSlotsByName(RegMatWindow)
+        self.retranslateUi(RegMatWin)
+        self.buttonBox.accepted.connect(RegMatWin.accept)
+        self.buttonBox.rejected.connect(RegMatWin.reject)
+        QtCore.QMetaObject.connectSlotsByName(RegMatWin)
 
-    def retranslateUi(self, RegMatWindow):
+    def retranslateUi(self, RegMatWin):
         _translate = QtCore.QCoreApplication.translate
-        RegMatWindow.setWindowTitle(_translate("RegMatWindow", "RegMat"))
+        RegMatWin.setWindowTitle(_translate("RegMatWin", "RegMat"))
         __sortingEnabled = self.table_regMat.isSortingEnabled()
         self.table_regMat.setSortingEnabled(False)
         item = self.table_regMat.item(0, 0)
-        item.setText(_translate("RegMatWindow", "-"))
+        item.setText(_translate("RegMatWin", "-"))
         item = self.table_regMat.item(0, 1)
-        item.setText(_translate("RegMatWindow", "-"))
+        item.setText(_translate("RegMatWin", "-"))
         item = self.table_regMat.item(0, 2)
-        item.setText(_translate("RegMatWindow", "-"))
+        item.setText(_translate("RegMatWin", "-"))
         item = self.table_regMat.item(0, 3)
-        item.setText(_translate("RegMatWindow", "-"))
+        item.setText(_translate("RegMatWin", "-"))
         item = self.table_regMat.item(1, 0)
-        item.setText(_translate("RegMatWindow", "-"))
+        item.setText(_translate("RegMatWin", "-"))
         item = self.table_regMat.item(1, 1)
-        item.setText(_translate("RegMatWindow", "-"))
+        item.setText(_translate("RegMatWin", "-"))
         item = self.table_regMat.item(1, 2)
-        item.setText(_translate("RegMatWindow", "-"))
+        item.setText(_translate("RegMatWin", "-"))
         item = self.table_regMat.item(1, 3)
-        item.setText(_translate("RegMatWindow", "-"))
+        item.setText(_translate("RegMatWin", "-"))
         item = self.table_regMat.item(2, 0)
-        item.setText(_translate("RegMatWindow", "-"))
+        item.setText(_translate("RegMatWin", "-"))
         item = self.table_regMat.item(2, 1)
-        item.setText(_translate("RegMatWindow", "-"))
+        item.setText(_translate("RegMatWin", "-"))
         item = self.table_regMat.item(2, 2)
-        item.setText(_translate("RegMatWindow", "-"))
+        item.setText(_translate("RegMatWin", "-"))
         item = self.table_regMat.item(2, 3)
-        item.setText(_translate("RegMatWindow", "-"))
+        item.setText(_translate("RegMatWin", "-"))
         item = self.table_regMat.item(3, 0)
-        item.setText(_translate("RegMatWindow", "0"))
+        item.setText(_translate("RegMatWin", "0"))
         item = self.table_regMat.item(3, 1)
-        item.setText(_translate("RegMatWindow", "0"))
+        item.setText(_translate("RegMatWin", "0"))
         item = self.table_regMat.item(3, 2)
-        item.setText(_translate("RegMatWindow", "0"))
+        item.setText(_translate("RegMatWin", "0"))
         item = self.table_regMat.item(3, 3)
-        item.setText(_translate("RegMatWindow", "1"))
+        item.setText(_translate("RegMatWin", "1"))
         self.table_regMat.setSortingEnabled(__sortingEnabled)
 
 
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    RegMatWindow = QtWidgets.QDialog()
-    ui = Ui_RegMatWindow()
-    ui.setupUi(RegMatWindow)
-    RegMatWindow.show()
+    RegMatWin = QtWidgets.QDialog()
+    ui = Ui_RegMatWin()
+    ui.setupUi(RegMatWin)
+    RegMatWin.show()
     sys.exit(app.exec_())
