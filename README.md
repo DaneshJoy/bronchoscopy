@@ -1,4 +1,11 @@
 # Bronchoscopy
+
+[!["Language"](https://img.shields.io/github/languages/top/saeeddiscovery/bronchoscopy.svg)](http://python.org/)
+![dependencies](https://img.shields.io/badge/dependencies-PyQt5-orange)
+
+[![Generic badge](https://img.shields.io/badge/Company-Parsiss-blue.svg)](http://parsiss.com/)
+[![Generic badge](https://img.shields.io/badge/Company-AitinTech-blue.svg)](http://AitinTech.ir/)
+
 PyQT + VTK in Python code for Navigation in Bronchoscopy
 
 ## Instructions (Windows)
