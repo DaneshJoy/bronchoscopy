@@ -5,6 +5,7 @@
 
 [![Generic badge](https://img.shields.io/badge/Company-Parsiss-blue.svg)](http://parsiss.com/)
 [![Generic badge](https://img.shields.io/badge/Company-AitinTech-blue.svg)](http://AitinTech.ir/)
+[![GitHub license](https://img.shields.io/github/license/saeeddiscovery/bronchoscopy.svg)](https://github.com/saeeddiscovery/bronchoscopy/blob/master/LICENSE)
 
 PyQT + VTK in Python code for Navigation in Bronchoscopy
 
