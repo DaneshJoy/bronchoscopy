@@ -8,7 +8,7 @@ Created on Mon Jun  3 01:09:45 2019
 import os
 import sys
 import vtk
-import numpy.random.common # Just for PyInstaller to work
+# import numpy.random.common # Just for PyInstaller to work
 # import numpy.random.bounded_integers
 # import numpy.random.entropy
 import numpy as np
@@ -16,10 +16,11 @@ import time
 import threading
 from scipy.io import loadmat
 import fix_qt_import_error
-from PyQt5.Qt import QApplication, QMainWindow, QColor, Qt, QIcon, QDialog
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QLabel
-from PyQt5.QtGui import QPalette
+from PyQt5.QtGui import QPalette, QColor, QIcon
 from sksurgerynditracker.nditracker import NDITracker
 from ui.QVtkViewer import QVtkViewer3D, QVtkViewer2D
 from ui import MainWin
