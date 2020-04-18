@@ -1,9 +1,46 @@
+import vtk
 from PyQt5.QtWidgets import QFrame
+from PyQt5 import QtWidgets, QtCore
+from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+from vtk.util.numpy_support import vtk_to_numpy
+import numpy as np
 from abc import abstractmethod
 
+class MyInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
+    def __init__(self, outer_instance):
+        self.outer_instance = outer_instance
+        self.AddObserver("LeftButtonReleaseEvent", self.left_button_press_event)
+        self.AddObserver("RightButtonReleaseEvent", self.right_button_press_event)
+        self.AddObserver("MiddleButtonReleaseEvent", self.middle_button_press_event)
+        self.AddObserver("MouseWheelForwardEvent", self.wheel_forward_event)
+        self.AddObserver("MouseWheelBackwardEvent", self.wheel_backward_event)
+
+    def left_button_press_event(self, obj, event):
+        # self.outer_instance.updateTextActor()
+        self.OnLeftButtonUp()
+        return
+
+    def right_button_press_event(self, obj, event):
+        # self.outer_instance.updateTextActor()
+        self.OnRightButtonUp()
+        return
+
+    def middle_button_press_event(self, obj, event):
+        # self.outer_instance.updateTextActor()
+        self.OnMiddleButtonUp()
+        return
+
+    def wheel_forward_event(self, obj, event):
+        # self.outer_instance.updateTextActor()
+        self.OnMouseWheelForward()
+        return
+
+    def wheel_backward_event(self, obj, event):
+        # self.outer_instance.updateTextActor()
+        self.OnMouseWheelBackward()
+        return
 
 class QVTKViewer(QFrame):
-
     def __init__(self, panel, size, viewType):
         super().__init__(panel)
         self.viewType = viewType
@@ -22,12 +59,22 @@ class QVTKViewer(QFrame):
         self.interactor.setMinimumSize(self.width, self.height)
         self.interactor.setMaximumSize(self.width, self.height)
         self.setLayout(self.layout)
+
+        self.initCamViewUp = (0, 0, 1)
+        self.initCamPosition = (0, 1, 0)
+        self.initCamFocalPoint = (0, 0, 0)
+
         self.cross = None
+        self.points = None
+
+        self.actor = vtk.vtkImageActor()
+
         # Setup VTK Environment
         self.ren = vtk.vtkRenderer()
         self.interactor.GetRenderWindow().AddRenderer(self.ren)
+
         # self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
-        self.interactor.SetInteractorStyle(self.MyInteractorStyle(self))
+        self.interactor.SetInteractorStyle(MyInteractorStyle(self))
         self.ren.SetBackground(0, 0, 0)
         # ren.SetBackground(colors.GetColor3D("BkgColor"))
         self.interactor.Initialize()
@@ -86,7 +133,8 @@ class QVTKViewer(QFrame):
         lines = vtk.vtkCellArray()
         lines.InsertNextCell(line0)
         lines.InsertNextCell(line1)
-        lines.InsertNextCell(line2)
+        if is3D:
+            lines.InsertNextCell(line2)
 
         # Create a polydata to store everything in
         linesPolyData = vtk.vtkPolyData()
@@ -103,10 +151,10 @@ class QVTKViewer(QFrame):
         self.ren.GetRenderWindow().Render()
         self.cross = None
 
-    def set_cross_position(self, x, y, z=1):
+    def set_cross_position(self, x, y, z=1, is3D=False):
             if self.cross == None:
                 mapper = vtk.vtkPolyDataMapper()
-                mapper.SetInputData(self.CreateCross(50))
+                mapper.SetInputData(self.create_cross(50, is3D))
                 self.cross = vtk.vtkActor()
                 self.cross.GetProperty().SetLineWidth(2)
                 self.cross.SetMapper(mapper)
