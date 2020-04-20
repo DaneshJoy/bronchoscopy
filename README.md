@@ -1,8 +1,8 @@
 # Bronchoscopy
 
-[!["Language"](https://img.shields.io/github/languages/top/saeeddiscovery/bronchoscopy.svg?logo=python)](http://python.org/)
-![dependencies](https://img.shields.io/badge/dependencies-PyQt5-orange)
-[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
+[!["Language"](https://img.shields.io/github/languages/top/saeeddiscovery/bronchoscopy.svg?style=for-the-badge&logo=python)](http://python.org/)
+![dependencies](https://img.shields.io/badge/dependencies-PyQt5-brightgreen.svg?style=for-the-badge)
+[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](https://lbesson.mit-license.org/)
 
 [!["Contributors"](https://img.shields.io/github/contributors/saeeddiscovery/bronchoscopy.svg?style=social&logo=visual%20studio%20code)](https://github.com/saeeddiscovery/bronchoscopy/graphs/contributors)
 [![Company](https://img.shields.io/badge/Company-Parsiss-blue.svg?style=social&logo=c)](http://parsiss.com/)
