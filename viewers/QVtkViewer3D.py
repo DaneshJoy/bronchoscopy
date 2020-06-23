@@ -95,7 +95,7 @@ class QVtkViewer3D(QVTKViewer):
 
         # Human Actor.
         readerH = vtk.vtkXMLPolyDataReader()
-        readerH.SetFileName('Human.vtp')
+        readerH.SetFileName('ui\\Human.vtp')
         readerH.Update()
         humanMapper = vtk.vtkPolyDataMapper()
         humanMapper.SetInputConnection(readerH.GetOutputPort())

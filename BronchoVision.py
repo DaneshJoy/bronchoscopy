@@ -8,14 +8,10 @@ Created on Mon Jun  3 01:09:45 2019
 import os
 import sys
 import vtk
-# import numpy.random.common # Just for PyInstaller to work
-# import numpy.random.bounded_integers
-# import numpy.random.entropy
 import numpy as np
 import time
 import threading
 from scipy.io import loadmat
-import fix_qt_import_error
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
 from PyQt5 import QtWidgets, QtCore, uic
@@ -53,7 +49,8 @@ class MainWindow(QMainWindow):
         self.regMatWindow = RegMatWindow(self)
         self.regMatWindow.setup()
         self.tracker = None
-        self.tracker_connected = False
+        self.tracker_connected = True
+        self.isRecordCoords = False
 
         self.regMat = np.array([[0.84,      0.09,   -0.53,  -35.67],
                                 [-0.51,     -0.14,  -0.85,  -202.98],
@@ -80,6 +77,7 @@ class MainWindow(QMainWindow):
         self.ui.btn_Connect.clicked.connect(self.connectTracker)
         self.ui.btn_ToolsWindow.clicked.connect(self.showToolsWindow)
         self.ui.btn_regMat.clicked.connect(self.showRegMatWindow)
+        self.ui.btn_recordToolRef.clicked.connect(self.recordCoords)
 
         self.ui.tabWidget.currentChanged.connect(self.virtualTabChanged)
 
@@ -143,8 +141,9 @@ class MainWindow(QMainWindow):
                     # TODO: Show some messages or info
                     continue
                 
-                self.trackerRawCoords_ref.append(self.refData) 
-                self.trackerRawCoords_tool.append(self.toolData)    
+                if (self.isRecordCoords):
+                    self.trackerRawCoords_ref.append(self.refData) 
+                    self.trackerRawCoords_tool.append(self.toolData)    
                 self.showToolOnViews(self.toolData)
                 self.toolsWindow.setData(self.refData, self.toolData)
             else:
@@ -152,15 +151,31 @@ class MainWindow(QMainWindow):
 
             time.sleep(0.03)
         return
+
+    def recordCoords(self):
+        if (self.isRecordCoords == False) and (self.tracker_connected):
+            self.isRecordCoords = True
+            self.ui.btn_recordToolRef.text = 'Stop Record'
+            icon = QIcon(":/icon/icons/rec_stop.png")
+            self.ui.btn_recordToolRef.setIcon(icon)
+        else:
+            self.isRecordCoords = False
+            self.ui.btn_recordToolRef.text = 'Start Record'
+            icon = QIcon(":/icon/icons/rec_start.png")
+            self.ui.btn_recordToolRef.setIcon(icon)
+            refFile = 'RefPoints_'+str(int(time.time()))
+            toolFile = 'ToolPoints_'+str(int(time.time()))
+            np.save(refFile, self.trackerRawCoords_ref)
+            np.save(toolFile, self.trackerRawCoords_tool)
+            QMessageBox.information(self, 'Tracker Points Saved', 'Tool points saved to \'' + toolFile + '.npy\'\nRef points saved to \'' + refFile + '.npy\'')
+
             
 
     def disconnectTracker(self):
         if self.trackerReady:
             self.tracker.stop_tracking()
             self.tracker.close()
-
-            np.save('trackerRawCoords_ref', self.trackerRawCoords_ref)
-            np.save('trackerRawCoords_tool', self.trackerRawCoords_tool)
+    
         self.tracker_connected = False
         self.captureCoordinates = False
         self.ui.btn_Connect.setText('Connect Tracker')
@@ -663,6 +678,6 @@ if __name__ == "__main__":
     # main_win.show()
     # main_win.initialize()
 
-    if main_win.tracker_connected == True:
-        main_win.disconnectTracker()
+    # if main_win.tracker_connected == True:
+    #     main_win.disconnectTracker()
     sys.exit(app.exec())
