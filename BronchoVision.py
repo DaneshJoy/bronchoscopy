@@ -22,7 +22,8 @@ from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QLabel
 from PyQt5.QtGui import QPalette, QColor, QIcon
 from sksurgerynditracker.nditracker import NDITracker
-from ui.QVtkViewer import QVtkViewer3D, QVtkViewer2D
+from viewers.QVtkViewer2D import QVtkViewer2D
+from viewers.QVtkViewer3D import QVtkViewer3D
 from ui import MainWin
 from ui.UiWindows import RegMatWindow, ToolsWindow
 
@@ -30,7 +31,7 @@ from ui.UiWindows import RegMatWindow, ToolsWindow
 class MainWindow(QMainWindow):
     def __init__(self, size):
         super().__init__()
-        self.trackerReady = False
+        self.trackerReady = True
         self.captureCoordinates = False
 
         self.trackerRawCoords_ref = []
@@ -69,6 +70,8 @@ class MainWindow(QMainWindow):
         self.ui.btn_pauseCam.clicked.connect(self.pauseCam)
         self.ui.btn_stopCam.clicked.connect(self.stopCam)
         self.ui.slider_Frames.valueChanged.connect(self.frameChanged)
+        self.ui.slider_threshold3D.valueChanged.connect(self.slider3DChanged)
+        self.ui.slider_threshold3D_2.valueChanged.connect(self.slider3DChanged_2)
         self.ui.btn_ResetViewports.clicked.connect(self.ResetViewports)
         self.ui.btn_ResetVB.clicked.connect(self.ResetVB)
         self.ui.comboBox_2DView.currentIndexChanged.connect(self.change2DView)
@@ -90,9 +93,10 @@ class MainWindow(QMainWindow):
                         self.tracker = NDITracker(settings_aurora)
                         self.captureCoordinates = True
                     except:
+                        QApplication.restoreOverrideCursor()
                         msg = 'Please check the following:\n' \
-                                '  1) Is an NDI device connected to your computer?\n' \
-                                '  2) Is the NDI device switched on?\n' \
+                                '  1) NDI device connection\n' \
+                                '  2) Is the NDI device switched on?!\n' \
                                 '  3) Do you have sufficient privilege to connect to the device?\n' \
                                 '     (e.g. on Linux are you part of the \"dialout\" group?)'
                         QMessageBox.critical(self, 'Tracker Connection Failed', f'Can not connect to the tracker!\n{msg}')
@@ -298,16 +302,19 @@ class MainWindow(QMainWindow):
             QApplication.restoreOverrideCursor()
 
     def showImages(self, reader, dims):
-        self.vtk_widget_3D.RemoveImage()
-        self.vtk_widget_3D_2.RemoveImage()
-        self.vtk_widget_2D.RemoveImage()
+        self.vtk_widget_3D.remove_image()
+        self.vtk_widget_3D_2.remove_image()
+        self.vtk_widget_2D.remove_image()
 
-        self.vtk_widget_3D.showImage(reader)
-        self.vtk_widget_3D_2.showImage(reader)
-        self.vtk_widget_2D.showImage(reader, dims)
+        self.vtk_widget_3D.show_image(reader)
+        self.vtk_widget_3D_2.show_image(reader)
+        self.vtk_widget_2D.show_image(reader, dims)
         
         self.ui.btn_LoadPoints.setEnabled(True)
         self.ui.groupBox_Viewports.setEnabled(True)
+
+        self.ui.slider_threshold3D.setEnabled(True)
+        self.ui.slider_threshold3D_2.setEnabled(True)
         
     def updateSubPanels(self, dims):
         self.showSubPanels()
@@ -324,9 +331,15 @@ class MainWindow(QMainWindow):
             self.ui.Slider_2D.setValue(dims[0]//2)
 
     def sliderChanged(self):
-        self.vtk_widget_2D.setSlice(self.ui.Slider_2D.value())
+        self.vtk_widget_2D.set_slice(self.ui.Slider_2D.value())
         self.vtk_widget_2D.interactor.Initialize()
         return
+
+    def slider3DChanged(self):
+        self.vtk_widget_3D.setThreshold(self.ui.slider_threshold3D.value())
+    
+    def slider3DChanged_2(self):
+        self.vtk_widget_3D_2.setThreshold(self.ui.slider_threshold3D_2.value())
     
     def hideSubPanels(self):
         self.ui.SubPanel_3D.hide()
@@ -421,13 +434,13 @@ class MainWindow(QMainWindow):
             self.RemovePoints()
 
     def DrawPoints(self, points):
-        self.vtk_widget_3D.DrawPoints(points)
-        self.vtk_widget_3D.AddStartPoint(points[:,:,0]) # start point
-        self.vtk_widget_3D.AddEndPoint(points[:,:,-1]) # end point
+        self.vtk_widget_3D.draw_points(points)
+        self.vtk_widget_3D.add_start_point(points[:,:,0]) # start point
+        self.vtk_widget_3D.add_end_point(points[:,:,-1]) # end point
         # self.playCam(points)
 
     def RemovePoints(self):
-        self.vtk_widget_3D.RemovePoints()
+        self.vtk_widget_3D.remove_points()
         
     def frameChanged(self):
         if self.registeredPoints is None:
@@ -451,28 +464,28 @@ class MainWindow(QMainWindow):
         self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
 
     def showToolOnViews(self, toolMatrix):
-        self.vtk_widget_3D.setCamera(toolMatrix)
+        self.vtk_widget_3D.set_camera(toolMatrix)
 
         if self.ui.comboBox_2DView.currentText() == 'Axial':
             axial_slice = int((toolMatrix[2,3] - self.origin[2]) / self.spacing[2])
-            self.vtk_widget_2D.setSlice(axial_slice)
+            self.vtk_widget_2D.set_slice(axial_slice)
             self.ui.Slider_2D.setValue(axial_slice)
         elif self.ui.comboBox_2DView.currentText() == 'Coronal':
             coronal_slice = int((toolMatrix[1,3] - self.origin[1]) / self.spacing[1])
-            self.vtk_widget_2D.setSlice(coronal_slice)
+            self.vtk_widget_2D.set_slice(coronal_slice)
             self.ui.Slider_2D.setValue(coronal_slice)
         else: # self.ui.comboBox_2DView.currentText() == 'Sagittal'
             sagittal_slice = int((toolMatrix[0,3] - self.origin[0]) / self.spacing[0])
-            self.vtk_widget_2D.setSlice(sagittal_slice)
+            self.vtk_widget_2D.set_slice(sagittal_slice)
             self.ui.Slider_2D.setValue(sagittal_slice)
 
-        self.vtk_widget_3D_2.SetCrossPosition(toolMatrix[0,3], toolMatrix[1,3], toolMatrix[2,3])
+        self.vtk_widget_3D_2.set_cross_position(toolMatrix[0,3], toolMatrix[1,3], toolMatrix[2,3], is3D=True)
         if self.ui.comboBox_2DView.currentText() == 'Axial':
-            self.vtk_widget_2D.SetCrossPosition(toolMatrix[0,3], toolMatrix[1,3])
+            self.vtk_widget_2D.set_cross_position(toolMatrix[0,3], toolMatrix[1,3])
         elif self.ui.comboBox_2DView.currentText() == 'Coronal':
-            self.vtk_widget_2D.SetCrossPosition(toolMatrix[0,3], toolMatrix[2,3]+self.origin[1])
+            self.vtk_widget_2D.set_cross_position(toolMatrix[0,3], toolMatrix[2,3]+self.origin[1])
         else: # if self.ui.comboBox_2DView.currentText() == 'Sagittal':
-            self.vtk_widget_2D.SetCrossPosition(toolMatrix[1,3], toolMatrix[2,3]+self.origin[0])
+            self.vtk_widget_2D.set_cross_position(toolMatrix[1,3], toolMatrix[2,3]+self.origin[0])
 
     def playCam(self):
         # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
@@ -523,24 +536,26 @@ class MainWindow(QMainWindow):
         self.ui.btn_stopCam.setEnabled(False)
     
     def change2DView(self):
-        self.vtk_widget_2D.ResetView()
+        self.vtk_widget_2D.reset_view(is3D=False)
         # self.vtk_widget_2D.RemoveImage()
-        self.vtk_widget_2D.planeType = self.ui.comboBox_2DView.currentText()
-        self.vtk_widget_2D.showImage(self.imgReader, self.dims)
+        self.vtk_widget_2D.viewType = self.ui.comboBox_2DView.currentText()
+        self.vtk_widget_2D.show_image(self.imgReader, self.dims)
         self.updateSubPanels(self.dims)
 
         if not self.vtk_widget_2D.cross == None:
-            self.vtk_widget_2D.RemoveCross()
+            self.vtk_widget_2D.remove_cross()
             if self.trackerReady:
                 self.showToolOnViews(self.toolData)
             else:
                 self.showToolOnViews(self.cam_pos)
 
     def ResetViewports(self):
-        self.vtk_widget_3D.ResetView()
-        self.vtk_widget_3D_2.ResetView()
-        self.vtk_widget_2D.ResetView()
+        self.vtk_widget_3D.reset_view(is3D=True)
+        self.vtk_widget_3D_2.reset_view(is3D=True)
+        self.vtk_widget_2D.reset_view(is3D=False)
         self.updateSubPanels(self.dims)
+        self.ui.slider_threshold3D.setValue(-600)
+        self.ui.slider_threshold3D_2.setValue(250)
 
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -562,7 +577,7 @@ class MainWindow(QMainWindow):
         self.RemovePoints()
         self.registeredPoints = None
         self.stopCam()
-        self.vtk_widget_2D.RemoveCross()
+        self.vtk_widget_2D.remove_cross()
         self.ui.btn_ResetVB.setEnabled(False)
         self.ui.btn_playCam.setEnabled(False)
         self.ui.btn_pauseCam.setEnabled(False)
@@ -578,7 +593,7 @@ class MainWindow(QMainWindow):
         # self.resize(sizeObject.width(), sizeObject.height())
         # self.resize(size.width(), size.height())
         self.vtk_widget_3D = QVtkViewer3D(self.ui.vtk_panel_3D_1, size, 'Virtual')
-        self.vtk_widget_3D_2 =  QVtkViewer3D(self.ui.vtk_panel_3D_2, size, 'Prespective')
+        self.vtk_widget_3D_2 =  QVtkViewer3D(self.ui.vtk_panel_3D_2, size, 'Normal')
         self.vtk_widget_2D = QVtkViewer2D(self.ui.vtk_panel_2D, size, self.ui.comboBox_2DView.currentText())
         self.hideSubPanels()
 

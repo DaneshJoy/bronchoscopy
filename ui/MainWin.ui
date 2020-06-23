@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>1278</width>
-    <height>700</height>
+    <height>884</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -297,7 +297,7 @@
        </property>
        <property name="maximumSize">
         <size>
-         <width>250</width>
+         <width>350</width>
          <height>16777215</height>
         </size>
        </property>
@@ -316,7 +316,7 @@
        <property name="midLineWidth">
         <number>0</number>
        </property>
-       <layout class="QVBoxLayout" name="verticalLayout" stretch="2,2,1,0">
+       <layout class="QVBoxLayout" name="verticalLayout" stretch="1,1,1,0">
         <property name="spacing">
          <number>6</number>
         </property>
@@ -339,6 +339,7 @@
           </property>
           <property name="font">
            <font>
+            <pointsize>10</pointsize>
             <weight>50</weight>
             <bold>false</bold>
             <strikeout>false</strikeout>
@@ -367,7 +368,7 @@ border-color: rgb(114, 171, 171);</string>
           <property name="checkable">
            <bool>false</bool>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1,0">
+          <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1,0,0">
            <property name="spacing">
             <number>6</number>
            </property>
@@ -935,6 +936,19 @@ border-color: rgb(114, 171, 171);</string>
             </widget>
            </item>
            <item>
+            <spacer name="verticalSpacer_4">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
             <spacer name="verticalSpacer_5">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
@@ -957,6 +971,7 @@ border-color: rgb(114, 171, 171);</string>
           </property>
           <property name="font">
            <font>
+            <pointsize>10</pointsize>
             <weight>50</weight>
             <bold>false</bold>
             <strikeout>false</strikeout>
@@ -1212,10 +1227,11 @@ border-color: rgb(114, 171, 171);</string>
         <item>
          <widget class="QGroupBox" name="groupBox_Viewports">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="font">
            <font>
+            <pointsize>10</pointsize>
             <weight>50</weight>
             <bold>false</bold>
             <strikeout>false</strikeout>
@@ -1240,22 +1256,7 @@ border-color: rgb(114, 171, 171);</string>
           <property name="checkable">
            <bool>false</bool>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,0,0">
-           <property name="spacing">
-            <number>6</number>
-           </property>
-           <property name="leftMargin">
-            <number>9</number>
-           </property>
-           <property name="topMargin">
-            <number>9</number>
-           </property>
-           <property name="rightMargin">
-            <number>9</number>
-           </property>
-           <property name="bottomMargin">
-            <number>9</number>
-           </property>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_11" stretch="1,3">
              <property name="spacing">
@@ -1291,7 +1292,7 @@ border-color: rgb(114, 171, 171);</string>
                 </font>
                </property>
                <property name="autoFillBackground">
-                <bool>false</bool>
+                <bool>true</bool>
                </property>
                <property name="styleSheet">
                 <string notr="true">background-color: rgb(65, 65, 65);</string>
@@ -1326,6 +1327,183 @@ border-color: rgb(114, 171, 171);</string>
                  <string>Sagittal</string>
                 </property>
                </item>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>3D Views Threshold</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_12" stretch="1,2,10,0">
+             <item>
+              <spacer name="horizontalSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_4">
+               <property name="text">
+                <string>Virtual</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSlider" name="slider_threshold3D">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="minimum">
+                <number>-2500</number>
+               </property>
+               <property name="maximum">
+                <number>1000</number>
+               </property>
+               <property name="singleStep">
+                <number>10</number>
+               </property>
+               <property name="pageStep">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>-600</number>
+               </property>
+               <property name="tracking">
+                <bool>false</bool>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="tickPosition">
+                <enum>QSlider::NoTicks</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="lbl_threshold3D">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">color: rgb(157, 205, 216);</string>
+               </property>
+               <property name="text">
+                <string>-600</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_14" stretch="1,2,10,0">
+             <item>
+              <spacer name="horizontalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_5">
+               <property name="text">
+                <string>Normal</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSlider" name="slider_threshold3D_2">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="minimum">
+                <number>-2500</number>
+               </property>
+               <property name="maximum">
+                <number>1000</number>
+               </property>
+               <property name="singleStep">
+                <number>10</number>
+               </property>
+               <property name="pageStep">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>250</number>
+               </property>
+               <property name="tracking">
+                <bool>false</bool>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="tickPosition">
+                <enum>QSlider::NoTicks</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="lbl_threshold3D_2">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">color: rgb(157, 205, 216);</string>
+               </property>
+               <property name="text">
+                <string>250</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
               </widget>
              </item>
             </layout>
@@ -1946,7 +2124,7 @@ border-color: rgb(114, 171, 171);</string>
                   <string notr="true">color: rgb(157, 205, 216);</string>
                  </property>
                  <property name="text">
-                  <string>Prespective</string>
+                  <string>Normal</string>
                  </property>
                 </widget>
                </item>
@@ -2119,6 +2297,38 @@ border-color: rgb(114, 171, 171);</string>
     <hint type="destinationlabel">
      <x>1026</x>
      <y>722</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>slider_threshold3D</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>lbl_threshold3D</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>177</x>
+     <y>591</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>338</x>
+     <y>591</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>slider_threshold3D_2</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>lbl_threshold3D_2</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>202</x>
+     <y>689</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>314</x>
+     <y>689</y>
     </hint>
    </hints>
   </connection>

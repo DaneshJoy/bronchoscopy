@@ -6,8 +6,8 @@ from vtk.util.numpy_support import vtk_to_numpy
 import numpy as np
 
 class QVtkViewer3D(QFrame):
-    def __init__(self, parent, size, viewType):
-        super().__init__(parent)
+    def __init__(self, panel, size, viewType):
+        super().__init__(panel)
 
         self.viewType = viewType
         self.colors = vtk.vtkNamedColors()
@@ -102,7 +102,6 @@ class QVtkViewer3D(QFrame):
         # Color the lines
         linesPolyData.GetCellData().SetScalars(colors)
         return linesPolyData
-
     def SetCrossPosition(self, x, y, z):
         if self.cross == None:
             mapper = vtk.vtkPolyDataMapper()
@@ -113,17 +112,14 @@ class QVtkViewer3D(QFrame):
             self.ren.AddActor(self.cross)
         self.cross.SetPosition(x, y, z)
         self.ren.GetRenderWindow().Render()
-
     def RemoveCross(self):
         self.ren.RemoveActor(self.cross)
         self.ren.GetRenderWindow().Render()
         self.cross = None
-
     def RemoveImage(self):
         self.ren.RemoveAllViewProps()
         self.cross = None
         self.ren.ResetCamera()
-
     def showImage(self, reader):
 
         # Isosurface
@@ -202,7 +198,6 @@ class QVtkViewer3D(QFrame):
         # self.interactor = interactor
         self.interactor.Initialize()
         # self.interactor.Start()
-
     def register(self, pt_tracker):
         ### Decimate points for registration
         self.surfaceExtractor.Update()
@@ -234,8 +229,6 @@ class QVtkViewer3D(QFrame):
         # R R R 0
         # t t t 1
         # then transpose
-
-
     def ShowOrientationWidget(self):
         # # Cube Actor
         # cubeActor = vtk.vtkAnnotatedCubeActor()
@@ -272,7 +265,6 @@ class QVtkViewer3D(QFrame):
         self.axes.SetViewport(0.0, 0.85, 0.15, 1.0)  # (xmin,ymin,xmax,ymax)
         self.axes.EnabledOn() # <== application freeze-crash
         self.axes.InteractiveOn()
-
     def ResetView(self):
         self.ren.ResetCamera()
         self.ren.GetActiveCamera().SetViewUp(self.initCamViewUp)
@@ -282,7 +274,6 @@ class QVtkViewer3D(QFrame):
         # self.ren.GetActiveCamera().Dolly(1.5)
         self.ren.ResetCameraClippingRange()
         self.interactor.ReInitialize()
-
     def DrawPoints(self, points):
         from vtk.util.numpy_support import numpy_to_vtkIdTypeArray
 
@@ -327,7 +318,6 @@ class QVtkViewer3D(QFrame):
         self.ren.AddActor(self.points)
         self.interactor.ReInitialize()
         # self.ren.ResetCameraClippingRange()
-
     def RemovePoints(self):
         if self.points == None:
             return
@@ -338,7 +328,6 @@ class QVtkViewer3D(QFrame):
         self.points = None
         self.startPoint = None
         self.endPoint = None
-
     def AddStartPoint(self, pos, color=[0,1,0]):
         # create source
         sphere = vtk.vtkSphereSource()
@@ -373,7 +362,6 @@ class QVtkViewer3D(QFrame):
         self.ren.AddActor(self.startPoint)
 
         self.interactor.ReInitialize()
-
     def AddEndPoint(self, pos, color=[1,0,0]):
         # create source
         sphere = vtk.vtkSphereSource()
@@ -407,7 +395,6 @@ class QVtkViewer3D(QFrame):
         # assign actor to the renderer
         self.ren.AddActor(self.endPoint)
         self.interactor.ReInitialize()
-
     def setCamera(self, cam_pos):
 
         ''' Set Camera Intrinsics '''
@@ -483,7 +470,6 @@ class QVtkViewer3D(QFrame):
         self.interactor.ReInitialize()
 
         # self.updateTextActor() # This function has interactor.ReInitialize() in it
-
     def updateTextActor(self):
         # create a text actor
         renSize = self.ren_win.GetSize()
@@ -535,10 +521,9 @@ class QVtkViewer3D(QFrame):
             self.OnMouseWheelBackward()
             return
 
-
 class QVtkViewer2D(QFrame):
-    def __init__(self, parent, size, planeType):
-        super().__init__(parent)
+    def __init__(self, panel, size, planeType):
+        super().__init__(panel)
 
         self.colors = vtk.vtkNamedColors()
         self.colors.SetColor("BkgColor", [0, 0, 0, 255])
@@ -575,7 +560,6 @@ class QVtkViewer2D(QFrame):
 
         self.actor = vtk.vtkImageActor()
         self.planeType = planeType
-
     def DummyFunc1(self, obj, ev):
         clickPos = self.interactor.GetEventPosition()
         coordinate = vtk.vtkCoordinate()
@@ -604,10 +588,8 @@ class QVtkViewer2D(QFrame):
         self.SetCrossPosition(pos[0], pos[1])
         # self.interactor.ReInitialize()
         print("Before Event")
-
     def DummyFunc2(self, obj, ev):
         print("After Event")
-
     def SetCrossPosition(self, x, y):
         if self.cross == None:
             mapper = vtk.vtkPolyDataMapper()
@@ -618,17 +600,14 @@ class QVtkViewer2D(QFrame):
             self.ren.AddActor(self.cross)
         self.cross.SetPosition(x, y, 1)
         self.ren.GetRenderWindow().Render()
-
     def RemoveImage(self):
         self.ren.RemoveAllViewProps()
         self.cross = None
         self.ren.ResetCamera()
-
     def RemoveCross(self):
         self.ren.RemoveActor(self.cross)
         self.ren.GetRenderWindow().Render()
         self.cross = None
-
     def showImage(self, reader, dims):
         # image = reader.GetOutput()
         # self.dims = image.GetDimensions()
@@ -794,8 +773,7 @@ class QVtkViewer2D(QFrame):
 
         self.interactor.Initialize()
         # self.interactor.Start()
-
-        # create a cross
+    # create a cross
     def CreateCross(self, size):
         #Create a vtkPoints object and store the points in it
         pts = vtk.vtkPoints()
@@ -843,7 +821,6 @@ class QVtkViewer2D(QFrame):
         # Color the lines
         linesPolyData.GetCellData().SetScalars(colors)
         return linesPolyData
-
     def drawLine(self, sliceNumber):
         winSize = self.interactor.GetRenderWindow().GetSize()
         p0 = [0, -self.height//2, 1]
@@ -908,7 +885,6 @@ class QVtkViewer2D(QFrame):
         self.lineActor = vtk.vtkActor()
         self.lineActor.SetMapper(mapper)
         self.ren.AddActor2D(self.lineActor)
-
     # def setSlice(self, sliceNumber, dims):
     def setSlice(self, sliceNumber):
         # self.ren.RemoveActor(self.lineActor)
@@ -948,7 +924,6 @@ class QVtkViewer2D(QFrame):
             sliceNumber = self.origin[0] + sliceNumber*self.spacing[0]
             matrix.SetElement(0, 3, sliceNumber)
         self.ren.GetRenderWindow().Render()
-
     def ResetView(self):
         self.ren.ResetCamera()
         self.ren.GetActiveCamera().Zoom(1.5)
