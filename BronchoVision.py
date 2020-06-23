@@ -65,6 +65,7 @@ class MainWindow(QMainWindow):
         self.ui.Slider_2D.valueChanged.connect(self.sliderChanged)
 
         self.ui.btn_LoadPoints.clicked.connect(self.readPoints)
+        self.ui.btn_LoadRefPoints.clicked.connect(self.readRefPoints)
         self.ui.checkBox_showPoints.stateChanged.connect(self.showHidePoints)
         self.ui.btn_playCam.clicked.connect(self.playCam)
         self.ui.btn_pauseCam.clicked.connect(self.pauseCam)
@@ -79,6 +80,15 @@ class MainWindow(QMainWindow):
         self.ui.btn_Connect.clicked.connect(self.connectTracker)
         self.ui.btn_ToolsWindow.clicked.connect(self.showToolsWindow)
         self.ui.btn_regMat.clicked.connect(self.showRegMatWindow)
+
+        self.ui.tabWidget.currentChanged.connect(self.virtualTabChanged)
+
+    def virtualTabChanged(self):
+        if (self.ui.tabWidget.currentIndex() == 0):
+            self.trackerReady = True
+        else:
+            self.trackerReady = False
+        print(self.ui.tabWidget.currentIndex(), self.trackerReady)
 
     def connectTracker(self):
         if self.tracker_connected == False:
@@ -311,6 +321,7 @@ class MainWindow(QMainWindow):
         self.vtk_widget_2D.show_image(reader, dims)
         
         self.ui.btn_LoadPoints.setEnabled(True)
+        self.ui.btn_LoadRefPoints.setEnabled(True)
         self.ui.groupBox_Viewports.setEnabled(True)
 
         self.ui.slider_threshold3D.setEnabled(True)
@@ -360,6 +371,7 @@ class MainWindow(QMainWindow):
         pass
 
     def readPoints(self):
+        #Read tool points
         self.registeredPoints = None
         self.RemovePoints()
         from vtk.util.numpy_support import vtk_to_numpy
@@ -427,6 +439,23 @@ class MainWindow(QMainWindow):
             self.ui.checkBox_showPoints.setEnabled(True)
             self.ui.btn_ResetVB.setEnabled(True)
 
+    def readRefPoints(self):
+        # Read Reference Points
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(self, "Read Points from File", "", "All Data Types (*.mat *.npy *.npz);;Matlab (*.mat);;Numpy (*.npy *.npz);;All Files (*)", options=options)
+
+        if fileName:
+            extension = os.path.splitext(fileName)[1].lower()
+
+            if 'mat' in extension:
+                matFile = loadmat(fileName)
+                # self.registeredPoints = matFile['EMT_cor']
+                self.refCoords = matFile[list(matFile)[-1]]
+            elif 'np' in extension:
+                self.refCoords = np.load(fileName)
+                # self.refCoords = np.swapaxes(self.refCoords, 1, 2)
+
     def showHidePoints(self):
         if self.ui.checkBox_showPoints.isChecked():
             self.DrawPoints(self.registeredPoints)
@@ -437,10 +466,15 @@ class MainWindow(QMainWindow):
         self.vtk_widget_3D.draw_points(points)
         self.vtk_widget_3D.add_start_point(points[:,:,0]) # start point
         self.vtk_widget_3D.add_end_point(points[:,:,-1]) # end point
+
+        self.vtk_widget_3D_2.draw_points(points)
+        self.vtk_widget_3D_2.add_start_point(points[:,:,0]) # start point
+        self.vtk_widget_3D_2.add_end_point(points[:,:,-1]) # end point
         # self.playCam(points)
 
     def RemovePoints(self):
         self.vtk_widget_3D.remove_points()
+        self.vtk_widget_3D_2.remove_points()
         
     def frameChanged(self):
         if self.registeredPoints is None:
@@ -544,7 +578,7 @@ class MainWindow(QMainWindow):
 
         if not self.vtk_widget_2D.cross == None:
             self.vtk_widget_2D.remove_cross()
-            if self.trackerReady:
+            if (self.trackerReady and self.tracker_connected):
                 self.showToolOnViews(self.toolData)
             else:
                 self.showToolOnViews(self.cam_pos)
@@ -556,21 +590,6 @@ class MainWindow(QMainWindow):
         self.updateSubPanels(self.dims)
         self.ui.slider_threshold3D.setValue(-600)
         self.ui.slider_threshold3D_2.setValue(250)
-
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, "Read Points from File", "", "All Data Types (*.mat *.npy *.npz);;Matlab (*.mat);;Numpy (*.npy *.npz);;All Files (*)", options=options)
-
-        if fileName:
-            extension = os.path.splitext(fileName)[1].lower()
-
-            if 'mat' in extension:
-                matFile = loadmat(fileName)
-                # self.registeredPoints = matFile['EMT_cor']
-                self.refCoords = matFile[list(matFile)[-1]]
-            elif 'np' in extension:
-                self.refCoords = np.load(fileName)
-                # self.refCoords = np.swapaxes(self.refCoords, 1, 2)
 
 
     def ResetVB(self):

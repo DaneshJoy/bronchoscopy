@@ -1,0 +1,13 @@
+certifi==2020.4.5.2
+future==0.18.2
+mkl-fft==1.1.0
+mkl-random==1.1.1
+mkl-service==2.3.0
+ndicapi==3.2.6
+numpy==1.18.5
+scikit-surgerycore==0.6.5
+scikit-surgerynditracker==0.1.9.1
+scipy==1.4.1
+six==1.15.0
+vtk===-PKG-VERSION
+wincertstore==0.2
