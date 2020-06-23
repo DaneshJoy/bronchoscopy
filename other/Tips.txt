@@ -1,0 +1,42 @@
+# copy from numpy to vtkMatrix4x4
+pr_vtk.DeepCopy(p_npy.ravel()) 
+        
+# copy from vtkMatrix4x4 to numpy
+p_npy = np.zeros((4,4))
+p_vtk.DeepCopy(p_npy.ravel(), p_vtk)
+
+# get camera extrinsics
+renderer.GetActiveCamera().GetViewTransformMatrix() # type: vtkMatrix4x4 -> can be printed
+
+
+# Convert World to Display Coords
+
+# Method 1
+coordinate = vtk.vtkCoordinate()
+coordinate.SetCoordinateSystemToWorld()
+coordinate.SetValue(cam_pos[0,3], cam_pos[1,3], cam_pos[2,3])
+dispPt = coordinate.GetComputedDisplayValue(self.vtk_widget_axial.ren)
+
+# Method 2
+self.vtk_widget_axial.ren.SetWorldPoint(cam_pos[0,3], cam_pos[1,3], cam_pos[2,3], 1.0)
+self.vtk_widget_axial.ren.WorldToDisplay()
+dispPt = self.vtk_widget_axial.ren.GetDisplayPoint()
+
+# Convert Display to World Coords
+
+coordinate = vtk.vtkCoordinate()
+coordinate.SetCoordinateSystemToDisplay()
+coordinate.SetValue(clickPos[0], clickPos[1])
+worldPt = coordinate.GetComputedWorldValue(self.ren)
+
+# Click on Axial:
+# saggital_slice = (origin[0]+pos[0])/spacing[0]
+# coronal_slice = (origin[1]+pos[1])/spacing[1]
+
+# Click on Coronal:
+# axial_slice = (origin[2]+pos[0])/spacing[2]
+# saggital_slice = (origin[1]+pos[1])/spacing[1]
+
+# Click on Saggital:
+# coronal_slice = (origin[1]+pos[0])/spacing[1]
+# axial_slice = (origin[2]+pos[1])/spacing[2]
