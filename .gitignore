@@ -107,7 +107,6 @@ venv.bak/
 data/
 dist/
 build/
-other/
 vtk_log.txt
 
 # VS COde

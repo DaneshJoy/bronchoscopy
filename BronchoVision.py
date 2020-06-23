@@ -31,7 +31,7 @@ from ui.UiWindows import RegMatWindow, ToolsWindow
 class MainWindow(QMainWindow):
     def __init__(self, size):
         super().__init__()
-        self.trackerReady = False
+        self.trackerReady = True
         self.captureCoordinates = False
 
         self.trackerRawCoords_ref = []
@@ -70,6 +70,8 @@ class MainWindow(QMainWindow):
         self.ui.btn_pauseCam.clicked.connect(self.pauseCam)
         self.ui.btn_stopCam.clicked.connect(self.stopCam)
         self.ui.slider_Frames.valueChanged.connect(self.frameChanged)
+        self.ui.slider_threshold3D.valueChanged.connect(self.slider3DChanged)
+        self.ui.slider_threshold3D_2.valueChanged.connect(self.slider3DChanged_2)
         self.ui.btn_ResetViewports.clicked.connect(self.ResetViewports)
         self.ui.btn_ResetVB.clicked.connect(self.ResetVB)
         self.ui.comboBox_2DView.currentIndexChanged.connect(self.change2DView)
@@ -91,9 +93,10 @@ class MainWindow(QMainWindow):
                         self.tracker = NDITracker(settings_aurora)
                         self.captureCoordinates = True
                     except:
+                        QApplication.restoreOverrideCursor()
                         msg = 'Please check the following:\n' \
-                                '  1) Is an NDI device connected to your computer?\n' \
-                                '  2) Is the NDI device switched on?\n' \
+                                '  1) NDI device connection\n' \
+                                '  2) Is the NDI device switched on?!\n' \
                                 '  3) Do you have sufficient privilege to connect to the device?\n' \
                                 '     (e.g. on Linux are you part of the \"dialout\" group?)'
                         QMessageBox.critical(self, 'Tracker Connection Failed', f'Can not connect to the tracker!\n{msg}')
@@ -309,6 +312,9 @@ class MainWindow(QMainWindow):
         
         self.ui.btn_LoadPoints.setEnabled(True)
         self.ui.groupBox_Viewports.setEnabled(True)
+
+        self.ui.slider_threshold3D.setEnabled(True)
+        self.ui.slider_threshold3D_2.setEnabled(True)
         
     def updateSubPanels(self, dims):
         self.showSubPanels()
@@ -328,6 +334,12 @@ class MainWindow(QMainWindow):
         self.vtk_widget_2D.set_slice(self.ui.Slider_2D.value())
         self.vtk_widget_2D.interactor.Initialize()
         return
+
+    def slider3DChanged(self):
+        self.vtk_widget_3D.setThreshold(self.ui.slider_threshold3D.value())
+    
+    def slider3DChanged_2(self):
+        self.vtk_widget_3D_2.setThreshold(self.ui.slider_threshold3D_2.value())
     
     def hideSubPanels(self):
         self.ui.SubPanel_3D.hide()
@@ -542,6 +554,8 @@ class MainWindow(QMainWindow):
         self.vtk_widget_3D_2.reset_view(is3D=True)
         self.vtk_widget_2D.reset_view(is3D=False)
         self.updateSubPanels(self.dims)
+        self.ui.slider_threshold3D.setValue(-600)
+        self.ui.slider_threshold3D_2.setValue(250)
 
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -579,7 +593,7 @@ class MainWindow(QMainWindow):
         # self.resize(sizeObject.width(), sizeObject.height())
         # self.resize(size.width(), size.height())
         self.vtk_widget_3D = QVtkViewer3D(self.ui.vtk_panel_3D_1, size, 'Virtual')
-        self.vtk_widget_3D_2 =  QVtkViewer3D(self.ui.vtk_panel_3D_2, size, 'Prespective')
+        self.vtk_widget_3D_2 =  QVtkViewer3D(self.ui.vtk_panel_3D_2, size, 'Normal')
         self.vtk_widget_2D = QVtkViewer2D(self.ui.vtk_panel_2D, size, self.ui.comboBox_2DView.currentText())
         self.hideSubPanels()
 

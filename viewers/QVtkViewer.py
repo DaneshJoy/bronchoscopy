@@ -74,7 +74,8 @@ class QVTKViewer(QFrame):
         self.interactor.GetRenderWindow().AddRenderer(self.ren)
 
         # self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
-        self.interactor.SetInteractorStyle(MyInteractorStyle(self))
+        interactor = MyInteractorStyle(self)
+        self.interactor.SetInteractorStyle(interactor)
         self.ren.SetBackground(0, 0, 0)
         # ren.SetBackground(colors.GetColor3D("BkgColor"))
         self.interactor.Initialize()
@@ -178,5 +179,7 @@ class QVTKViewer(QFrame):
             self.actor.GetProperty().SetColorLevel(127.5)
 
         self.interactor.ReInitialize()
+
+
 
         

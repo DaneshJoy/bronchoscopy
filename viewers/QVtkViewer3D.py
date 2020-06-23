@@ -36,12 +36,14 @@ class QVtkViewer3D(QVTKViewer):
         self.surface.SetMapper(surfaceMapper)
         # self.surface.GetProperty().SetDiffuseColor(0.8, 0.6, 0.2)
         self.surface.GetProperty().SetAmbient(0.1)
-        if self.viewType == 'Prespective':
-            self.surface.GetProperty().SetOpacity(0.5)
+        if self.viewType == 'Normal':
+            self.surface.GetProperty().SetOpacity(0.3)
+            self.surface.GetProperty().SetSpecular(0.2)
+        else:
+            self.surface.GetProperty().SetSpecular(0.7)
+        self.surface.GetProperty().SetSpecularPower(40)
         # self.surface.GetProperty().SetDiffuseColor(1, .49, .25)
         self.surface.GetProperty().SetDiffuseColor(self.colors.GetColor3d("SkinColor"))
-        self.surface.GetProperty().SetSpecular(0.7)
-        self.surface.GetProperty().SetSpecularPower(40)
         self.surface.GetProperty().SetDiffuse(0.7)
 
         # Camera
@@ -360,4 +362,10 @@ class QVtkViewer3D(QVTKViewer):
         # assign actor to the renderer
         self.ren.AddActor(self.endPoint)
         self.interactor.ReInitialize()
+
+    def setThreshold(self, value):
+        self.surfaceExtractor.SetValue(0, value)
+        self.ren.Render()
+        self.interactor.ReInitialize()
+
 

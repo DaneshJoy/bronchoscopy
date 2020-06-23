@@ -75,6 +75,7 @@ class QVtkViewer2D(QVTKViewer):
         cam.Zoom(2)
         self.ren.ResetCameraClippingRange()
         self.interactor.Initialize()
+        self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleImage())
 
     def set_slice(self, sliceNumber):
         self.reslice.Update()
