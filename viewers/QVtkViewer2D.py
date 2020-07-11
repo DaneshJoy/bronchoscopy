@@ -4,6 +4,7 @@ import vtk
 class QVtkViewer2D(QVTKViewer):
     def __init__(self, panel, size, viewType):
         super().__init__(panel, size, viewType)
+        self.reslice = vtk.vtkImageReslice()
     
     def show_image(self, reader, dims):
         # image = reader.GetOutput()
@@ -48,7 +49,6 @@ class QVtkViewer2D(QVTKViewer):
                         0, 1, 0, center[2],
                         0, 0, 0, 1))
 
-        self.reslice = vtk.vtkImageReslice()
         self.reslice.SetInputConnection(reader.GetOutputPort())
         self.reslice.SetOutputDimensionality(2)
         if self.viewType == "Axial":

@@ -1,6 +1,7 @@
 import vtk
 from PyQt5.QtWidgets import QFrame
 from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtGui import QSurfaceFormat
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtk.util.numpy_support import vtk_to_numpy
 import numpy as np
@@ -43,6 +44,10 @@ class MyInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
 class QVTKViewer(QFrame):
     def __init__(self, panel, size, viewType):
         super().__init__(panel)
+
+        QSurfaceFormat.defaultFormat().setProfile(QSurfaceFormat.CompatibilityProfile)
+        vtk.qt.QVTKRWIBase = "QGLWidget"
+        
         self.viewType = viewType
         self.colors = vtk.vtkNamedColors()
         self.colors.SetColor("SkinColor", [204, 153, 51, 255]) # rgba
@@ -70,7 +75,7 @@ class QVTKViewer(QFrame):
         self.actor = vtk.vtkImageActor()
 
         # Setup VTK Environment
-        self.ren = vtk.vtkRenderer()
+        self.ren = vtk.vtkOpenGLRenderer()
         self.interactor.GetRenderWindow().AddRenderer(self.ren)
 
         # self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())

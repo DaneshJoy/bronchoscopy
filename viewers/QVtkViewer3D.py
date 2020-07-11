@@ -11,6 +11,7 @@ class QVtkViewer3D(QVTKViewer):
         # Isosurface
         self.surfaceExtractor = vtk.vtkMarchingCubes()
         self.surfaceExtractor.SetInputConnection(reader.GetOutputPort())
+		
         ''' 
         Marching Cubes is used to build a surface from iso-values field
         It thresholds the data into binary information,
@@ -26,13 +27,13 @@ class QVtkViewer3D(QVTKViewer):
             self.surfaceExtractor.SetValue(0, 250)
 
         # Mapper
-        surfaceMapper = vtk.vtkPolyDataMapper()
+        surfaceMapper = vtk.vtkOpenGLPolyDataMapper()
         surfaceMapper.SetInputConnection(self.surfaceExtractor.GetOutputPort())
         surfaceMapper.ScalarVisibilityOff()
         # skinMapper.UseLookupTableScalarRangeOn()
 
         # Actor
-        self.surface = vtk.vtkActor()
+        self.surface = vtk.vtkOpenGLActor()
         self.surface.SetMapper(surfaceMapper)
         # self.surface.GetProperty().SetDiffuseColor(0.8, 0.6, 0.2)
         self.surface.GetProperty().SetAmbient(0.1)
@@ -46,8 +47,54 @@ class QVtkViewer3D(QVTKViewer):
         self.surface.GetProperty().SetDiffuseColor(self.colors.GetColor3d("SkinColor"))
         self.surface.GetProperty().SetDiffuse(0.7)
 
+        ###### Volume Rendering
+        volume = vtk.vtkVolume()
+        # Ray cast function know how to render the data
+        # volumeMapper = vtk.vtkOpenGLGPUVolumeRayCastMapper()
+        volumeMapper = vtk.vtkGPUVolumeRayCastMapper()
+        volumeMapper.SetInputConnection(reader.GetOutputPort())
+        volumeMapper.SetBlendModeToMaximumIntensity()
+
+        # 2. Filter --&gt; Setting the color mapper, Opacity for VolumeProperty
+        s0, sf = reader.GetOutput().GetScalarRange()
+        colorFunc = vtk.vtkColorTransferFunction()
+        colorFunc.SetColorSpaceToHSV()
+        colorFunc.HSVWrapOff()
+        colorFunc.AddRGBPoint(s0, 1, 0, 0)
+        colorFunc.AddRGBPoint(sf, 0, 1, 0)
+
+        volumeProperty = vtk.vtkVolumeProperty()
+
+        # The opacity transfer function is used to control the opacity
+        # of different tissue types.
+        # Create transfer mapping scalar value to opacity
+        volumeScalarOpacity = vtk.vtkPiecewiseFunction()
+        volumeScalarOpacity.AddPoint(0, 0.00)
+        volumeScalarOpacity.AddPoint(500, 0.55)
+        volumeScalarOpacity.AddPoint(800, 0.75)
+        volumeScalarOpacity.AddPoint(1000, 0.75)
+        volumeScalarOpacity.AddPoint(1150, 0.85)
+
+        # set the color for volumes
+        volumeProperty.SetColor(colorFunc)
+        # To add black as background of Volume
+        volumeProperty.SetScalarOpacity(volumeScalarOpacity)
+        volumeProperty.SetInterpolationTypeToLinear()
+        volumeProperty.SetIndependentComponents(2)
+
+        volumeProperty.ShadeOn()
+        volumeProperty.SetAmbient(0.4)
+        volumeProperty.SetDiffuse(0.6)
+        volumeProperty.SetSpecular(0.2)
+
+        volume.SetMapper(volumeMapper)
+        volume.SetProperty(volumeProperty)
+    
+        ############
+
+
         # Camera
-        cam = vtk.vtkCamera()
+        cam = vtk.vtkOpenGLCamera()
         # self.cam.SetViewUp(0,-1,0) # the camera Y axis points down
         # self.cam.SetPosition(0, 0, 0)
         # self.cam.SetFocalPoint(0, 0, 1) # look in the +Z direction of the camera coordinate system

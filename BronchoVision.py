@@ -18,6 +18,7 @@ from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QLabel
 from PyQt5.QtGui import QPalette, QColor, QIcon
 from sksurgerynditracker.nditracker import NDITracker
+# from vmtk import pypes, vmtkscripts, vmtkcenterlines 
 from viewers.QVtkViewer2D import QVtkViewer2D
 from viewers.QVtkViewer3D import QVtkViewer3D
 from ui import MainWin
@@ -27,6 +28,9 @@ from ui.UiWindows import RegMatWindow, ToolsWindow
 class MainWindow(QMainWindow):
     def __init__(self, size):
         super().__init__()
+        self.tracker = None
+        self.tracker_connected = False
+        self.isRecordCoords = False
         self.trackerReady = True
         self.captureCoordinates = False
 
@@ -48,9 +52,7 @@ class MainWindow(QMainWindow):
         self.toolsWindow.setup()
         self.regMatWindow = RegMatWindow(self)
         self.regMatWindow.setup()
-        self.tracker = None
-        self.tracker_connected = True
-        self.isRecordCoords = False
+        
 
         self.regMat = np.array([[0.84,      0.09,   -0.53,  -35.67],
                                 [-0.51,     -0.14,  -0.85,  -202.98],
@@ -59,6 +61,7 @@ class MainWindow(QMainWindow):
 
         self.ui.actionLoad_Image.triggered.connect(self.openFileDialog)
         self.ui.actionLoad_DICOM.triggered.connect(self.openDirDialog)
+        self.ui.actionCenterLine.triggered.connect(self.centerlineExtract)
         self.ui.Slider_2D.valueChanged.connect(self.sliderChanged)
 
         self.ui.btn_LoadPoints.clicked.connect(self.readPoints)
@@ -96,25 +99,26 @@ class MainWindow(QMainWindow):
             if self.tracker is None:
                 # settings_aurora = { "tracker type": "aurora", "ports to use" : [5]}
                 settings_aurora = { "tracker type": "aurora"}
-                if self.trackerReady:
-                    try:
-                        self.tracker = NDITracker(settings_aurora)
-                        self.captureCoordinates = True
-                    except:
-                        QApplication.restoreOverrideCursor()
-                        msg = 'Please check the following:\n' \
-                                '  1) NDI device connection\n' \
-                                '  2) Is the NDI device switched on?!\n' \
-                                '  3) Do you have sufficient privilege to connect to the device?\n' \
-                                '     (e.g. on Linux are you part of the \"dialout\" group?)'
-                        QMessageBox.critical(self, 'Tracker Connection Failed', f'Can not connect to the tracker!\n{msg}')
-                        return
+                try:
+                    self.tracker = NDITracker(settings_aurora)
+                    self.captureCoordinates = True
+                except:
+                    QApplication.restoreOverrideCursor()
+                    msg = 'Please check the following:\n' \
+                            '  1) NDI device connection\n' \
+                            '  2) Is the NDI device switched on?!\n' \
+                            '  3) Do you have sufficient privilege to connect to the device?\n' \
+                            '     (e.g. on Linux are you part of the \"dialout\" group?)'
+                    QMessageBox.critical(self, 'Tracker Connection Failed', f'Can not connect to the tracker!\n{msg}')
+                    self.ui.btn_Connect.setText('Connect Tracker')
+                    return
 
-                    self.tracker.start_tracking()
-                    tool_desc = self.tracker.get_tool_descriptions()
+            self.tracker.start_tracking()
+            tool_desc = self.tracker.get_tool_descriptions()
 
             self.ui.btn_Connect.setText('Disconnect Tracker')
             self.ui.btn_ToolsWindow.setEnabled(True)
+            self.ui.btn_recordToolRef.setEnabled(True)
             self.tracker_connected = True
             icon = QIcon(":/icon/icons/tracker_connected.png")
             self.ui.btn_Connect.setIcon(icon)
@@ -132,7 +136,7 @@ class MainWindow(QMainWindow):
 
     def trackerLoop(self):
         while self.captureCoordinates:
-            if self.trackerReady:
+            if self.tracker_connected:
                 data = self.tracker.get_frame()
                 # Data is numpy.ndarray(4x4)
                 self.refData = data[3][1]  # Ref must be attached to the 1st port
@@ -172,7 +176,7 @@ class MainWindow(QMainWindow):
             
 
     def disconnectTracker(self):
-        if self.trackerReady:
+        if self.tracker_connected:
             self.tracker.stop_tracking()
             self.tracker.close()
     
@@ -180,6 +184,7 @@ class MainWindow(QMainWindow):
         self.captureCoordinates = False
         self.ui.btn_Connect.setText('Connect Tracker')
         self.ui.btn_ToolsWindow.setEnabled(False)
+        self.ui.btn_recordToolRef.setEnabled(False)
         icon = QIcon(":/icon/icons/tracker_disconnected.png")
         self.ui.btn_Connect.setIcon(icon)
 
@@ -341,6 +346,7 @@ class MainWindow(QMainWindow):
 
         self.ui.slider_threshold3D.setEnabled(True)
         self.ui.slider_threshold3D_2.setEnabled(True)
+        self.ui.btn_ResetViewports.setEnabled(True)
         
     def updateSubPanels(self, dims):
         self.showSubPanels()
@@ -620,6 +626,10 @@ class MainWindow(QMainWindow):
         self.ui.checkBox_showPoints.setEnabled(False)
         self.ResetViewports()
 
+    def centerlineExtract(self):
+        myArguments = 'vmtksurfacereader -ifile m01_AirwaySegments.vtk --pipe vmtkcenterlines --pipe vmtkrenderer --pipe vmtksurfaceviewer -opacity 0.25 --pipe vmtksurfaceviewer -i @vmtkcenterlines.o -array MaximumInscribedSphereRadius'
+        myPype = pypes.PypeRun(myArguments)
+
     def setup(self, size):
         self.ui = MainWin.Ui_MainWin()
         self.ui.setupUi(self)
@@ -652,7 +662,7 @@ if __name__ == "__main__":
     Set Dark Pallete
     '''
     # # Force the style to be the same on all OSs:
-    app.setStyle("Fusion")
+    app.setStyle("fusion")
 
     # # Now use a palette to switch to dark colors:
     # palette = QPalette()
@@ -670,6 +680,7 @@ if __name__ == "__main__":
     # palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
     # palette.setColor(QPalette.HighlightedText, Qt.black)
     # app.setPalette(palette)
+    app.setStyleSheet("QToolBar { background-color: rgb(51,51,51); }")
 
     screen = app.primaryScreen()
     size = screen.availableGeometry()  # size.height(), size.width()

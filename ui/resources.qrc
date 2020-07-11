@@ -4,6 +4,8 @@
   </qresource>
   <qresource prefix="icon">
     <file>icons/rec_start.png</file>
+    <file>icons/BronchoVision.ico</file>
+    <file>icons/centerLine.png</file>
     <file>icons/trajectory.png</file>
     <file>icons/matrix.png</file>
     <file>icons/rec_stop.png</file>
