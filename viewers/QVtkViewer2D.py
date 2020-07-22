@@ -6,7 +6,7 @@ class QVtkViewer2D(QVTKViewer):
         super().__init__(panel, size, viewType)
         self.reslice = vtk.vtkImageReslice()
     
-    def show_image(self, reader, dims):
+    def show_image(self, reader, dims, spacing, origin):
         # image = reader.GetOutput()
         # self.dims = image.GetDimensions()
 
@@ -24,8 +24,10 @@ class QVtkViewer2D(QVTKViewer):
         grLut.Build()
 
         # Calculate the center of the volume
-        self.spacing = reader.GetOutput().GetSpacing()
-        self.origin = reader.GetOutput().GetOrigin()
+        self.spacing = spacing
+        self.origin = origin
+        # self.spacing = reader.GetOutput().GetSpacing()
+        # self.origin = reader.GetOutput().GetOrigin()
         center = [self.origin[0] + self.spacing[0] * 0.5 * dims[0],
                 self.origin[1] + self.spacing[1] * 0.5 * dims[1],
                 self.origin[2] + self.spacing[2] * 0.5 * dims[2]]
@@ -53,6 +55,7 @@ class QVtkViewer2D(QVTKViewer):
         self.reslice.SetOutputDimensionality(2)
         if self.viewType == "Axial":
             self.reslice.SetResliceAxes(axial)
+            # cam.SetViewUp(0, -1, 0)
         elif self.viewType == "Coronal":
             self.reslice.SetResliceAxes(coronal)
         else:  # self.viewType == "Sagittal"
@@ -69,7 +72,7 @@ class QVtkViewer2D(QVTKViewer):
         self.ren.AddActor2D(self.actor)
 
         cam.ComputeViewPlaneNormal()
-        cam.SetViewUp(0, -1, 0)
+        # cam.SetViewUp(0, -1, 0)
         self.ren.SetActiveCamera(cam)
         self.ren.ResetCamera()
         cam.Zoom(2)

@@ -3,6 +3,7 @@
     <file>logo/logo_transparent.png</file>
   </qresource>
   <qresource prefix="icon">
+    <file>icons/Segmentation.png</file>
     <file>icons/rec_start.png</file>
     <file>icons/BronchoVision.ico</file>
     <file>icons/centerLine.png</file>

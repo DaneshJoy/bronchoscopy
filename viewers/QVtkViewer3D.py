@@ -47,50 +47,50 @@ class QVtkViewer3D(QVTKViewer):
         self.surface.GetProperty().SetDiffuseColor(self.colors.GetColor3d("SkinColor"))
         self.surface.GetProperty().SetDiffuse(0.7)
 
-        ###### Volume Rendering
-        volume = vtk.vtkVolume()
-        # Ray cast function know how to render the data
-        # volumeMapper = vtk.vtkOpenGLGPUVolumeRayCastMapper()
-        volumeMapper = vtk.vtkGPUVolumeRayCastMapper()
-        volumeMapper.SetInputConnection(reader.GetOutputPort())
-        volumeMapper.SetBlendModeToMaximumIntensity()
+        # ###### Volume Rendering
+        # volume = vtk.vtkVolume()
+        # # Ray cast function know how to render the data
+        # # volumeMapper = vtk.vtkOpenGLGPUVolumeRayCastMapper()
+        # volumeMapper = vtk.vtkGPUVolumeRayCastMapper()
+        # volumeMapper.SetInputConnection(reader.GetOutputPort())
+        # volumeMapper.SetBlendModeToMaximumIntensity()
 
-        # 2. Filter --&gt; Setting the color mapper, Opacity for VolumeProperty
-        s0, sf = reader.GetOutput().GetScalarRange()
-        colorFunc = vtk.vtkColorTransferFunction()
-        colorFunc.SetColorSpaceToHSV()
-        colorFunc.HSVWrapOff()
-        colorFunc.AddRGBPoint(s0, 1, 0, 0)
-        colorFunc.AddRGBPoint(sf, 0, 1, 0)
+        # # 2. Filter --&gt; Setting the color mapper, Opacity for VolumeProperty
+        # s0, sf = reader.GetOutput().GetScalarRange()
+        # colorFunc = vtk.vtkColorTransferFunction()
+        # colorFunc.SetColorSpaceToHSV()
+        # colorFunc.HSVWrapOff()
+        # colorFunc.AddRGBPoint(s0, 1, 0, 0)
+        # colorFunc.AddRGBPoint(sf, 0, 1, 0)
 
-        volumeProperty = vtk.vtkVolumeProperty()
+        # volumeProperty = vtk.vtkVolumeProperty()
 
-        # The opacity transfer function is used to control the opacity
-        # of different tissue types.
-        # Create transfer mapping scalar value to opacity
-        volumeScalarOpacity = vtk.vtkPiecewiseFunction()
-        volumeScalarOpacity.AddPoint(0, 0.00)
-        volumeScalarOpacity.AddPoint(500, 0.55)
-        volumeScalarOpacity.AddPoint(800, 0.75)
-        volumeScalarOpacity.AddPoint(1000, 0.75)
-        volumeScalarOpacity.AddPoint(1150, 0.85)
+        # # The opacity transfer function is used to control the opacity
+        # # of different tissue types.
+        # # Create transfer mapping scalar value to opacity
+        # volumeScalarOpacity = vtk.vtkPiecewiseFunction()
+        # volumeScalarOpacity.AddPoint(0, 0.00)
+        # volumeScalarOpacity.AddPoint(500, 0.55)
+        # volumeScalarOpacity.AddPoint(800, 0.75)
+        # volumeScalarOpacity.AddPoint(1000, 0.75)
+        # volumeScalarOpacity.AddPoint(1150, 0.85)
 
-        # set the color for volumes
-        volumeProperty.SetColor(colorFunc)
-        # To add black as background of Volume
-        volumeProperty.SetScalarOpacity(volumeScalarOpacity)
-        volumeProperty.SetInterpolationTypeToLinear()
-        volumeProperty.SetIndependentComponents(2)
+        # # set the color for volumes
+        # volumeProperty.SetColor(colorFunc)
+        # # To add black as background of Volume
+        # volumeProperty.SetScalarOpacity(volumeScalarOpacity)
+        # volumeProperty.SetInterpolationTypeToLinear()
+        # volumeProperty.SetIndependentComponents(2)
 
-        volumeProperty.ShadeOn()
-        volumeProperty.SetAmbient(0.4)
-        volumeProperty.SetDiffuse(0.6)
-        volumeProperty.SetSpecular(0.2)
+        # volumeProperty.ShadeOn()
+        # volumeProperty.SetAmbient(0.4)
+        # volumeProperty.SetDiffuse(0.6)
+        # volumeProperty.SetSpecular(0.2)
 
-        volume.SetMapper(volumeMapper)
-        volume.SetProperty(volumeProperty)
+        # volume.SetMapper(volumeMapper)
+        # volume.SetProperty(volumeProperty)
     
-        ############
+        # ############
 
 
         # Camera
@@ -101,22 +101,24 @@ class QVtkViewer3D(QVTKViewer):
         cam.SetFocalPoint(0, 0, 0)
         cam.ComputeViewPlaneNormal()
 
-        if self.viewType == 'Virtual':
-            cam.SetViewUp(0, -1, 0)
-            cam.SetPosition(0, 0, 1)
-        else:
-            cam.SetViewUp(0, 1, 0)
-            cam.SetPosition(0, -5, 1)
+        # if self.viewType == 'Virtual':
+        #     cam.SetViewUp(0, -1, 0)
+        #     cam.SetPosition(0, 0, 1)
+        # else:
+        #     cam.SetViewUp(0, 1, 0)
+        #     cam.SetPosition(0, -5, 1)
 
-        self.show_orientation_widget()
 
         self.ren.AddActor(self.surface)
+        # self.ren.AddActor(volume)
 
         self.ren.SetActiveCamera(cam)
         self.ren.ResetCamera()
         cam.Zoom(1.5)
         cam.Dolly(1.5)
         self.ren.ResetCameraClippingRange()
+
+        self.show_orientation_widget()
 
         self.initCamViewUp = self.ren.GetActiveCamera().GetViewUp()
         self.initCamPosition = self.ren.GetActiveCamera().GetPosition()
@@ -279,11 +281,24 @@ class QVtkViewer3D(QVTKViewer):
         reg.register()
         print(reg.R)
         print(reg.t)
+
+        # reg_mat = np.array([[RR[0][0], RR[0][1], RR[0][2], tt[0]],
+        #                     [RR[1][0], RR[1][1], RR[1][2], tt[1]],
+        #                     [RR[2][0], RR[2][1], RR[2][2], tt[2]],
+        #                     [0       , 0       , 0       , 1]])
+
+        reg_mat = np.array([[RR[0][0], RR[0][1], RR[0][2], 0],
+                            [RR[1][0], RR[1][1], RR[1][2], 0],
+                            [RR[2][0], RR[2][1], RR[2][2], 0],
+                            [tt[0]   , tt[1]   , tt[2]   , 1]])
+        reg_mat = np.transpose(reg_mat)
+
         # R R R 0
         # R R R 0
         # R R R 0
         # t t t 1
         # then transpose
+        return reg_mat
 
     def draw_points(self, points):
         from vtk.util.numpy_support import numpy_to_vtkIdTypeArray

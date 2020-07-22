@@ -59,6 +59,12 @@ class MainWindow(QMainWindow):
                                 [-0.15,     0.99,   -0.07,  -22.7],
                                 [0,         0,      0,          1]])
 
+
+        # self.regMat = np.array([[0.341743, 0.0349852, -0.939142, 181.512],
+        #                         [0.0993239, -0.995054, -0.00092523, 182.889],
+        #                         [-0.93453, -0.0929631, -0.343528, 25.4791], 
+        #                         [0, 0, 0, 1 ]])
+
         self.ui.actionLoad_Image.triggered.connect(self.openFileDialog)
         self.ui.actionLoad_DICOM.triggered.connect(self.openDirDialog)
         self.ui.actionCenterLine.triggered.connect(self.centerlineExtract)
@@ -208,18 +214,32 @@ class MainWindow(QMainWindow):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             extension = os.path.splitext(fileName)[1].lower()
             try:
-                if 'nii' in extension or 'gz' in extension:
-                    reader = vtk.vtkNIFTIImageReader()
+                if 'vtk' in extension or 'vtp' in extension:
+                    reader = vtk.vtkPolyDataReader()
                     reader.SetFileName(fileName)
-                elif 'mhd' in extension or 'mha' in extension:
-                    reader = vtk.vtkMetaImageReader()
-                    reader.SetFileName(fileName)
+                    _extent = reader.GetOutput().GetBounds()
+                    self.spacing = (1, 1, 1)
+                    self.origin = (0, 0, 0)
+                    reader.Update()
+                else:
+                    if 'nii' in extension or 'gz' in extension:
+                        reader = vtk.vtkNIFTIImageReader()
+                        reader.SetFileName(fileName)
+                    elif 'mhd' in extension or 'mha' in extension:
+                        reader = vtk.vtkMetaImageReader()
+                        reader.SetFileName(fileName)
+                    reader.Update()
+                    # Load dimensions using `GetDataExtent`
+                    # xMin, xMax, yMin, yMax, zMin, zMax = reader.GetDataExtent()
+                    _extent = reader.GetDataExtent()
+                    self.spacing = reader.GetOutput().GetSpacing()
+                    self.origin = reader.GetOutput().GetOrigin()
+                
+                self.dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]   
             except:
                 QApplication.restoreOverrideCursor()
                 QMessageBox.critical(self, 'Unknown File Type', 'Can not load selected image!')
                 return
-                
-            reader.Update()
 
             # TODO : Read image orientation and apply IJK to RAS transform (i.e. different flipping for each orientation) 
             # import SimpleITK as sitk
@@ -228,16 +248,10 @@ class MainWindow(QMainWindow):
             # reader.Execute()
             # dd = reader.GetDirection()
 
-            # Load dimensions using `GetDataExtent`
-            # xMin, xMax, yMin, yMax, zMin, zMax = reader.GetDataExtent()
-            _extent = reader.GetDataExtent()
-            self.dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]
-
-            self.spacing = reader.GetOutput().GetSpacing()
-            self.origin = reader.GetOutput().GetOrigin()
+            
             # self.origin = (0, 0, 0)
 
-            # # Flip and Translate the image to the right place
+            # Flip and Translate the image to the right place
             # flipXFilter = vtk.vtkImageFlip()
             # flipXFilter.SetFilteredAxis(0); # flip x axis
             # flipXFilter.SetInputConnection(reader.GetOutputPort())
@@ -257,7 +271,7 @@ class MainWindow(QMainWindow):
                     imageInfo.SetOutputOrigin(self.origin)
                     imageInfo.SetInputConnection(reader.GetOutputPort())
                     self.imgReader = imageInfo
-                    self.showImages(self.imgReader, self.dims)
+                    self.showImages()
                 except:
                     QMessageBox.warning(self, 'Wrong Header', 'Can not read Image Origin from header!\nImage position might be wrong')
             else:
@@ -267,7 +281,7 @@ class MainWindow(QMainWindow):
                 # imageInfo.SetInputConnection(reader.GetOutputPort())
                 # self.showImages(imageInfo, self.dims)
                 self.imgReader = reader
-                self.showImages(self.imgReader, self.dims)
+                self.showImages()
 
             self.updateSubPanels(self.dims)
             QApplication.restoreOverrideCursor()
@@ -327,18 +341,23 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self, 'Wrong Header', 'Can not read image Origin from header!\nImage position might be wrong')
 
             self.imgReader = imageInfo
-            self.showImages(self.imgReader, self.dims)
+            self.showImages()
             self.updateSubPanels(self.dims)
             QApplication.restoreOverrideCursor()
 
-    def showImages(self, reader, dims):
+    def showImages(self):
         self.vtk_widget_3D.remove_image()
         self.vtk_widget_3D_2.remove_image()
         self.vtk_widget_2D.remove_image()
 
-        self.vtk_widget_3D.show_image(reader)
-        self.vtk_widget_3D_2.show_image(reader)
-        self.vtk_widget_2D.show_image(reader, dims)
+        flipXFilter = vtk.vtkImageFlip()
+        flipXFilter.SetFilteredAxis(1); # flip x axis
+        flipXFilter.SetInputConnection(self.imgReader.GetOutputPort())
+        flipXFilter.Update()
+
+        self.vtk_widget_3D.show_image(flipXFilter)
+        self.vtk_widget_3D_2.show_image(flipXFilter)
+        self.vtk_widget_2D.show_image(flipXFilter, self.dims, self.spacing, self.origin)
         
         self.ui.btn_LoadPoints.setEnabled(True)
         self.ui.btn_LoadRefPoints.setEnabled(True)
@@ -409,8 +428,7 @@ class MainWindow(QMainWindow):
                 self.registeredPoints = matFile[list(matFile)[-1]]
             elif 'np' in extension:
                 self.toolCoords = np.load(fileName)
-                self.registeredPoints = np.zeros_like(self.toolCoords)
-                self.registeredPoints = np.swapaxes(self.registeredPoints, 0, 2)
+                
                 # self.toolCoords = np.swapaxes(self.toolCoords, 0, 2)
                 # self.toolCoords = np.swapaxes(self.toolCoords, 0, 1)
 
@@ -423,16 +441,21 @@ class MainWindow(QMainWindow):
                 #                         [0, 0, 0, 1]])
 
                 
-                regMat_inv = np.linalg.inv(self.regMat)
-                ii = 0
-                pt_tracker = np.zeros([len(self.toolCoords), 3], dtype='float')
-                for ref, tool in zip(self.refCoords, self.toolCoords):
-                    ref_inv = np.linalg.inv(ref)
-                    tool2ref = np.dot(ref_inv, tool)
-                    pt_tracker[ii, :] = tool2ref[:,3][:-1]
-                    reg = np.dot(regMat_inv, tool2ref)
-                    self.registeredPoints[:,:,ii] = reg
-                    ii += 1
+                if (not self.refCoords.any()):
+                    self.registeredPoints = np.swapaxes(self.toolCoords, 0, 2)
+                else:
+                    self.registeredPoints = np.zeros_like(self.toolCoords)
+                    self.registeredPoints = np.swapaxes(self.registeredPoints, 0, 2)
+                    regMat_inv = np.linalg.inv(self.regMat)
+                    ii = 0
+                    pt_tracker = np.zeros([len(self.toolCoords), 3], dtype='float')
+                    for ref, tool in zip(self.refCoords, self.toolCoords):
+                        ref_inv = np.linalg.inv(ref)
+                        tool2ref = np.dot(ref_inv, tool)
+                        pt_tracker[ii, :] = tool2ref[:,3][:-1]
+                        reg = np.dot(regMat_inv, tool2ref)
+                        self.registeredPoints[:,:,ii] = reg
+                        ii += 1
 
                 # self.vtk_widget_3D.register(pt_tracker)
             numPoints = self.registeredPoints.shape[-1]
@@ -443,7 +466,8 @@ class MainWindow(QMainWindow):
                 pt_vtk = vtk.vtkMatrix4x4()
                 pt_vtk.DeepCopy(pt.ravel()) 
                 flipTrans = vtk.vtkTransform()
-                flipTrans.Scale(-1,-1,1)
+                flipTrans.Scale(-1,1,1)
+                # flipTrans.Scale(-1,-1,1)
                 pt_new = vtk.vtkMatrix4x4()
                 vtk.vtkMatrix4x4.Multiply4x4(flipTrans.GetMatrix(), pt_vtk, pt_new)
 
@@ -594,7 +618,7 @@ class MainWindow(QMainWindow):
         self.vtk_widget_2D.reset_view(is3D=False)
         # self.vtk_widget_2D.RemoveImage()
         self.vtk_widget_2D.viewType = self.ui.comboBox_2DView.currentText()
-        self.vtk_widget_2D.show_image(self.imgReader, self.dims)
+        self.vtk_widget_2D.show_image(self.imgReader, self.dims, self.spacing, self.origin)
         self.updateSubPanels(self.dims)
 
         if not self.vtk_widget_2D.cross == None:
