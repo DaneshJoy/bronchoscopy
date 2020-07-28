@@ -17,12 +17,13 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QLabel
 from PyQt5.QtGui import QPalette, QColor, QIcon
+import sqlite3
 from sksurgerynditracker.nditracker import NDITracker
 # from vmtk import pypes, vmtkscripts, vmtkcenterlines 
 from viewers.QVtkViewer2D import QVtkViewer2D
 from viewers.QVtkViewer3D import QVtkViewer3D
 from ui import MainWin
-from ui.UiWindows import RegMatWindow, ToolsWindow
+from ui.UiWindows import RegMatWindow, ToolsWindow, NewPatientWindow
 
 
 class MainWindow(QMainWindow):
@@ -52,6 +53,8 @@ class MainWindow(QMainWindow):
         self.toolsWindow.setup()
         self.regMatWindow = RegMatWindow(self)
         self.regMatWindow.setup()
+        self.newPatientWindow = NewPatientWindow(self)
+        # self.newPatientWindow.setup()
         
 
         self.regMat = np.array([[0.84,      0.09,   -0.53,  -35.67],
@@ -65,9 +68,10 @@ class MainWindow(QMainWindow):
         #                         [-0.93453, -0.0929631, -0.343528, 25.4791], 
         #                         [0, 0, 0, 1 ]])
 
+        self.ui.btn_NewPatient.clicked.connect(self.newPatient)
+
         self.ui.actionLoad_Image.triggered.connect(self.openFileDialog)
         self.ui.actionLoad_DICOM.triggered.connect(self.openDirDialog)
-        self.ui.actionCenterLine.triggered.connect(self.centerlineExtract)
         self.ui.Slider_2D.valueChanged.connect(self.sliderChanged)
 
         self.ui.btn_LoadPoints.clicked.connect(self.readPoints)
@@ -89,6 +93,15 @@ class MainWindow(QMainWindow):
         self.ui.btn_recordToolRef.clicked.connect(self.recordCoords)
 
         self.ui.tabWidget.currentChanged.connect(self.virtualTabChanged)
+
+    def newPatient(self):
+        # TODO: get number of patients from database
+        p_num = self.ui.tableWidget_Patients.rowCount()
+        p_name = f'Patient_{p_num+1}'
+        self.newPatientWindow.setData(p_name)
+        res = self.newPatientWindow.exec()
+        if (res == QDialog.Accepted):
+            _name, _date, _image = self.newPatientWindow.getData()
 
     def virtualTabChanged(self):
         if (self.ui.tabWidget.currentIndex() == 0):

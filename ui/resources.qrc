@@ -3,6 +3,9 @@
     <file>logo/logo_transparent.png</file>
   </qresource>
   <qresource prefix="icon">
+    <file>icons/add_patient.png</file>
+    <file>icons/delete_patient.png</file>
+    <file>icons/load_patient.png</file>
     <file>icons/Segmentation.png</file>
     <file>icons/rec_start.png</file>
     <file>icons/BronchoVision.ico</file>

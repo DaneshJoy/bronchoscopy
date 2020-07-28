@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_RegMatWin(object):
     def setupUi(self, RegMatWin):
         RegMatWin.setObjectName("RegMatWin")
+        RegMatWin.setWindowModality(QtCore.Qt.NonModal)
         RegMatWin.resize(261, 170)
         RegMatWin.setStyleSheet("background-color: rgb(65, 65, 65);")
         self.verticalLayout = QtWidgets.QVBoxLayout(RegMatWin)
@@ -91,6 +92,7 @@ class Ui_RegMatWin(object):
         self.table_regMat.verticalHeader().setMinimumSectionSize(10)
         self.verticalLayout.addWidget(self.table_regMat)
         self.buttonBox = QtWidgets.QDialogButtonBox(RegMatWin)
+        self.buttonBox.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.buttonBox.setStyleSheet("color: rgb(170, 255, 255);")
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
