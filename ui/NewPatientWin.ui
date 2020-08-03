@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>383</width>
+    <width>394</width>
     <height>220</height>
    </rect>
   </property>
@@ -617,9 +617,9 @@
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="0,0">
           <item>
-           <widget class="QToolButton" name="btn_LoadDicom">
+           <widget class="QToolButton" name="btn_LoadImage">
             <property name="enabled">
              <bool>true</bool>
             </property>
@@ -649,7 +649,7 @@ border-color: rgb(170, 255, 255);
 color: rgb(170, 255, 255);</string>
             </property>
             <property name="text">
-             <string>Load Dicom ...</string>
+             <string>Load Image ...</string>
             </property>
             <property name="icon">
              <iconset resource="resources.qrc">
@@ -676,7 +676,7 @@ color: rgb(170, 255, 255);</string>
            </widget>
           </item>
           <item>
-           <widget class="QToolButton" name="btn_LoadImage">
+           <widget class="QToolButton" name="btn_ViewImage">
             <property name="enabled">
              <bool>true</bool>
             </property>
@@ -705,11 +705,11 @@ color: rgb(170, 255, 255);</string>
 color: rgb(170, 255, 255);</string>
             </property>
             <property name="text">
-             <string>Load Image ...</string>
+             <string>View Image</string>
             </property>
             <property name="icon">
              <iconset resource="resources.qrc">
-              <normaloff>:/icon/icons/Open.png</normaloff>:/icon/icons/Open.png</iconset>
+              <normaloff>:/icon/icons/3D_vis.png</normaloff>:/icon/icons/3D_vis.png</iconset>
             </property>
             <property name="iconSize">
              <size>

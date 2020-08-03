@@ -446,6 +446,9 @@ color: rgb(157, 205, 216);</string>
                  <property name="sizeAdjustPolicy">
                   <enum>QAbstractScrollArea::AdjustToContents</enum>
                  </property>
+                 <property name="selectionMode">
+                  <enum>QAbstractItemView::SingleSelection</enum>
+                 </property>
                  <property name="selectionBehavior">
                   <enum>QAbstractItemView::SelectRows</enum>
                  </property>
@@ -456,7 +459,7 @@ color: rgb(157, 205, 216);</string>
                   <bool>false</bool>
                  </property>
                  <property name="rowCount">
-                  <number>2</number>
+                  <number>0</number>
                  </property>
                  <attribute name="horizontalHeaderVisible">
                   <bool>true</bool>
@@ -473,16 +476,6 @@ color: rgb(157, 205, 216);</string>
                  <attribute name="horizontalHeaderStretchLastSection">
                   <bool>true</bool>
                  </attribute>
-                 <row>
-                  <property name="text">
-                   <string>1</string>
-                  </property>
-                 </row>
-                 <row>
-                  <property name="text">
-                   <string>2</string>
-                  </property>
-                 </row>
                  <column>
                   <property name="text">
                    <string>Name</string>
@@ -493,26 +486,6 @@ color: rgb(157, 205, 216);</string>
                    <string>Date</string>
                   </property>
                  </column>
-                 <item row="0" column="0">
-                  <property name="text">
-                   <string>Patient_1</string>
-                  </property>
-                 </item>
-                 <item row="0" column="1">
-                  <property name="text">
-                   <string>2020-10-22</string>
-                  </property>
-                 </item>
-                 <item row="1" column="0">
-                  <property name="text">
-                   <string>Patient_2</string>
-                  </property>
-                 </item>
-                 <item row="1" column="1">
-                  <property name="text">
-                   <string>2020-02-02</string>
-                  </property>
-                 </item>
                 </widget>
                </item>
                <item>
@@ -523,7 +496,7 @@ color: rgb(157, 205, 216);</string>
                  <item>
                   <widget class="QToolButton" name="btn_LoadPatient">
                    <property name="enabled">
-                    <bool>false</bool>
+                    <bool>true</bool>
                    </property>
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -575,7 +548,7 @@ color: rgb(157, 205, 216);</string>
                  <item>
                   <widget class="QToolButton" name="btn_DeletePatient">
                    <property name="enabled">
-                    <bool>false</bool>
+                    <bool>true</bool>
                    </property>
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -693,7 +666,7 @@ color: rgb(157, 205, 216);</string>
                </widget>
               </item>
               <item>
-               <widget class="QToolButton" name="btn_ImportPatient_2">
+               <widget class="QToolButton" name="btn_ClearPatients">
                 <property name="enabled">
                  <bool>true</bool>
                 </property>
@@ -3145,6 +3118,38 @@ border-color: rgb(114, 171, 171);</string>
     <hint type="destinationlabel">
      <x>1026</x>
      <y>722</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>tableWidget_Patients</sender>
+   <signal>cellClicked(int,int)</signal>
+   <receiver>btn_LoadPatient</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>185</x>
+     <y>381</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>128</x>
+     <y>531</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>tableWidget_Patients</sender>
+   <signal>cellClicked(int,int)</signal>
+   <receiver>btn_DeletePatient</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>185</x>
+     <y>381</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>284</x>
+     <y>531</y>
     </hint>
    </hints>
   </connection>

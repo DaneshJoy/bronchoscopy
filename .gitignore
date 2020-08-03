@@ -108,6 +108,7 @@ data/
 dist/
 build/
 vtk_log.txt
+Patients/
 
 # VS COde
 .vscode/

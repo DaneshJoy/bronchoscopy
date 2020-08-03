@@ -1,5 +1,6 @@
 import sqlite3
 from sqlite3 import Error
+import os
 
 
 class PatientsDB():
@@ -13,16 +14,19 @@ class PatientsDB():
         try:
             conn = sqlite3.connect(db_file)
             cursor = conn.cursor()
-            cursor.execute('''CREATE TABLE IF NOT EXISTS patients(
-                            id INTEGER PRIMARY KEY,
-                            name TEXT,
-                            date DATE,
-                            image TEXT,
-                            segmented BOOLEAN NOT NULL CHECK(segmented IN (0,1)),
-                            centerline BOOLEAN NOT NULL CHECK(centerline IN (0,1)),
-                            registered BOOLEAN NOT NULL CHECK(registered IN (0,1))
-                            );''')
-            conn.commit()
+            cursor.execute(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='patients' ''')
+
+            if not cursor.fetchone()[0]==1:
+                cursor.execute('''CREATE TABLE IF NOT EXISTS patients(
+                                id INTEGER PRIMARY KEY,
+                                name TEXT,
+                                date DATE,
+                                image TEXT,
+                                segmented BOOLEAN NOT NULL CHECK(segmented IN (0,1)),
+                                centerline BOOLEAN NOT NULL CHECK(centerline IN (0,1)),
+                                registered BOOLEAN NOT NULL CHECK(registered IN (0,1))
+                                );''')
+                conn.commit()
         except Error as e:
             print('Error while connecting to the database\n', e)
             # self.conn.close()
@@ -71,20 +75,20 @@ class PatientsDB():
         rows = cur.fetchall()
         return rows
 
-    def db_getPatientByID(conn, id):
+    def db_getPatientByName(self, conn, name):
         """
         Query patients by id
         :param conn: the Connection object
-        :param id:
+        :param name:
         :return: seleted patient
         """
         cur = conn.cursor()
-        cur.execute("SELECT * FROM patients WHERE id=?", (id,))
+        cur.execute("SELECT * FROM patients WHERE name=?", (name,))
 
         rows = cur.fetchall()
         return rows
 
-    def db_deletePatient(conn, id):
+    def db_deletePatient(self, conn, id):
         """
         Delete a patient by id
         :param conn:  Connection to the SQLite database
@@ -96,7 +100,7 @@ class PatientsDB():
         cur.execute(sql, (id,))
         conn.commit()
     
-    def db_deleteAllPatients(conn):
+    def db_deleteAllPatients(self, conn):
         """
         Delete all patients in the DB
         :param conn: Connection to the SQLite database

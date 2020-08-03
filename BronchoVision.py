@@ -15,7 +15,7 @@ from scipy.io import loadmat
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
 from PyQt5 import QtWidgets, QtCore, uic
-from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QLabel
+from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QLabel, QTableWidgetItem, QAbstractItemView
 from PyQt5.QtGui import QPalette, QColor, QIcon
 import sqlite3
 from sksurgerynditracker.nditracker import NDITracker
@@ -24,11 +24,15 @@ from viewers.QVtkViewer2D import QVtkViewer2D
 from viewers.QVtkViewer3D import QVtkViewer3D
 from ui import MainWin
 from ui.UiWindows import RegMatWindow, ToolsWindow, NewPatientWindow
+from patients_db import PatientsDB
 
 
 class MainWindow(QMainWindow):
     def __init__(self, size):
         super().__init__()
+        self.db = None
+        self.db_connection = None
+        
         self.tracker = None
         self.tracker_connected = False
         self.isRecordCoords = False
@@ -50,12 +54,13 @@ class MainWindow(QMainWindow):
         self.size = size
         self.cam_pos = None
         self.toolsWindow = ToolsWindow(self)
-        self.toolsWindow.setup()
         self.regMatWindow = RegMatWindow(self)
-        self.regMatWindow.setup()
         self.newPatientWindow = NewPatientWindow(self)
-        # self.newPatientWindow.setup()
-        
+
+        self.getPatientsFromDB()
+        self.ui.btn_LoadPatient.hide()
+        self.ui.btn_DeletePatient.hide()
+
 
         self.regMat = np.array([[0.84,      0.09,   -0.53,  -35.67],
                                 [-0.51,     -0.14,  -0.85,  -202.98],
@@ -69,6 +74,10 @@ class MainWindow(QMainWindow):
         #                         [0, 0, 0, 1 ]])
 
         self.ui.btn_NewPatient.clicked.connect(self.newPatient)
+        self.ui.btn_LoadPatient.clicked.connect(self.loadPatient)
+        self.ui.btn_DeletePatient.clicked.connect(self.deletePatient)
+        self.ui.btn_ImportPatient.clicked.connect(self.importPatient)
+        self.ui.btn_ClearPatients.clicked.connect(self.clearPatients)
 
         self.ui.actionLoad_Image.triggered.connect(self.openFileDialog)
         self.ui.actionLoad_DICOM.triggered.connect(self.openDirDialog)
@@ -94,14 +103,58 @@ class MainWindow(QMainWindow):
 
         self.ui.tabWidget.currentChanged.connect(self.virtualTabChanged)
 
+    def getPatientsFromDB(self):
+        self.ui.tableWidget_Patients.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.db = PatientsDB()
+        if (not os.path.exists('Patients')):
+            os.mkdir('Patients')
+        self.db_connection = self.db.db_createConnection(os.path.join('Patients', 'patients.db'))
+        patients = self.db.db_getPatients(self.db_connection)
+        print(len(patients))
+        for p in patients:
+            self.addPatientRow([p[1], p[2]])
+
+    def addPatientRow(self, row_data):
+        row = self.ui.tableWidget_Patients.rowCount()
+        self.ui.tableWidget_Patients.setRowCount(row+1)
+        col = 0
+        for item in row_data:
+            cell = QTableWidgetItem(str(item))
+            self.ui.tableWidget_Patients.setItem(row, col, cell)
+            col += 1
+
     def newPatient(self):
-        # TODO: get number of patients from database
         p_num = self.ui.tableWidget_Patients.rowCount()
         p_name = f'Patient_{p_num+1}'
         self.newPatientWindow.setData(p_name)
         res = self.newPatientWindow.exec()
         if (res == QDialog.Accepted):
             _name, _date, _image = self.newPatientWindow.getData()
+            self.db.db_addPatient(self.db_connection, [_name, _date, _image, 0, 0, 0])
+            self.addPatientRow([_name, _date])
+
+    def loadPatient(self):
+        # TODO: loadPatient
+        # index = self.ui.tableWidget_Patients.selectedIndexes()[0]
+        index = self.ui.tableWidget_Patients.selectionModel().selectedRows()[0]
+        selected_patient = self.ui.tableWidget_Patients.model().data(index)
+        patient_in_db = self.db.db_getPatientByName(self.db_connection, selected_patient)
+        selected_image = patient_in_db[0][3] + '.nii.gz'
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        thread_img = threading.Thread(target=self.loadImage(os.path.join('Patients', selected_patient, selected_image)))
+        thread_img.start()
+
+    def deletePatient(self):
+        # TODO: deletePatient
+        pass
+
+    def importPatient(self):
+        # TODO: importPatient
+        pass
+
+    def clearPatients(self):
+        # TODO: delete folders and clear table
+        self.db.db_deleteAllPatients(self.db_connection)
 
     def virtualTabChanged(self):
         if (self.ui.tabWidget.currentIndex() == 0):
@@ -192,8 +245,6 @@ class MainWindow(QMainWindow):
             np.save(toolFile, self.trackerRawCoords_tool)
             QMessageBox.information(self, 'Tracker Points Saved', 'Tool points saved to \'' + toolFile + '.npy\'\nRef points saved to \'' + refFile + '.npy\'')
 
-            
-
     def disconnectTracker(self):
         if self.tracker_connected:
             self.tracker.stop_tracking()
@@ -218,6 +269,81 @@ class MainWindow(QMainWindow):
             self.regMat = self.regMatWindow.getData()
         print(self.regMat)
 
+    def loadImage(self, fileName):
+        extension = os.path.splitext(fileName)[1].lower()
+        try:
+            if 'vtk' in extension or 'vtp' in extension:
+                reader = vtk.vtkPolyDataReader()
+                reader.SetFileName(fileName)
+                _extent = reader.GetOutput().GetBounds()
+                self.spacing = (1, 1, 1)
+                self.origin = (0, 0, 0)
+                reader.Update()
+            else:
+                if 'nii' in extension or 'gz' in extension:
+                    reader = vtk.vtkNIFTIImageReader()
+                    reader.SetFileName(fileName)
+                elif 'mhd' in extension or 'mha' in extension:
+                    reader = vtk.vtkMetaImageReader()
+                    reader.SetFileName(fileName)
+                reader.Update()
+                # Load dimensions using `GetDataExtent`
+                # xMin, xMax, yMin, yMax, zMin, zMax = reader.GetDataExtent()
+                _extent = reader.GetDataExtent()
+                self.spacing = reader.GetOutput().GetSpacing()
+                self.origin = reader.GetOutput().GetOrigin()
+            
+            self.dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]   
+        except:
+            QApplication.restoreOverrideCursor()
+            QMessageBox.critical(self, 'Unknown File Type', 'Can not load selected image!')
+            return
+
+        # TODO : Read image orientation and apply IJK to RAS transform (i.e. different flipping for each orientation) 
+        # import SimpleITK as sitk
+        # reader = sitk.ImageFileReader()
+        # reader.SetFileName(fileName)
+        # reader.Execute()
+        # dd = reader.GetDirection()
+
+        
+        # self.origin = (0, 0, 0)
+
+        # Flip and Translate the image to the right place
+        # flipXFilter = vtk.vtkImageFlip()
+        # flipXFilter.SetFilteredAxis(0); # flip x axis
+        # flipXFilter.SetInputConnection(reader.GetOutputPort())
+        # flipXFilter.Update()
+
+        # flipYFilter = vtk.vtkImageFlip()
+        # flipYFilter.SetFilteredAxis(1); # flip y axis
+        # flipYFilter.SetInputConnection(flipXFilter.GetOutputPort())
+        # flipYFilter.Update()
+
+        if 'nii' in extension or 'gz' in extension:
+            try:
+                _QMatrix = reader.GetQFormMatrix()
+                # self.origin = (0, 0, 0)
+                self.origin = (-_QMatrix.GetElement(0,3), -_QMatrix.GetElement(1,3), _QMatrix.GetElement(2,3))
+                imageInfo = vtk.vtkImageChangeInformation()
+                imageInfo.SetOutputOrigin(self.origin)
+                imageInfo.SetInputConnection(reader.GetOutputPort())
+                self.imgReader = imageInfo
+                self.showImages()
+            except:
+                QMessageBox.warning(self, 'Wrong Header', 'Can not read Image Origin from header!\nImage position might be wrong')
+        else:
+            # origin = (140, 140, -58)
+            # imageInfo = vtk.vtkImageChangeInformation()
+            # imageInfo.SetOutputOrigin(self.origin)
+            # imageInfo.SetInputConnection(reader.GetOutputPort())
+            # self.showImages(imageInfo, self.dims)
+            self.imgReader = reader
+            self.showImages()
+
+        self.updateSubPanels(self.dims)
+        QApplication.restoreOverrideCursor()
+
     def openFileDialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -225,80 +351,9 @@ class MainWindow(QMainWindow):
         # QMessageBox.information(self, 'Test Message', fileName)
         if fileName:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            extension = os.path.splitext(fileName)[1].lower()
-            try:
-                if 'vtk' in extension or 'vtp' in extension:
-                    reader = vtk.vtkPolyDataReader()
-                    reader.SetFileName(fileName)
-                    _extent = reader.GetOutput().GetBounds()
-                    self.spacing = (1, 1, 1)
-                    self.origin = (0, 0, 0)
-                    reader.Update()
-                else:
-                    if 'nii' in extension or 'gz' in extension:
-                        reader = vtk.vtkNIFTIImageReader()
-                        reader.SetFileName(fileName)
-                    elif 'mhd' in extension or 'mha' in extension:
-                        reader = vtk.vtkMetaImageReader()
-                        reader.SetFileName(fileName)
-                    reader.Update()
-                    # Load dimensions using `GetDataExtent`
-                    # xMin, xMax, yMin, yMax, zMin, zMax = reader.GetDataExtent()
-                    _extent = reader.GetDataExtent()
-                    self.spacing = reader.GetOutput().GetSpacing()
-                    self.origin = reader.GetOutput().GetOrigin()
-                
-                self.dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]   
-            except:
-                QApplication.restoreOverrideCursor()
-                QMessageBox.critical(self, 'Unknown File Type', 'Can not load selected image!')
-                return
-
-            # TODO : Read image orientation and apply IJK to RAS transform (i.e. different flipping for each orientation) 
-            # import SimpleITK as sitk
-            # reader = sitk.ImageFileReader()
-            # reader.SetFileName(fileName)
-            # reader.Execute()
-            # dd = reader.GetDirection()
-
+            thread_img = threading.Thread(target=self.loadImage(fileName))
+            thread_img.start()
             
-            # self.origin = (0, 0, 0)
-
-            # Flip and Translate the image to the right place
-            # flipXFilter = vtk.vtkImageFlip()
-            # flipXFilter.SetFilteredAxis(0); # flip x axis
-            # flipXFilter.SetInputConnection(reader.GetOutputPort())
-            # flipXFilter.Update()
-
-            # flipYFilter = vtk.vtkImageFlip()
-            # flipYFilter.SetFilteredAxis(1); # flip y axis
-            # flipYFilter.SetInputConnection(flipXFilter.GetOutputPort())
-            # flipYFilter.Update()
-
-            if 'nii' in extension or 'gz' in extension:
-                try:
-                    _QMatrix = reader.GetQFormMatrix()
-                    # self.origin = (0, 0, 0)
-                    self.origin = (-_QMatrix.GetElement(0,3), -_QMatrix.GetElement(1,3), _QMatrix.GetElement(2,3))
-                    imageInfo = vtk.vtkImageChangeInformation()
-                    imageInfo.SetOutputOrigin(self.origin)
-                    imageInfo.SetInputConnection(reader.GetOutputPort())
-                    self.imgReader = imageInfo
-                    self.showImages()
-                except:
-                    QMessageBox.warning(self, 'Wrong Header', 'Can not read Image Origin from header!\nImage position might be wrong')
-            else:
-                # origin = (140, 140, -58)
-                # imageInfo = vtk.vtkImageChangeInformation()
-                # imageInfo.SetOutputOrigin(self.origin)
-                # imageInfo.SetInputConnection(reader.GetOutputPort())
-                # self.showImages(imageInfo, self.dims)
-                self.imgReader = reader
-                self.showImages()
-
-            self.updateSubPanels(self.dims)
-            QApplication.restoreOverrideCursor()
-
     def openDirDialog(self):
         dirname = QFileDialog.getExistingDirectory(self, "Select a Directory", "" )
 
@@ -680,6 +735,10 @@ class MainWindow(QMainWindow):
 
     def initialize(self):
         pass
+
+    def closeEvent(self, event):
+        print('Exitting Application...')
+        event.accept()
 
 if __name__ == "__main__":
     # # ReCompile Ui
