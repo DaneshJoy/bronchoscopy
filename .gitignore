@@ -107,8 +107,8 @@ venv.bak/
 data/
 dist/
 build/
-vtk_log.txt
 Patients/
+vtk_log.txt
 
 # VS COde
 .vscode/
