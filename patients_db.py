@@ -75,9 +75,9 @@ class PatientsDB():
         rows = cur.fetchall()
         return rows
 
-    def db_getPatientByName(self, conn, name):
+    def db_getPatient(self, conn, name):
         """
-        Query patients by id
+        Query patients by name
         :param conn: the Connection object
         :param name:
         :return: seleted patient
@@ -88,16 +88,16 @@ class PatientsDB():
         rows = cur.fetchall()
         return rows
 
-    def db_deletePatient(self, conn, id):
+    def db_deletePatient(self, conn, name):
         """
-        Delete a patient by id
+        Delete a patient by name
         :param conn:  Connection to the SQLite database
-        :param id: id of the patient
+        :param name: name of the patient
         :return:
         """
-        sql = 'DELETE FROM patient WHERE id=?'
+        sql = 'DELETE FROM patients WHERE name=?'
         cur = conn.cursor()
-        cur.execute(sql, (id,))
+        cur.execute(sql, (name,))
         conn.commit()
     
     def db_deleteAllPatients(self, conn):

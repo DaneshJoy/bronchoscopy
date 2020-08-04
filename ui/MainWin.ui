@@ -280,17 +280,33 @@
          <number>3</number>
         </property>
         <property name="leftMargin">
-         <number>5</number>
+         <number>7</number>
         </property>
         <property name="topMargin">
-         <number>5</number>
+         <number>7</number>
         </property>
         <property name="rightMargin">
-         <number>5</number>
+         <number>7</number>
         </property>
         <property name="bottomMargin">
-         <number>5</number>
+         <number>7</number>
         </property>
+        <item>
+         <spacer name="verticalSpacer_11">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>10</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
         <item>
          <widget class="QTabWidget" name="tabWidget">
           <property name="font">
@@ -369,7 +385,7 @@ color: rgb(157, 205, 216);</string>
                <string notr="true">background-color: rgb(65, 65, 65);</string>
               </property>
               <property name="text">
-               <string>New Patient ...</string>
+               <string>    New Patient ...</string>
               </property>
               <property name="icon">
                <iconset resource="resources.qrc">
@@ -441,16 +457,34 @@ color: rgb(157, 205, 216);</string>
                <bool>false</bool>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_12">
+               <property name="leftMargin">
+                <number>7</number>
+               </property>
+               <property name="topMargin">
+                <number>7</number>
+               </property>
+               <property name="rightMargin">
+                <number>7</number>
+               </property>
+               <property name="bottomMargin">
+                <number>7</number>
+               </property>
                <item>
                 <widget class="QTableWidget" name="tableWidget_Patients">
                  <property name="sizeAdjustPolicy">
-                  <enum>QAbstractScrollArea::AdjustToContents</enum>
+                  <enum>QAbstractScrollArea::AdjustToContentsOnFirstShow</enum>
                  </property>
                  <property name="selectionMode">
                   <enum>QAbstractItemView::SingleSelection</enum>
                  </property>
                  <property name="selectionBehavior">
                   <enum>QAbstractItemView::SelectRows</enum>
+                 </property>
+                 <property name="textElideMode">
+                  <enum>Qt::ElideLeft</enum>
+                 </property>
+                 <property name="horizontalScrollMode">
+                  <enum>QAbstractItemView::ScrollPerPixel</enum>
                  </property>
                  <property name="sortingEnabled">
                   <bool>true</bool>
@@ -468,22 +502,34 @@ color: rgb(157, 205, 216);</string>
                   <bool>true</bool>
                  </attribute>
                  <attribute name="horizontalHeaderDefaultSectionSize">
-                  <number>120</number>
+                  <number>150</number>
+                 </attribute>
+                 <attribute name="horizontalHeaderHighlightSections">
+                  <bool>true</bool>
                  </attribute>
                  <attribute name="horizontalHeaderMinimumSectionSize">
-                  <number>20</number>
+                  <number>0</number>
                  </attribute>
                  <attribute name="horizontalHeaderStretchLastSection">
+                  <bool>true</bool>
+                 </attribute>
+                 <attribute name="verticalHeaderVisible">
                   <bool>true</bool>
                  </attribute>
                  <column>
                   <property name="text">
                    <string>Name</string>
                   </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
+                  </property>
                  </column>
                  <column>
                   <property name="text">
                    <string>Date</string>
+                  </property>
+                  <property name="textAlignment">
+                   <set>AlignCenter</set>
                   </property>
                  </column>
                 </widget>
@@ -492,6 +538,12 @@ color: rgb(157, 205, 216);</string>
                 <layout class="QHBoxLayout" name="horizontalLayout_15" stretch="2,1">
                  <property name="spacing">
                   <number>7</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
                  </property>
                  <item>
                   <widget class="QToolButton" name="btn_LoadPatient">
@@ -522,7 +574,7 @@ color: rgb(157, 205, 216);</string>
                     <string notr="true">background-color: rgb(65, 65, 65);</string>
                    </property>
                    <property name="text">
-                    <string>Load</string>
+                    <string> Load</string>
                    </property>
                    <property name="icon">
                     <iconset resource="resources.qrc">
@@ -574,7 +626,7 @@ color: rgb(157, 205, 216);</string>
                     <string notr="true">background-color: rgb(65, 65, 65);</string>
                    </property>
                    <property name="text">
-                    <string>Delete</string>
+                    <string> Delete</string>
                    </property>
                    <property name="icon">
                     <iconset resource="resources.qrc">
@@ -604,6 +656,9 @@ color: rgb(157, 205, 216);</string>
                  <property name="orientation">
                   <enum>Qt::Vertical</enum>
                  </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Fixed</enum>
+                 </property>
                  <property name="sizeHint" stdset="0">
                   <size>
                    <width>20</width>
@@ -616,7 +671,22 @@ color: rgb(157, 205, 216);</string>
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_10">
+             <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="2,1">
+              <property name="spacing">
+               <number>7</number>
+              </property>
+              <property name="leftMargin">
+               <number>7</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>7</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
               <item>
                <widget class="QToolButton" name="btn_ImportPatient">
                 <property name="enabled">
@@ -714,6 +784,22 @@ color: rgb(157, 205, 216);</string>
                </widget>
               </item>
              </layout>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_12">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Fixed</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>50</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </widget>
@@ -2223,20 +2309,20 @@ border-color: rgb(114, 171, 171);</string>
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="label">
+         <widget class="QLabel" name="label_Logo">
           <property name="enabled">
            <bool>true</bool>
           </property>
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
           <property name="maximumSize">
            <size>
-            <width>250</width>
-            <height>30</height>
+            <width>16777215</width>
+            <height>45</height>
            </size>
           </property>
           <property name="frameShape">
@@ -2248,9 +2334,6 @@ border-color: rgb(114, 171, 171);</string>
           <property name="text">
            <string/>
           </property>
-          <property name="textFormat">
-           <enum>Qt::AutoText</enum>
-          </property>
           <property name="pixmap">
            <pixmap resource="resources.qrc">:/logo/logo/logo_transparent.png</pixmap>
           </property>
@@ -2259,6 +2342,27 @@ border-color: rgb(114, 171, 171);</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
+          </property>
+          <property name="margin">
+           <number>5</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_version">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(157, 205, 216);</string>
+          </property>
+          <property name="text">
+           <string>2020-08 Beta  </string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>

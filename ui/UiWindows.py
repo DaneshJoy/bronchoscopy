@@ -38,14 +38,16 @@ class NewPatientWindow(QDialog):
     def openFileDialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        self.fileName, _ = QFileDialog.getOpenFileName(self, "Open Medical Image", "", "Medical Images (*.nii *.nii.gz *.mhd *.mha);;Nifti (*.nii *.nii.gz);;Meta (*.mhd *.mha);;All Files (*)", options=options)
+        self.fileName, _ = QFileDialog.getOpenFileName(self, "Open Medical Image", "", "Medical Images (*.nii *.nii.gz *.mhd *.mha *.dcm *.);;Nifti (*.nii *.nii.gz);;Meta (*.mhd *.mha);;Dicom (*.dcm *.);;All Files (*)", options=options)
         # QMessageBox.information(self, 'Test Message', fileName)
         if self.fileName:
             self._imageName = os.path.basename(self.fileName)
             _tmp = extension = os.path.splitext(self._imageName)
             if (len(_tmp) > 1):
                 extension = os.path.splitext(self._imageName)[1].lower()
-                if 'gz' in extension:
+                if 'dcm' in extension or '' in extension:
+                     self._imageName = os.path.basename(os.path.dirname(self.fileName))
+                elif 'gz' in extension:
                     self._imageName = self._imageName[:-7]
                 else:
                     self._imageName = self._imageName[:-4]
@@ -64,7 +66,7 @@ class NewPatientWindow(QDialog):
         thread_vis = threading.Thread(target=self.visualizeImage())
         thread_vis.start()
 
-    def setData(self, p_name):
+    def prepare(self, p_name):
         self._name = p_name
         self._imageName = None
         self.fileName = ''
@@ -72,6 +74,7 @@ class NewPatientWindow(QDialog):
         self.ui.label_ImageName.setText('None')
         self.ui.lineEdit_Name.setText(self._name)
         self.ui.dateEdit.setDateTime(QDateTime.currentDateTime())
+        self.ui.btn_ViewImage.hide()
 
     def getData(self):
         return self._name, self._date, self._imageName

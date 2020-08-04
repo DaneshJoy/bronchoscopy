@@ -61,6 +61,8 @@ class MainWindow(QMainWindow):
         self.ui.btn_LoadPatient.hide()
         self.ui.btn_DeletePatient.hide()
 
+        self.ui.toolBar.hide()
+
 
         self.regMat = np.array([[0.84,      0.09,   -0.53,  -35.67],
                                 [-0.51,     -0.14,  -0.85,  -202.98],
@@ -126,7 +128,7 @@ class MainWindow(QMainWindow):
     def newPatient(self):
         p_num = self.ui.tableWidget_Patients.rowCount()
         p_name = f'Patient_{p_num+1}'
-        self.newPatientWindow.setData(p_name)
+        self.newPatientWindow.prepare(p_name)
         res = self.newPatientWindow.exec()
         if (res == QDialog.Accepted):
             _name, _date, _image = self.newPatientWindow.getData()
@@ -134,27 +136,58 @@ class MainWindow(QMainWindow):
             self.addPatientRow([_name, _date])
 
     def loadPatient(self):
-        # TODO: loadPatient
         # index = self.ui.tableWidget_Patients.selectedIndexes()[0]
         index = self.ui.tableWidget_Patients.selectionModel().selectedRows()[0]
         selected_patient = self.ui.tableWidget_Patients.model().data(index)
-        patient_in_db = self.db.db_getPatientByName(self.db_connection, selected_patient)
+        patient_in_db = self.db.db_getPatient(self.db_connection, selected_patient)
         selected_image = patient_in_db[0][3] + '.nii.gz'
         QApplication.setOverrideCursor(Qt.WaitCursor)
         thread_img = threading.Thread(target=self.loadImage(os.path.join('Patients', selected_patient, selected_image)))
         thread_img.start()
+        self.ui.tableWidget_Patients.clearSelection()
+
+    def removePatientDir(self, patient_dir):
+        for root, dirs, files in os.walk(os.path.join('Patients', patient_dir), topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+        os.rmdir(os.path.join('Patients', patient_dir))
 
     def deletePatient(self):
-        # TODO: deletePatient
-        pass
+        index = self.ui.tableWidget_Patients.selectionModel().selectedRows()[0]
+        selected_patient = self.ui.tableWidget_Patients.model().data(index)
+        ret = QMessageBox.question(self, 'Delete Patient',
+                                    f'Do you want to delete {selected_patient} ?\nThis action is NOT reversible',
+                                    QMessageBox.Yes | QMessageBox.No)
+        if ret == QMessageBox.Yes:
+            self.db.db_deletePatient(self.db_connection, selected_patient)
+            self.removePatientDir(selected_patient)
+            self.ui.tableWidget_Patients.removeRow(index.row())
+        self.ui.btn_LoadPatient.hide()
+        self.ui.btn_DeletePatient.hide()
+        self.ui.tableWidget_Patients.clearSelection()
 
     def importPatient(self):
         # TODO: importPatient
-        pass
+        QMessageBox.information(self, 'Comming Soon...', f'Not Implemented Yet !')
 
     def clearPatients(self):
-        # TODO: delete folders and clear table
-        self.db.db_deleteAllPatients(self.db_connection)
+        ret = QMessageBox.question(self, 'Delete All Patients',
+                                    f'Are you sure you want to delete all patients ?!\nThis action is NOT reversible!',
+                                    QMessageBox.Yes | QMessageBox.No)
+        if ret == QMessageBox.Yes:
+            self.db.db_deleteAllPatients(self.db_connection)
+            for d in os.listdir('Patients'):
+                if os.path.isdir(os.path.join('Patients', d)):
+                    self.removePatientDir(d)
+            # Clear table Method1
+            self.ui.tableWidget_Patients.setRowCount(0)
+            # # Clear table Method2
+            # self.ui.tableWidget_Patients.clearContents()
+            # self.ui.tableWidget_Patients.model().removeRows(0, self.ui.tableWidget_Patients.rowCount())
+            self.ui.btn_LoadPatient.hide()
+            self.ui.btn_DeletePatient.hide()
 
     def virtualTabChanged(self):
         if (self.ui.tabWidget.currentIndex() == 0):

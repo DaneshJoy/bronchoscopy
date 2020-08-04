@@ -296,8 +296,6 @@ class Ui_NewPatientWin(object):
         self.buttonBox = QtWidgets.QDialogButtonBox(NewPatientWin)
         self.buttonBox.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.buttonBox.setStyleSheet("background-color: rgb(65, 65, 65);\n"
-"alternate-background-color: rgb(255, 0, 4);\n"
-"selection-color: rgb(64, 240, 255);\n"
 "color: rgb(236, 236, 236);")
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
