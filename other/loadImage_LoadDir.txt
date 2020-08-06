@@ -1,0 +1,72 @@
+        self.ui.actionLoad_Image.triggered.connect(self.openFileDialog)
+        self.ui.actionLoad_DICOM.triggered.connect(self.openDirDialog)
+
+
+    def openFileDialog(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(self, "Open Medical Image", "", "Medical Images (*.nii *.nii.gz *.mhd *.mha);;Nifti (*.nii *.nii.gz);;Meta (*.mhd *.mha);;All Files (*)", options=options)
+        # QMessageBox.information(self, 'Test Message', fileName)
+        if fileName:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            thread_img = threading.Thread(target=self.loadImage(fileName))
+            thread_img.start()
+            
+    def openDirDialog(self):
+        dirname = QFileDialog.getExistingDirectory(self, "Select a Directory", "" )
+
+        if dirname:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
+            reader = vtk.vtkDICOMImageReader()
+            reader.SetDirectoryName(dirname)
+
+            # reader1 = sitk.ImageSeriesReader()
+            # dicom_names = reader1.GetGDCMSeriesFileNames(dirname)
+            fileNames = vtk.vtkStringArray()
+            dicom_names = os.listdir(dirname)
+            for f in dicom_names:
+                fileNames.InsertNextValue(f)
+            reader.SetFileNames(fileNames)
+            reader.Update()
+
+            # TODO : Read image orientation and apply IJK to RAS transform (i.e. different flipping for each orientation) 
+            # import SimpleITK as sitk
+            # reader = sitk.ImageFileReader()
+            # reader.SetFileName(fileName)
+            # reader.Execute()
+            # dd = reader.GetDirection()
+
+            # Load dimensions using `GetDataExtent`
+            _extent = reader.GetDataExtent()
+            self.dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]
+
+            self.spacing = reader.GetOutput().GetSpacing()
+
+            # # Load spacing values
+            # ConstPixelSpacing = reader.GetPixelSpacing()
+            # ConstScalarRange = reader.GetOutput().GetScalarRange()
+
+            # Flip and Translate the image to the right place
+            flipYFilter = vtk.vtkImageFlip()
+            flipYFilter.SetFilteredAxis(1); # flip y axis
+            flipYFilter.SetInputConnection(reader.GetOutputPort())
+            flipYFilter.Update()
+
+            flipZFilter = vtk.vtkImageFlip()
+            flipZFilter.SetFilteredAxis(2); # flip z axis
+            flipZFilter.SetInputConnection(flipYFilter.GetOutputPort())
+            flipZFilter.Update()
+
+            try:
+                self.origin = reader.GetImagePositionPatient()
+                imageInfo = vtk.vtkImageChangeInformation()
+                imageInfo.SetOutputOrigin(self.origin)
+                imageInfo.SetInputConnection(flipZFilter.GetOutputPort())
+            except:
+                QMessageBox.warning(self, 'Wrong Header', 'Can not read image Origin from header!\nImage position might be wrong')
+
+            self.imgReader = imageInfo
+            self.showImages()
+            self.updateSubPanels(self.dims)
+            QApplication.restoreOverrideCursor()

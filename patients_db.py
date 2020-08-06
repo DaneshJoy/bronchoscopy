@@ -55,10 +55,10 @@ class PatientsDB():
         :param patient:
         """
         sql = ''' UPDATE patients
-                SET segmented = ? ,
-                    centerline = ? ,
-                    registered = ?
-                WHERE id = ? '''
+                SET segmented=? ,
+                    centerline=? ,
+                    registered=?
+                WHERE name=? '''
         cur = conn.cursor()
         cur.execute(sql, task)
         conn.commit()

@@ -1,0 +1,17 @@
+ERROR: In ..\vtkVmtk\Utilities\vtkvmtkITK\vtkvmtkITKArchetypeImageSeriesReader.cxx, line 220
+vtkvmtkITKArchetypeImageSeriesScalarReader (000002B4FD984720): vtkvmtkITKArchetypeImageSeriesReader::ExecuteInformation: Archetype file D:/Parsiss/Bronchoscopy_project/BronchoVision/Phantom_1_Segmented.nii.gz does not exist.
+
+
+ERROR: In ..\Common\ExecutionModel\vtkExecutive.cxx, line 784
+vtkCompositeDataPipeline (000002B4F85C6030): Algorithm vtkvmtkITKArchetypeImageSeriesScalarReader(000002B4FD984720) returned failure for request: vtkInformation (000002B480221BD0)
+  Debug: Off
+  Modified Time: 148
+  Reference Count: 1
+  Registered Events: (none)
+  Request: REQUEST_INFORMATION
+  ALGORITHM_AFTER_FORWARD: 1
+  FORWARD_DIRECTION: 0
+
+
+
+

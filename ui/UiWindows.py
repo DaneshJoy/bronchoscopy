@@ -37,7 +37,7 @@ class NewPatientWindow(QDialog):
     
     def openFileDialog(self):
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+        # options |= QFileDialog.DontUseNativeDialog
         self.fileName, _ = QFileDialog.getOpenFileName(self, "Open Medical Image", "", "Medical Images (*.nii *.nii.gz *.mhd *.mha *.dcm *.);;Nifti (*.nii *.nii.gz);;Meta (*.mhd *.mha);;Dicom (*.dcm *.);;All Files (*)", options=options)
         # QMessageBox.information(self, 'Test Message', fileName)
         if self.fileName:
@@ -45,7 +45,7 @@ class NewPatientWindow(QDialog):
             _tmp = extension = os.path.splitext(self._imageName)
             if (len(_tmp) > 1):
                 extension = os.path.splitext(self._imageName)[1].lower()
-                if 'dcm' in extension or '' in extension:
+                if 'dcm' in extension or extension == '' :
                      self._imageName = os.path.basename(os.path.dirname(self.fileName))
                 elif 'gz' in extension:
                     self._imageName = self._imageName[:-7]
@@ -56,7 +56,7 @@ class NewPatientWindow(QDialog):
             self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(True)
 
     def visualizeImage(self):
-        myArguments = f'vmtkimagereader -ifile {self.fileName} --pipe vmtkmarchingcubes -l 0.5 --pipe vmtkrenderer --pipe vmtksurfaceviewer -opacity 0.25'
+        myArguments = f'vmtkimagereader -ifile \"{self.fileName}\" --pipe vmtkmarchingcubes -l 0.5 --pipe vmtkrenderer --pipe vmtksurfaceviewer -opacity 0.25'
         myPype = pypes.PypeRun(myArguments)
         self.ImageData = myPype.GetScriptObject('vmtkimagereader','0').Image
         QApplication.restoreOverrideCursor()
@@ -81,7 +81,7 @@ class NewPatientWindow(QDialog):
 
     def writeImage(self):
         if self.ImageData == None:
-            myArguments = f'vmtkimagereader -ifile {self.fileName}'
+            myArguments = f'vmtkimagereader -ifile \"{self.fileName}\"'
             myPype = pypes.PypeRun(myArguments)
             self.ImageData = myPype.GetScriptObject('vmtkimagereader','0').Image
         patient_dir = os.path.join('Patients', self._name)

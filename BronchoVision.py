@@ -81,8 +81,6 @@ class MainWindow(QMainWindow):
         self.ui.btn_ImportPatient.clicked.connect(self.importPatient)
         self.ui.btn_ClearPatients.clicked.connect(self.clearPatients)
 
-        self.ui.actionLoad_Image.triggered.connect(self.openFileDialog)
-        self.ui.actionLoad_DICOM.triggered.connect(self.openDirDialog)
         self.ui.Slider_2D.valueChanged.connect(self.sliderChanged)
 
         self.ui.btn_LoadPoints.clicked.connect(self.readPoints)
@@ -145,6 +143,8 @@ class MainWindow(QMainWindow):
         thread_img = threading.Thread(target=self.loadImage(os.path.join('Patients', selected_patient, selected_image)))
         thread_img.start()
         self.ui.tableWidget_Patients.clearSelection()
+        self.ui.btn_LoadPatient.hide()
+        self.ui.btn_DeletePatient.hide()
 
     def removePatientDir(self, patient_dir):
         for root, dirs, files in os.walk(os.path.join('Patients', patient_dir), topdown=False):
@@ -189,118 +189,34 @@ class MainWindow(QMainWindow):
             self.ui.btn_LoadPatient.hide()
             self.ui.btn_DeletePatient.hide()
 
-    def virtualTabChanged(self):
-        if (self.ui.tabWidget.currentIndex() == 0):
-            self.trackerReady = True
-        else:
-            self.trackerReady = False
-        print(self.ui.tabWidget.currentIndex(), self.trackerReady)
+    def showImages(self):
+        self.vtk_widget_3D.remove_image()
+        self.vtk_widget_3D_2.remove_image()
+        self.vtk_widget_2D.remove_image()
 
-    def connectTracker(self):
-        if self.tracker_connected == False:
-            self.ui.btn_Connect.setText('Connecting...')
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+        flipXFilter = vtk.vtkImageFlip()
+        flipXFilter.SetFilteredAxis(0); # flip x axis
+        flipXFilter.SetInputConnection(self.imgReader.GetOutputPort())
+        flipXFilter.Update()
 
-            if self.tracker is None:
-                # settings_aurora = { "tracker type": "aurora", "ports to use" : [5]}
-                settings_aurora = { "tracker type": "aurora"}
-                try:
-                    self.tracker = NDITracker(settings_aurora)
-                    self.captureCoordinates = True
-                except:
-                    QApplication.restoreOverrideCursor()
-                    msg = 'Please check the following:\n' \
-                            '  1) NDI device connection\n' \
-                            '  2) Is the NDI device switched on?!\n' \
-                            '  3) Do you have sufficient privilege to connect to the device?\n' \
-                            '     (e.g. on Linux are you part of the \"dialout\" group?)'
-                    QMessageBox.critical(self, 'Tracker Connection Failed', f'Can not connect to the tracker!\n{msg}')
-                    self.ui.btn_Connect.setText('Connect Tracker')
-                    return
+        flipYFilter = vtk.vtkImageFlip()
+        flipYFilter.SetFilteredAxis(1); # flip y axis
+        flipYFilter.SetInputConnection(flipXFilter.GetOutputPort())
+        flipYFilter.Update()
 
-            self.tracker.start_tracking()
-            tool_desc = self.tracker.get_tool_descriptions()
+        self.vtk_widget_3D.show_image(flipYFilter)
+        self.vtk_widget_3D_2.show_image(flipYFilter)
+        self.vtk_widget_2D.show_image(flipYFilter, self.dims, self.spacing, self.origin)
+        
+        self.ui.btn_LoadPoints.setEnabled(True)
+        self.ui.btn_LoadRefPoints.setEnabled(True)
+        self.ui.groupBox_Viewports.setEnabled(True)
 
-            self.ui.btn_Connect.setText('Disconnect Tracker')
-            self.ui.btn_ToolsWindow.setEnabled(True)
-            self.ui.btn_recordToolRef.setEnabled(True)
-            self.tracker_connected = True
-            icon = QIcon(":/icon/icons/tracker_connected.png")
-            self.ui.btn_Connect.setIcon(icon)
+        self.ui.slider_threshold3D.setEnabled(True)
+        self.ui.slider_threshold3D_2.setEnabled(True)
+        self.ui.btn_ResetViewports.setEnabled(True)
 
-            QApplication.restoreOverrideCursor()
-
-            # Multithreading Method 1 (recomended)
-            thread_tracker = threading.Thread(target=self.trackerLoop)
-            thread_tracker.start()
-
-            # Multithreading Method 2 (not recomended)
-            # Use QApplication.processEvents() inside the loop
-        else:
-            self.disconnectTracker()
-
-    def trackerLoop(self):
-        while self.captureCoordinates:
-            if self.tracker_connected:
-                data = self.tracker.get_frame()
-                # Data is numpy.ndarray(4x4)
-                self.refData = data[3][1]  # Ref must be attached to the 1st port
-                self.toolData = data[3][0]  # Tool must be attached to the 2nd port
-                if np.isnan(self.toolData.sum()) or np.isnan(self.refData.sum()):
-                    # TODO: Show some messages or info
-                    continue
-                
-                if (self.isRecordCoords):
-                    self.trackerRawCoords_ref.append(self.refData) 
-                    self.trackerRawCoords_tool.append(self.toolData)    
-                self.showToolOnViews(self.toolData)
-                self.toolsWindow.setData(self.refData, self.toolData)
-            else:
-                self.toolsWindow.setData(self.cam_pos, self.cam_pos)
-
-            time.sleep(0.03)
-        return
-
-    def recordCoords(self):
-        if (self.isRecordCoords == False) and (self.tracker_connected):
-            self.isRecordCoords = True
-            self.ui.btn_recordToolRef.text = 'Stop Record'
-            icon = QIcon(":/icon/icons/rec_stop.png")
-            self.ui.btn_recordToolRef.setIcon(icon)
-        else:
-            self.isRecordCoords = False
-            self.ui.btn_recordToolRef.text = 'Start Record'
-            icon = QIcon(":/icon/icons/rec_start.png")
-            self.ui.btn_recordToolRef.setIcon(icon)
-            refFile = 'RefPoints_'+str(int(time.time()))
-            toolFile = 'ToolPoints_'+str(int(time.time()))
-            np.save(refFile, self.trackerRawCoords_ref)
-            np.save(toolFile, self.trackerRawCoords_tool)
-            QMessageBox.information(self, 'Tracker Points Saved', 'Tool points saved to \'' + toolFile + '.npy\'\nRef points saved to \'' + refFile + '.npy\'')
-
-    def disconnectTracker(self):
-        if self.tracker_connected:
-            self.tracker.stop_tracking()
-            self.tracker.close()
-    
-        self.tracker_connected = False
-        self.captureCoordinates = False
-        self.ui.btn_Connect.setText('Connect Tracker')
-        self.ui.btn_ToolsWindow.setEnabled(False)
-        self.ui.btn_recordToolRef.setEnabled(False)
-        icon = QIcon(":/icon/icons/tracker_disconnected.png")
-        self.ui.btn_Connect.setIcon(icon)
-
-    def showToolsWindow(self):
-        # self.toolsWindow.setData(self.cam_pos, self.cam_pos)
-        self.toolsWindow.show()
-
-    def showRegMatWindow(self):
-        self.regMatWindow.setData(self.regMat)
-        res = self.regMatWindow.exec()
-        if (res == QDialog.Accepted):
-            self.regMat = self.regMatWindow.getData()
-        print(self.regMat)
+        self.ui.groupBox_VB.setEnabled(True)
 
     def loadImage(self, fileName):
         extension = os.path.splitext(fileName)[1].lower()
@@ -377,96 +293,123 @@ class MainWindow(QMainWindow):
         self.updateSubPanels(self.dims)
         QApplication.restoreOverrideCursor()
 
-    def openFileDialog(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, "Open Medical Image", "", "Medical Images (*.nii *.nii.gz *.mhd *.mha);;Nifti (*.nii *.nii.gz);;Meta (*.mhd *.mha);;All Files (*)", options=options)
-        # QMessageBox.information(self, 'Test Message', fileName)
-        if fileName:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            thread_img = threading.Thread(target=self.loadImage(fileName))
-            thread_img.start()
-            
-    def openDirDialog(self):
-        dirname = QFileDialog.getExistingDirectory(self, "Select a Directory", "" )
 
-        if dirname:
+    def virtualTabChanged(self):
+        if (self.ui.tabWidget.currentIndex() == 0):
+            self.trackerReady = True
+        else:
+            self.trackerReady = False
+        # print(self.ui.tabWidget.currentIndex(), self.trackerReady)
+
+    def connectTracker(self):
+        if self.tracker_connected == False:
+            self.ui.btn_Connect.setText('Connecting...')
             QApplication.setOverrideCursor(Qt.WaitCursor)
 
-            reader = vtk.vtkDICOMImageReader()
-            reader.SetDirectoryName(dirname)
+            if self.tracker is None:
+                # settings_aurora = { "tracker type": "aurora", "ports to use" : [5]}
+                settings_aurora = { "tracker type": "aurora"}
+                try:
+                    self.tracker = NDITracker(settings_aurora)
+                    self.captureCoordinates = True
+                except:
+                    QApplication.restoreOverrideCursor()
+                    msg = 'Please check the following:\n' \
+                            '  1) NDI device connection\n' \
+                            '  2) Is the NDI device switched on?!\n' \
+                            '  3) Do you have sufficient privilege to connect to the device?\n' \
+                            '     (e.g. on Linux are you part of the \"dialout\" group?)'
+                    QMessageBox.critical(self, 'Tracker Connection Failed', f'Can not connect to the tracker!\n{msg}')
+                    self.ui.btn_Connect.setText('Connect Tracker')
+                    return
 
-            # reader1 = sitk.ImageSeriesReader()
-            # dicom_names = reader1.GetGDCMSeriesFileNames(dirname)
-            fileNames = vtk.vtkStringArray()
-            dicom_names = os.listdir(dirname)
-            for f in dicom_names:
-                fileNames.InsertNextValue(f)
-            reader.SetFileNames(fileNames)
-            reader.Update()
+            self.tracker.start_tracking()
+            tool_desc = self.tracker.get_tool_descriptions()
 
-            # TODO : Read image orientation and apply IJK to RAS transform (i.e. different flipping for each orientation) 
-            # import SimpleITK as sitk
-            # reader = sitk.ImageFileReader()
-            # reader.SetFileName(fileName)
-            # reader.Execute()
-            # dd = reader.GetDirection()
+            self.ui.btn_Connect.setText('Disconnect Tracker')
+            self.ui.btn_ToolsWindow.setEnabled(True)
+            self.ui.btn_recordToolRef.setEnabled(True)
+            self.tracker_connected = True
+            icon = QIcon(":/icon/icons/tracker_connected.png")
+            self.ui.btn_Connect.setIcon(icon)
 
-            # Load dimensions using `GetDataExtent`
-            _extent = reader.GetDataExtent()
-            self.dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]
-
-            self.spacing = reader.GetOutput().GetSpacing()
-
-            # # Load spacing values
-            # ConstPixelSpacing = reader.GetPixelSpacing()
-            # ConstScalarRange = reader.GetOutput().GetScalarRange()
-
-            # Flip and Translate the image to the right place
-            flipYFilter = vtk.vtkImageFlip()
-            flipYFilter.SetFilteredAxis(1); # flip y axis
-            flipYFilter.SetInputConnection(reader.GetOutputPort())
-            flipYFilter.Update()
-
-            flipZFilter = vtk.vtkImageFlip()
-            flipZFilter.SetFilteredAxis(2); # flip z axis
-            flipZFilter.SetInputConnection(flipYFilter.GetOutputPort())
-            flipZFilter.Update()
-
-            try:
-                self.origin = reader.GetImagePositionPatient()
-                imageInfo = vtk.vtkImageChangeInformation()
-                imageInfo.SetOutputOrigin(self.origin)
-                imageInfo.SetInputConnection(flipZFilter.GetOutputPort())
-            except:
-                QMessageBox.warning(self, 'Wrong Header', 'Can not read image Origin from header!\nImage position might be wrong')
-
-            self.imgReader = imageInfo
-            self.showImages()
-            self.updateSubPanels(self.dims)
             QApplication.restoreOverrideCursor()
 
-    def showImages(self):
-        self.vtk_widget_3D.remove_image()
-        self.vtk_widget_3D_2.remove_image()
-        self.vtk_widget_2D.remove_image()
+            # Multithreading Method 1 (recomended)
+            thread_tracker = threading.Thread(target=self.trackerLoop)
+            thread_tracker.start()
 
-        flipXFilter = vtk.vtkImageFlip()
-        flipXFilter.SetFilteredAxis(1); # flip x axis
-        flipXFilter.SetInputConnection(self.imgReader.GetOutputPort())
-        flipXFilter.Update()
+            # Multithreading Method 2 (not recomended)
+            # Use QApplication.processEvents() inside the loop
+        else:
+            self.disconnectTracker()
 
-        self.vtk_widget_3D.show_image(flipXFilter)
-        self.vtk_widget_3D_2.show_image(flipXFilter)
-        self.vtk_widget_2D.show_image(flipXFilter, self.dims, self.spacing, self.origin)
-        
-        self.ui.btn_LoadPoints.setEnabled(True)
-        self.ui.btn_LoadRefPoints.setEnabled(True)
-        self.ui.groupBox_Viewports.setEnabled(True)
+    def trackerLoop(self):
+        while self.captureCoordinates:
+            if self.tracker_connected:
+                data = self.tracker.get_frame()
+                # Data is numpy.ndarray(4x4)
+                self.refData = data[3][1]  # Ref must be attached to the 1st port
+                self.toolData = data[3][0]  # Tool must be attached to the 2nd port
+                if np.isnan(self.toolData.sum()) or np.isnan(self.refData.sum()):
+                    # TODO: Show some messages or info
+                    continue
+                
+                registered_tool = applyRegistration(self.toolData, self.refData)
 
-        self.ui.slider_threshold3D.setEnabled(True)
-        self.ui.slider_threshold3D_2.setEnabled(True)
-        self.ui.btn_ResetViewports.setEnabled(True)
+                if (self.isRecordCoords):
+                    self.trackerRawCoords_ref.append(self.refData) 
+                    self.trackerRawCoords_tool.append(self.toolData)  
+
+                self.showToolOnViews(registered_tool)
+
+                self.toolsWindow.setData(self.refData, self.toolData)
+            # else:
+            #     self.toolsWindow.setData(self.cam_pos, self.cam_pos)
+
+            time.sleep(0.03)
+        return
+
+    def recordCoords(self):
+        if (self.isRecordCoords == False) and (self.tracker_connected):
+            self.isRecordCoords = True
+            self.ui.btn_recordToolRef.text = 'Stop Record'
+            icon = QIcon(":/icon/icons/rec_stop.png")
+            self.ui.btn_recordToolRef.setIcon(icon)
+        else:
+            self.isRecordCoords = False
+            self.ui.btn_recordToolRef.text = 'Start Record'
+            icon = QIcon(":/icon/icons/rec_start.png")
+            self.ui.btn_recordToolRef.setIcon(icon)
+            refFile = 'RefPoints_'+str(int(time.time()))
+            toolFile = 'ToolPoints_'+str(int(time.time()))
+            np.save(refFile, self.trackerRawCoords_ref)
+            np.save(toolFile, self.trackerRawCoords_tool)
+            QMessageBox.information(self, 'Tracker Points Saved', 'Tool points saved to \'' + toolFile + '.npy\'\nRef points saved to \'' + refFile + '.npy\'')
+
+    def disconnectTracker(self):
+        if self.tracker_connected:
+            self.tracker.stop_tracking()
+            self.tracker.close()
+    
+        self.tracker_connected = False
+        self.captureCoordinates = False
+        self.ui.btn_Connect.setText('Connect Tracker')
+        self.ui.btn_ToolsWindow.setEnabled(False)
+        self.ui.btn_recordToolRef.setEnabled(False)
+        icon = QIcon(":/icon/icons/tracker_disconnected.png")
+        self.ui.btn_Connect.setIcon(icon)
+
+    def showToolsWindow(self):
+        # self.toolsWindow.setData(self.cam_pos, self.cam_pos)
+        self.toolsWindow.show()
+
+    def showRegMatWindow(self):
+        self.regMatWindow.setData(self.regMat)
+        res = self.regMatWindow.exec()
+        if (res == QDialog.Accepted):
+            self.regMat = self.regMatWindow.getData()
+        print(self.regMat)
         
     def updateSubPanels(self, dims):
         self.showSubPanels()
@@ -505,11 +448,16 @@ class MainWindow(QMainWindow):
         self.ui.SubPanel_2D.show()
         self.ui.SubPanel_endoscope.show()
 
-    def applyRegistration(self, toolMat, refMat, regMat):
-        # TODO: Calculate tool coords in ref space and apply registration matrix
+    def applyRegistration(self, toolMat, refMat):
+        # Calculate tool coords in ref space and apply registration matrix
         # tool2ref = inv(inv(refMat) * toolMat)
         # registeredTool = inv(regMat) * tool2ref
-        pass
+
+        regMat_inv = np.linalg.inv(self.regMat)
+        ref_inv = np.linalg.inv(refMat)
+        tool2ref = np.dot(ref_inv, toolMat)
+        reg = np.dot(regMat_inv, tool2ref)
+        return reg
 
     def readPoints(self):
         #Read tool points
@@ -517,7 +465,7 @@ class MainWindow(QMainWindow):
         self.RemovePoints()
         from vtk.util.numpy_support import vtk_to_numpy
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+        # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self, "Read Points from File", "", "All Data Types (*.mat *.npy *.npz);;Matlab (*.mat);;Numpy (*.npy *.npz);;All Files (*)", options=options)
 
         if fileName:
@@ -529,7 +477,7 @@ class MainWindow(QMainWindow):
                 self.registeredPoints = matFile[list(matFile)[-1]]
             elif 'np' in extension:
                 self.toolCoords = np.load(fileName)
-                
+                self.toolCoords = np.squeeze(self.toolCoords)
                 # self.toolCoords = np.swapaxes(self.toolCoords, 0, 2)
                 # self.toolCoords = np.swapaxes(self.toolCoords, 0, 1)
 
@@ -542,8 +490,9 @@ class MainWindow(QMainWindow):
                 #                         [0, 0, 0, 1]])
 
                 
-                if (not self.refCoords.any()):
-                    self.registeredPoints = np.swapaxes(self.toolCoords, 0, 2)
+                if (self.refCoords == None):
+                    self.registeredPoints = np.swapaxes(self.toolCoords, 1, 2)
+                    self.registeredPoints = np.swapaxes(self.registeredPoints, 0, 2)
                 else:
                     self.registeredPoints = np.zeros_like(self.toolCoords)
                     self.registeredPoints = np.swapaxes(self.registeredPoints, 0, 2)
@@ -561,20 +510,20 @@ class MainWindow(QMainWindow):
                 # self.vtk_widget_3D.register(pt_tracker)
             numPoints = self.registeredPoints.shape[-1]
 
-            # Flip/Rotate points to match the orientation of the image
-            for i in range(numPoints):
-                pt = self.registeredPoints[:,:,i]
-                pt_vtk = vtk.vtkMatrix4x4()
-                pt_vtk.DeepCopy(pt.ravel()) 
-                flipTrans = vtk.vtkTransform()
-                flipTrans.Scale(-1,1,1)
-                # flipTrans.Scale(-1,-1,1)
-                pt_new = vtk.vtkMatrix4x4()
-                vtk.vtkMatrix4x4.Multiply4x4(flipTrans.GetMatrix(), pt_vtk, pt_new)
+            # # Flip/Rotate points to match the orientation of the image
+            # for i in range(numPoints):
+            #     pt = self.registeredPoints[:,:,i]
+            #     pt_vtk = vtk.vtkMatrix4x4()
+            #     pt_vtk.DeepCopy(pt.ravel()) 
+            #     flipTrans = vtk.vtkTransform()
+            #     # flipTrans.Scale(-1,1,1)
+            #     flipTrans.Scale(-1,-1,1)
+            #     pt_new = vtk.vtkMatrix4x4()
+            #     vtk.vtkMatrix4x4.Multiply4x4(flipTrans.GetMatrix(), pt_vtk, pt_new)
 
-                pt_t = np.zeros((4,4))
-                pt_new.DeepCopy(pt_t.ravel(), pt_new)
-                self.registeredPoints[:,:,i] = pt_t
+            #     pt_t = np.zeros((4,4))
+            #     pt_new.DeepCopy(pt_t.ravel(), pt_new)
+            #     self.registeredPoints[:,:,i] = pt_t
 
             self.ui.slider_Frames.setRange(0, numPoints-1)
             self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
@@ -588,7 +537,7 @@ class MainWindow(QMainWindow):
     def readRefPoints(self):
         # Read Reference Points
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+        # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self, "Read Points from File", "", "All Data Types (*.mat *.npy *.npz);;Matlab (*.mat);;Numpy (*.npy *.npz);;All Files (*)", options=options)
 
         if fileName:
@@ -630,7 +579,7 @@ class MainWindow(QMainWindow):
 
         pNum = self.ui.slider_Frames.value()
         self.cam_pos = self.registeredPoints[:,:,pNum]
-
+        
         # cam_pos_t = vtk.vtkMatrix4x4()
         # cam_pos_t.DeepCopy(cam_pos.ravel()) 
         # flipTrans = vtk.vtkTransform()
@@ -735,7 +684,7 @@ class MainWindow(QMainWindow):
         self.vtk_widget_2D.reset_view(is3D=False)
         self.updateSubPanels(self.dims)
         self.ui.slider_threshold3D.setValue(-600)
-        self.ui.slider_threshold3D_2.setValue(250)
+        self.ui.slider_threshold3D_2.setValue(-600)
 
 
     def ResetVB(self):

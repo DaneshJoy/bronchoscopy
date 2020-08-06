@@ -24,7 +24,7 @@ class QVtkViewer3D(QVTKViewer):
         if self.viewType == 'Virtual':
             self.surfaceExtractor.SetValue(0, -600)
         else:
-            self.surfaceExtractor.SetValue(0, 250)
+            self.surfaceExtractor.SetValue(0, -600)
 
         # Mapper
         surfaceMapper = vtk.vtkOpenGLPolyDataMapper()
