@@ -58,6 +58,11 @@ class NewPatientWindow(QDialog):
     def visualizeImage(self):
         myArguments = f'vmtkimagereader -ifile \"{self.fileName}\" --pipe vmtkmarchingcubes -l 0.5 --pipe vmtkrenderer --pipe vmtksurfaceviewer -opacity 0.25'
         myPype = pypes.PypeRun(myArguments)
+        self.XyzToRas = myPype.GetScriptObject('vmtkimagereader','0').XyzToRasMatrixCoefficients
+        self.XyzToRas = np.array([[self.XyzToRas[0:4]],
+                                [self.XyzToRas[4:8]],
+                                [self.XyzToRas[8:12]],
+                                [self.XyzToRas[12:16]]])
         self.ImageData = myPype.GetScriptObject('vmtkimagereader','0').Image
         QApplication.restoreOverrideCursor()
 
@@ -83,6 +88,11 @@ class NewPatientWindow(QDialog):
         if self.ImageData == None:
             myArguments = f'vmtkimagereader -ifile \"{self.fileName}\"'
             myPype = pypes.PypeRun(myArguments)
+            self.XyzToRas = myPype.GetScriptObject('vmtkimagereader','0').XyzToRasMatrixCoefficients
+            self.XyzToRas = np.array([[self.XyzToRas[0:4]],
+                                    [self.XyzToRas[4:8]],
+                                    [self.XyzToRas[8:12]],
+                                    [self.XyzToRas[12:16]]])
             self.ImageData = myPype.GetScriptObject('vmtkimagereader','0').Image
         patient_dir = os.path.join('Patients', self._name)
         if (not os.path.exists(patient_dir)):
@@ -90,7 +100,13 @@ class NewPatientWindow(QDialog):
         myWriter = vmtkscripts.vmtkImageWriter()
         myWriter.Image = self.ImageData
         myWriter.OutputFileName = os.path.join('Patients', self._name, self._imageName + '.nii.gz')
+        myWriter.RasToIjkMatrixCoefficients = myPype.GetScriptObject('vmtkimagereader','0').RasToIjkMatrixCoefficients
+        myWriter.ApplyTransform = 1
         myWriter.Execute()
+
+        XyzToRas_file = os.path.join('Patients', self._name, 'XyzToRasMatrix.npy')
+        np.save(XyzToRas_file, self.XyzToRas)
+        
         QApplication.restoreOverrideCursor()
 
     def acceptPatient(self):

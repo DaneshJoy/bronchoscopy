@@ -46,13 +46,17 @@ class MainWindow(QMainWindow):
         self.vtk_widget_3D_2 = None
         self.vtk_widget_2D = None
         self.ui = None
-        self.registeredPoints = None
-        self.toolCoords = None
-        self.refCoords = None
+        self.registeredPoints = []
+        self.toolCoords = []
+        self.refCoords = []
         self.setup(size)
         self.paused = False
         self.size = size
         self.cam_pos = None
+        self.XyzToRas = []
+        self.lastUpdate = 0
+        self.registered_tool = []
+
         self.toolsWindow = ToolsWindow(self)
         self.regMatWindow = RegMatWindow(self)
         self.newPatientWindow = NewPatientWindow(self)
@@ -63,17 +67,45 @@ class MainWindow(QMainWindow):
 
         self.ui.toolBar.hide()
 
-
-        self.regMat = np.array([[0.84,      0.09,   -0.53,  -35.67],
-                                [-0.51,     -0.14,  -0.85,  -202.98],
-                                [-0.15,     0.99,   -0.07,  -22.7],
-                                [0,         0,      0,          1]])
+        self.ui.tabWidget.setCurrentIndex(0)
 
 
-        # self.regMat = np.array([[0.341743, 0.0349852, -0.939142, 181.512],
-        #                         [0.0993239, -0.995054, -0.00092523, 182.889],
-        #                         [-0.93453, -0.0929631, -0.343528, 25.4791], 
-        #                         [0, 0, 0, 1 ]])
+        # self.regMat = np.array([[0.84,      0.09,   -0.53,  -35.67],
+        #                         [-0.51,     -0.14,  -0.85,  -202.98],
+        #                         [-0.15,     0.99,   -0.07,  -22.7],
+        #                         [0,         0,      0,          1]])
+
+        # self.regMat = np.array([[  9.6680e-02,  -1.0480e-01,  -9.8978e-01,   3.8618e+01], 
+        #                         [ -6.0031e-02,   9.9201e-01,  -1.1090e-01,  -4.0377e+01], 
+        #                         [  9.9350e-01,   7.0140e-02,   8.9617e-02,   1.3952e+02], 
+        #                         [  0,   0,   0,   1]])
+
+        # self.regMat = np.array([[  0.0967,  -0.1048,   -0.9898,   125],
+        #                         [ -0.0600,   0.9920,   -0.1109,   58],
+        #                         [  0.9935,   0.0701,    0.0896,  -58],
+        #                         [  0,   0,   0,   1]])
+
+        # self.regMat = np.array([[  7.35563581e-02,  -1.71236069e-01,   9.82480367e-01,   2.67630473e+02],
+        #                         [  1.72677134e-01,   9.72456305e-01,   1.56560985e-01,   3.17539388e+02],
+        #                         [ -9.82228115e-01,   1.58135838e-01,   1.01098898e-01,   1.62724952e+02],
+        #                         [  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,   1.00000000e+00]])
+
+        # self.regMat = np.array([[  6.46888431e-02,  -3.14844735e-01,  -9.46936189e-01,   4.25743133e+01],
+        #                         [ -2.01626482e-02,   9.48317634e-01,  -3.16681437e-01,   9.24174545e+01],
+        #                         [  9.97701770e-01,   3.95784970e-02,   5.49974670e-02,   3.43897444e+01],
+        #                         [  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,   1.00000000e+00]])
+
+        # self.regMat = np.array([[  6.46888431e-02,  -3.14844735e-01,  -9.46936189e-01,   50],
+        #                         [ -2.01626482e-02,   9.48317634e-01,  -3.16681437e-01,   -100],
+        #                         [  9.97701770e-01,   3.95784970e-02,   5.49974670e-02,   -50],
+        #                         [  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,   1.00000000e+00]])
+
+        self.regMat = np.array([[  2.12947445e-01,  -9.39494389e-01,   2.68335012e-01,   -88],
+                                [  2.37930485e-01,   3.16228932e-01,   9.18361774e-01,  -138],
+                                [ -9.47651027e-01,  -1.31717714e-01,   2.90874499e-01,   -50],
+                                [  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,   1.00000000e+00]])
+
+
 
         self.ui.btn_NewPatient.clicked.connect(self.newPatient)
         self.ui.btn_LoadPatient.clicked.connect(self.loadPatient)
@@ -132,6 +164,8 @@ class MainWindow(QMainWindow):
             _name, _date, _image = self.newPatientWindow.getData()
             self.db.db_addPatient(self.db_connection, [_name, _date, _image, 0, 0, 0])
             self.addPatientRow([_name, _date])
+            thread_img = threading.Thread(target=self.loadImage(os.path.join('Patients', _name, _image+'.nii.gz')))
+            thread_img.start()
 
     def loadPatient(self):
         # index = self.ui.tableWidget_Patients.selectedIndexes()[0]
@@ -147,12 +181,14 @@ class MainWindow(QMainWindow):
         self.ui.btn_DeletePatient.hide()
 
     def removePatientDir(self, patient_dir):
-        for root, dirs, files in os.walk(os.path.join('Patients', patient_dir), topdown=False):
-            for name in files:
-                os.remove(os.path.join(root, name))
-            for name in dirs:
-                os.rmdir(os.path.join(root, name))
-        os.rmdir(os.path.join('Patients', patient_dir))
+        pdir = os.path.join('Patients', patient_dir)
+        if os.path.exists(pdir):
+            for root, dirs, files in os.walk(pdir, topdown=False):
+                for name in files:
+                    os.remove(os.path.join(root, name))
+                for name in dirs:
+                    os.rmdir(os.path.join(root, name))
+            os.rmdir(pdir)
 
     def deletePatient(self):
         index = self.ui.tableWidget_Patients.selectionModel().selectedRows()[0]
@@ -167,6 +203,7 @@ class MainWindow(QMainWindow):
         self.ui.btn_LoadPatient.hide()
         self.ui.btn_DeletePatient.hide()
         self.ui.tableWidget_Patients.clearSelection()
+        self.removeImagesFromViewports()
 
     def importPatient(self):
         # TODO: importPatient
@@ -188,11 +225,10 @@ class MainWindow(QMainWindow):
             # self.ui.tableWidget_Patients.model().removeRows(0, self.ui.tableWidget_Patients.rowCount())
             self.ui.btn_LoadPatient.hide()
             self.ui.btn_DeletePatient.hide()
+            self.removeImagesFromViewports()
 
     def showImages(self):
-        self.vtk_widget_3D.remove_image()
-        self.vtk_widget_3D_2.remove_image()
-        self.vtk_widget_2D.remove_image()
+        self.removeImagesFromViewports()
 
         flipXFilter = vtk.vtkImageFlip()
         flipXFilter.SetFilteredAxis(0); # flip x axis
@@ -216,7 +252,7 @@ class MainWindow(QMainWindow):
         self.ui.slider_threshold3D_2.setEnabled(True)
         self.ui.btn_ResetViewports.setEnabled(True)
 
-        self.ui.groupBox_VB.setEnabled(True)
+        self.ui.tabWidget_offline.setEnabled(True)
 
     def loadImage(self, fileName):
         extension = os.path.splitext(fileName)[1].lower()
@@ -243,6 +279,7 @@ class MainWindow(QMainWindow):
                 self.origin = reader.GetOutput().GetOrigin()
             
             self.dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]   
+            self.XyzToRas = np.load(os.path.join(os.path.dirname(fileName), 'XyzToRasMatrix.npy'))
         except:
             QApplication.restoreOverrideCursor()
             QMessageBox.critical(self, 'Unknown File Type', 'Can not load selected image!')
@@ -254,7 +291,6 @@ class MainWindow(QMainWindow):
         # reader.SetFileName(fileName)
         # reader.Execute()
         # dd = reader.GetDirection()
-
         
         # self.origin = (0, 0, 0)
 
@@ -293,6 +329,10 @@ class MainWindow(QMainWindow):
         self.updateSubPanels(self.dims)
         QApplication.restoreOverrideCursor()
 
+    def removeImagesFromViewports(self):
+        self.vtk_widget_3D.remove_image()
+        self.vtk_widget_3D_2.remove_image()
+        self.vtk_widget_2D.remove_image()
 
     def virtualTabChanged(self):
         if (self.ui.tabWidget.currentIndex() == 0):
@@ -339,6 +379,9 @@ class MainWindow(QMainWindow):
             thread_tracker = threading.Thread(target=self.trackerLoop)
             thread_tracker.start()
 
+            # thread_updateViews = threading.Thread(target=self.showToolOnViews(self.registered_tool))
+            # thread_updateViews.start()
+
             # Multithreading Method 2 (not recomended)
             # Use QApplication.processEvents() inside the loop
         else:
@@ -349,19 +392,22 @@ class MainWindow(QMainWindow):
             if self.tracker_connected:
                 data = self.tracker.get_frame()
                 # Data is numpy.ndarray(4x4)
-                self.refData = data[3][1]  # Ref must be attached to the 1st port
-                self.toolData = data[3][0]  # Tool must be attached to the 2nd port
+                self.refData = data[3][0]  # Ref must be attached to the 1st port
+                self.toolData = data[3][1]  # Tool must be attached to the 2nd port
                 if np.isnan(self.toolData.sum()) or np.isnan(self.refData.sum()):
                     # TODO: Show some messages or info
                     continue
                 
-                registered_tool = applyRegistration(self.toolData, self.refData)
 
                 if (self.isRecordCoords):
                     self.trackerRawCoords_ref.append(self.refData) 
-                    self.trackerRawCoords_tool.append(self.toolData)  
+                    self.trackerRawCoords_tool.append(self.toolData) 
 
-                self.showToolOnViews(registered_tool)
+                if (self.XyzToRas != []):
+                    self.registered_tool = self.applyRegistration(self.toolData, self.refData)
+                    # registered_tool = np.squeeze(np.matmul(self.XyzToRas, registered_tool))
+
+                    self.showToolOnViews(self.registered_tool)
 
                 self.toolsWindow.setData(self.refData, self.toolData)
             # else:
@@ -373,26 +419,39 @@ class MainWindow(QMainWindow):
     def recordCoords(self):
         if (self.isRecordCoords == False) and (self.tracker_connected):
             self.isRecordCoords = True
-            self.ui.btn_recordToolRef.text = 'Stop Record'
+            self.ui.btn_recordToolRef.setText(' Stop Record')
             icon = QIcon(":/icon/icons/rec_stop.png")
             self.ui.btn_recordToolRef.setIcon(icon)
         else:
             self.isRecordCoords = False
-            self.ui.btn_recordToolRef.text = 'Start Record'
+            self.ui.btn_recordToolRef.setText(' Start Record')
             icon = QIcon(":/icon/icons/rec_start.png")
             self.ui.btn_recordToolRef.setIcon(icon)
             refFile = 'RefPoints_'+str(int(time.time()))
             toolFile = 'ToolPoints_'+str(int(time.time()))
-            np.save(refFile, self.trackerRawCoords_ref)
-            np.save(toolFile, self.trackerRawCoords_tool)
+            refcoords = np.array(self.trackerRawCoords_ref)
+            refcoords = np.swapaxes(refcoords, 0, 2)
+            refcoords = np.swapaxes(refcoords, 0, 1)
+            toolcoords = np.array(self.trackerRawCoords_tool)
+            toolcoords = np.swapaxes(toolcoords, 0, 2)
+            toolcoords = np.swapaxes(toolcoords, 0, 1)
+
+            recDir = 'Records'
+            if (not os.path.exists(recDir)):
+                os.mkdir(recDir)
+            np.save(os.path.join(recDir, refFile), refcoords)
+            np.save(os.path.join(recDir, toolFile), toolcoords)
+            
             QMessageBox.information(self, 'Tracker Points Saved', 'Tool points saved to \'' + toolFile + '.npy\'\nRef points saved to \'' + refFile + '.npy\'')
 
     def disconnectTracker(self):
         if self.tracker_connected:
+            print('Disconnecting Tracker...')
+            self.captureCoordinates = False
+            self.tracker_connected = False
             self.tracker.stop_tracking()
             self.tracker.close()
     
-        self.tracker_connected = False
         self.captureCoordinates = False
         self.ui.btn_Connect.setText('Connect Tracker')
         self.ui.btn_ToolsWindow.setEnabled(False)
@@ -455,13 +514,13 @@ class MainWindow(QMainWindow):
 
         regMat_inv = np.linalg.inv(self.regMat)
         ref_inv = np.linalg.inv(refMat)
-        tool2ref = np.dot(ref_inv, toolMat)
-        reg = np.dot(regMat_inv, tool2ref)
+        tool2ref = np.squeeze(np.matmul(ref_inv, toolMat))
+        reg = np.squeeze(np.matmul(regMat_inv, tool2ref))
         return reg
 
     def readPoints(self):
         #Read tool points
-        self.registeredPoints = None
+        self.registeredPoints = []
         self.RemovePoints()
         from vtk.util.numpy_support import vtk_to_numpy
         options = QFileDialog.Options()
@@ -470,7 +529,7 @@ class MainWindow(QMainWindow):
 
         if fileName:
             extension = os.path.splitext(fileName)[1].lower()
-
+            
             if 'mat' in extension:
                 matFile = loadmat(fileName)
                 # self.registeredPoints = matFile['EMT_cor']
@@ -483,30 +542,35 @@ class MainWindow(QMainWindow):
 
                 # self.toolCoords = np.swapaxes(self.toolCoords, 1, 2)
 
+                tmp = np.zeros_like(self.toolCoords)
+                # tmp = np.swapaxes(tmp, 0, 2)
+                numPoints = self.toolCoords.shape[-1]
 
-                # self.regMat = np.array([[0.3, 0.86, 0.41, 9.09],
-                #                         [0.03, 0.42, -0.91, -1.49],
-                #                         [-0.95, 0.28, 0.098, -27.97],
-                #                         [0, 0, 0, 1]])
-
-                
-                if (self.refCoords == None):
-                    self.registeredPoints = np.swapaxes(self.toolCoords, 1, 2)
-                    self.registeredPoints = np.swapaxes(self.registeredPoints, 0, 2)
+                if (self.refCoords == []):
+                    self.registeredPoints = self.toolCoords
+                    for i in range(numPoints):
+                        self.registeredPoints[:,:,i] = np.squeeze(np.matmul(self.XyzToRas, self.registeredPoints[:,:,i]))
+                    # self.registeredPoints = np.swapaxes(self.toolCoords, 1, 2)
+                    # self.registeredPoints = np.swapaxes(self.registeredPoints, 0, 2)
                 else:
+                    # self.toolCoords = np.swapaxes(self.toolCoords, 1, 2)
                     self.registeredPoints = np.zeros_like(self.toolCoords)
-                    self.registeredPoints = np.swapaxes(self.registeredPoints, 0, 2)
+                    # self.registeredPoints = np.swapaxes(self.registeredPoints, 0, 2)
                     regMat_inv = np.linalg.inv(self.regMat)
-                    ii = 0
-                    pt_tracker = np.zeros([len(self.toolCoords), 3], dtype='float')
-                    for ref, tool in zip(self.refCoords, self.toolCoords):
+                    pt_tracker = np.zeros([numPoints, 3], dtype='float')
+                    # for ref, tool in zip(self.refCoords, self.toolCoords):
+                    for ii in range(numPoints):
+                        ref = self.refCoords[:,:,ii]
+                        tool = self.toolCoords[:,:,ii]
                         ref_inv = np.linalg.inv(ref)
-                        tool2ref = np.dot(ref_inv, tool)
+                        tool2ref = np.squeeze(np.matmul(ref_inv, tool))
+                        tmp[:,:,ii] = tool2ref
                         pt_tracker[ii, :] = tool2ref[:,3][:-1]
-                        reg = np.dot(regMat_inv, tool2ref)
+                        reg = np.squeeze(np.matmul(regMat_inv, tool2ref))
+                        reg_aligned = np.squeeze(np.matmul(self.XyzToRas, reg))
                         self.registeredPoints[:,:,ii] = reg
-                        ii += 1
 
+                    np.save('tool2ref.npy', tmp)
                 # self.vtk_widget_3D.register(pt_tracker)
             numPoints = self.registeredPoints.shape[-1]
 
@@ -549,7 +613,8 @@ class MainWindow(QMainWindow):
                 self.refCoords = matFile[list(matFile)[-1]]
             elif 'np' in extension:
                 self.refCoords = np.load(fileName)
-                # self.refCoords = np.swapaxes(self.refCoords, 1, 2)
+                # self.refCoords = np.swapaxes(self.refCoords, 0, 2)
+                # self.refCoords = np.swapaxes(self.refCoords, 0, 1)
 
     def showHidePoints(self):
         if self.ui.checkBox_showPoints.isChecked():
@@ -593,8 +658,20 @@ class MainWindow(QMainWindow):
         self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registeredPoints.shape[-1]))
 
     def showToolOnViews(self, toolMatrix):
-        self.vtk_widget_3D.set_camera(toolMatrix)
+        # if (time.monotonic() - self.lastUpdate < 0.3):
+        #     continue
 
+        # self.lastUpdate = time.monotonic()
+        # if isinstance(toolMatrix, (list)):
+        #     continue
+        self.vtk_widget_3D.set_camera(toolMatrix)
+        self.vtk_widget_3D_2.set_cross_position(toolMatrix[0,3], toolMatrix[1,3], toolMatrix[2,3], is3D=True)
+
+        self.showToolOn2DView(toolMatrix)
+        QApplication.processEvents()
+        
+
+    def showToolOn2DView(self, toolMatrix):
         if self.ui.comboBox_2DView.currentText() == 'Axial':
             axial_slice = int((toolMatrix[2,3] - self.origin[2]) / self.spacing[2])
             self.vtk_widget_2D.set_slice(axial_slice)
@@ -608,7 +685,6 @@ class MainWindow(QMainWindow):
             self.vtk_widget_2D.set_slice(sagittal_slice)
             self.ui.Slider_2D.setValue(sagittal_slice)
 
-        self.vtk_widget_3D_2.set_cross_position(toolMatrix[0,3], toolMatrix[1,3], toolMatrix[2,3], is3D=True)
         if self.ui.comboBox_2DView.currentText() == 'Axial':
             self.vtk_widget_2D.set_cross_position(toolMatrix[0,3], toolMatrix[1,3])
         elif self.ui.comboBox_2DView.currentText() == 'Coronal':
@@ -618,7 +694,7 @@ class MainWindow(QMainWindow):
 
     def playCam(self):
         # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
-        if self.registeredPoints is None:
+        if self.registeredPoints == []:
             QMessageBox.critical(self, 'No Points Found', 'Please load the registered points first !')
             return
         self.ui.btn_pauseCam.setEnabled(True)
@@ -689,7 +765,9 @@ class MainWindow(QMainWindow):
 
     def ResetVB(self):
         self.RemovePoints()
-        self.registeredPoints = None
+        self.registeredPoints = []
+        self.refCoords = []
+        self.toolCoords == []
         self.stopCam()
         self.vtk_widget_2D.remove_cross()
         self.ui.btn_ResetVB.setEnabled(False)
@@ -720,6 +798,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         print('Exitting Application...')
+        self.disconnectTracker()
         event.accept()
 
 if __name__ == "__main__":

@@ -300,7 +300,7 @@ class QVtkViewer3D(QVTKViewer):
         # then transpose
         return reg_mat
 
-    def draw_points(self, points):
+    def draw_points(self, points):         
         from vtk.util.numpy_support import numpy_to_vtkIdTypeArray
 
         pts = vtk.vtkPoints()

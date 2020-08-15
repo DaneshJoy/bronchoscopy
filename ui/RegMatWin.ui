@@ -9,9 +9,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>261</width>
-    <height>170</height>
+    <width>500</width>
+    <height>300</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>500</width>
+    <height>300</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>500</width>
+    <height>300</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>RegMat</string>
@@ -27,6 +39,11 @@
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
      </property>
      <property name="styleSheet">
       <string notr="true">color: rgb(170, 255, 255);</string>
@@ -65,7 +82,7 @@
       <bool>false</bool>
      </attribute>
      <attribute name="horizontalHeaderDefaultSectionSize">
-      <number>60</number>
+      <number>117</number>
      </attribute>
      <attribute name="horizontalHeaderMinimumSectionSize">
       <number>10</number>
@@ -74,7 +91,7 @@
       <bool>false</bool>
      </attribute>
      <attribute name="verticalHeaderDefaultSectionSize">
-      <number>30</number>
+      <number>60</number>
      </attribute>
      <attribute name="verticalHeaderMinimumSectionSize">
       <number>10</number>

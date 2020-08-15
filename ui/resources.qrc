@@ -4,6 +4,7 @@
   </qresource>
   <qresource prefix="icon">
     <file>icons/3D_vis.png</file>
+    <file>icons/register_centerlines.png</file>
     <file>icons/add_patient.png</file>
     <file>icons/delete_patient.png</file>
     <file>icons/load_patient.png</file>

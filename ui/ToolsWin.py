@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_ToolsWin(object):
     def setupUi(self, ToolsWin):
         ToolsWin.setObjectName("ToolsWin")
-        ToolsWin.resize(561, 355)
+        ToolsWin.resize(700, 450)
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
         brush.setStyle(QtCore.Qt.SolidPattern)
@@ -170,6 +170,7 @@ class Ui_ToolsWin(object):
         font.setWeight(50)
         font.setKerning(True)
         self.label_33.setFont(font)
+        self.label_33.setStyleSheet("color: rgb(202, 202, 202);")
         self.label_33.setObjectName("label_33")
         self.verticalLayout_4.addWidget(self.label_33)
         self.gridLayout = QtWidgets.QGridLayout()
@@ -346,6 +347,7 @@ class Ui_ToolsWin(object):
         font.setWeight(50)
         font.setKerning(True)
         self.label_34.setFont(font)
+        self.label_34.setStyleSheet("color: rgb(202, 202, 202);")
         self.label_34.setObjectName("label_34")
         self.verticalLayout_3.addWidget(self.label_34)
         self.gridLayout_2 = QtWidgets.QGridLayout()

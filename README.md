@@ -12,19 +12,24 @@
 1. **Install [Anaconda](https://anaconda.org/) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html)**
 
 2. **Create environment and install requirements:**
-    ```bash
-    > conda env create -n bronchovision python=3.6
-    > conda activate bronchovision
-    > pip install -r requirements.txt
+    ```
+    > conda env create -f environment.yml
+    > conda activate vmtk
     ```
 
-3. **Compile ui files (only if you've changed the ui files)**
-    ```bash
+    if it failed, try this one:
+    ```
+    > conda create --name vmtk --file spec-file.txt
+    > conda activate vmtk
+    ```
+
+3. **Compile ui files (Optional: only if you've changed the ui files)**
+    ```
     > compile_ui.bat
     ```
 
 4. **Run application**
-    ```bash
+    ```
     > run.bat
     ```
 --------------
