@@ -335,7 +335,7 @@ class MainWindow(QMainWindow):
         self.vtk_widget_2D.remove_image()
 
     def virtualTabChanged(self):
-        if (self.ui.tabWidget.currentIndex() == 0):
+        if (self.ui.tabWidget_2.currentIndex() == 0):
             self.trackerReady = True
         else:
             self.trackerReady = False
@@ -352,6 +352,9 @@ class MainWindow(QMainWindow):
                 try:
                     self.tracker = NDITracker(settings_aurora)
                     self.captureCoordinates = True
+                    self.tracker.start_tracking()
+                    # self.tracker_connected = True
+                    tool_desc = self.tracker.get_tool_descriptions()
                 except:
                     QApplication.restoreOverrideCursor()
                     msg = 'Please check the following:\n' \
@@ -361,16 +364,14 @@ class MainWindow(QMainWindow):
                             '     (e.g. on Linux are you part of the \"dialout\" group?)'
                     QMessageBox.critical(self, 'Tracker Connection Failed', f'Can not connect to the tracker!\n{msg}')
                     self.ui.btn_Connect.setText('Connect Tracker')
+                    # self.tracker_connected = False
                     return
-
-            self.tracker.start_tracking()
-            tool_desc = self.tracker.get_tool_descriptions()
 
             self.ui.btn_Connect.setText('Disconnect Tracker')
             self.ui.btn_ToolsWindow.setEnabled(True)
             self.ui.btn_recordToolRef.setEnabled(True)
-            self.tracker_connected = True
             icon = QIcon(":/icon/icons/tracker_connected.png")
+            self.tracker_connected = True
             self.ui.btn_Connect.setIcon(icon)
 
             QApplication.restoreOverrideCursor()
@@ -451,6 +452,7 @@ class MainWindow(QMainWindow):
             self.tracker_connected = False
             self.tracker.stop_tracking()
             self.tracker.close()
+            self.tracker = None
     
         self.captureCoordinates = False
         self.ui.btn_Connect.setText('Connect Tracker')

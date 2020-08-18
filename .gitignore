@@ -108,6 +108,7 @@ data/
 dist/
 build/
 Patients/
+Records/
 vtk_log.txt
 
 # VS COde
