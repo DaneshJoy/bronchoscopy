@@ -15,8 +15,8 @@ from scipy.io import loadmat
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
 from PyQt5 import QtWidgets, QtCore, uic
-from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QLabel, QTableWidgetItem, QAbstractItemView
-from PyQt5.QtGui import QPalette, QColor, QIcon
+from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QLabel, QTableWidgetItem, QAbstractItemView, QSplashScreen
+from PyQt5.QtGui import QPalette, QColor, QIcon, QPixmap
 import sqlite3
 from sksurgerynditracker.nditracker import NDITracker
 # from vmtk import pypes, vmtkscripts, vmtkcenterlines 
@@ -147,13 +147,15 @@ class MainWindow(QMainWindow):
             self.addPatientRow([p[1], p[2]])
 
     def addPatientRow(self, row_data):
-        row = self.ui.tableWidget_Patients.rowCount()
-        self.ui.tableWidget_Patients.setRowCount(row+1)
-        col = 0
-        for item in row_data:
-            cell = QTableWidgetItem(str(item))
-            self.ui.tableWidget_Patients.setItem(row, col, cell)
-            col += 1
+        from ui_from_out_test import addPatientRow
+        addPatientRow(self.ui.tableWidget_Patients, row_data)
+        # row = self.ui.tableWidget_Patients.rowCount()
+        # self.ui.tableWidget_Patients.setRowCount(row+1)
+        # col = 0
+        # for item in row_data:
+        #     cell = QTableWidgetItem(str(item))
+        #     self.ui.tableWidget_Patients.setItem(row, col, cell)
+        #     col += 1
 
     def newPatient(self):
         p_num = self.ui.tableWidget_Patients.rowCount()
@@ -365,6 +367,7 @@ class MainWindow(QMainWindow):
                     QMessageBox.critical(self, 'Tracker Connection Failed', f'Can not connect to the tracker!\n{msg}')
                     self.ui.btn_Connect.setText('Connect Tracker')
                     # self.tracker_connected = False
+                    self.ui.btn_Connect.setStyleSheet("background-color: rgb(65, 65, 65)")
                     return
 
             self.ui.btn_Connect.setText('Disconnect Tracker')
@@ -417,12 +420,55 @@ class MainWindow(QMainWindow):
             time.sleep(0.03)
         return
 
+    def countdownSplash(self):
+        splash_pix = QPixmap('ui/icons/5.png')
+        splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+        splash.show()
+        # splash.showMessage("<h1><font color='orange'>Ready for record</font></h1>", Qt.AlignTop | Qt.AlignCenter, Qt.black)
+        timer = QtCore.QElapsedTimer()
+        timer.start()
+        while timer.elapsed() < 1000 :
+            app.processEvents()
+        splash.hide()
+        splash_pix = QPixmap('ui/icons/4.png')
+        splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+        splash.show()
+        timer.start()
+        while timer.elapsed() < 1000 :
+            app.processEvents()
+        splash.hide()
+        splash_pix = QPixmap('ui/icons/3.png')
+        splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+        splash.show()
+        timer.start()
+        while timer.elapsed() < 1000 :
+            app.processEvents()
+        splash.hide()
+        splash_pix = QPixmap('ui/icons/2.png')
+        splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+        splash.show()
+        timer.start()
+        while timer.elapsed() < 1000 :
+            app.processEvents()
+        splash.hide()
+        splash_pix = QPixmap('ui/icons/1.png')
+        splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+        splash.show()
+        timer.start()
+        while timer.elapsed() < 1000 :
+            app.processEvents()
+        splash.close()
+        
     def recordCoords(self):
         if (self.isRecordCoords == False) and (self.tracker_connected):
+            self.ui.btn_recordToolRef.setEnabled(False)
+            self.countdownSplash()
+            self.ui.btn_recordToolRef.setEnabled(True)
             self.isRecordCoords = True
             self.ui.btn_recordToolRef.setText(' Stop Record')
             icon = QIcon(":/icon/icons/rec_stop.png")
             self.ui.btn_recordToolRef.setIcon(icon)
+            self.ui.btn_recordToolRef.setStyleSheet("background-color: rgba(235, 25, 75, 100)")
         else:
             self.isRecordCoords = False
             self.ui.btn_recordToolRef.setText(' Start Record')
@@ -436,6 +482,9 @@ class MainWindow(QMainWindow):
             toolcoords = np.array(self.trackerRawCoords_tool)
             toolcoords = np.swapaxes(toolcoords, 0, 2)
             toolcoords = np.swapaxes(toolcoords, 0, 1)
+
+            self.ui.btn_recordToolRef.setStyleSheet("background-color: rgb(65, 65, 65)")
+            self.ui.btn_registerCenterlines.setEnabled(True)
 
             recDir = 'Records'
             if (not os.path.exists(recDir)):

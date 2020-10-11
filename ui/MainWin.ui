@@ -325,7 +325,7 @@ color: rgb(157, 205, 216);</string>
            <enum>QTabWidget::Rounded</enum>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>3</number>
           </property>
           <property name="iconSize">
            <size>
@@ -496,7 +496,7 @@ color: rgb(157, 205, 216);</string>
                   <number>0</number>
                  </property>
                  <attribute name="horizontalHeaderVisible">
-                  <bool>true</bool>
+                  <bool>false</bool>
                  </attribute>
                  <attribute name="horizontalHeaderCascadingSectionResizes">
                   <bool>true</bool>
@@ -1494,7 +1494,9 @@ color: rgb(157, 205, 216);</string>
                       <bool>false</bool>
                      </property>
                      <property name="styleSheet">
-                      <string notr="true">background-color: rgb(65, 65, 65);</string>
+                      <string notr="true">background-color: rgb(65, 65, 65);
+selection-background-color: rgb(85, 85, 255);
+alternate-background-color: rgb(85, 255, 127);</string>
                      </property>
                      <property name="text">
                       <string> Connect Tracker</string>
@@ -1614,7 +1616,8 @@ color: rgb(157, 205, 216);</string>
                       <bool>false</bool>
                      </property>
                      <property name="styleSheet">
-                      <string notr="true">background-color: rgb(65, 65, 65);</string>
+                      <string notr="true">background-color: rgb(65, 65, 65);
+border-color: rgb(255, 78, 81);</string>
                      </property>
                      <property name="text">
                       <string> Start Record</string>
@@ -1641,7 +1644,7 @@ color: rgb(157, 205, 216);</string>
                     </widget>
                    </item>
                    <item>
-                    <widget class="QToolButton" name="btn_RegisterCenterlines">
+                    <widget class="QToolButton" name="btn_registerCenterlines">
                      <property name="enabled">
                       <bool>false</bool>
                      </property>

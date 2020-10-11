@@ -194,7 +194,7 @@ class Ui_MainWin(object):
         item = QtWidgets.QTableWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidget_Patients.setHorizontalHeaderItem(1, item)
-        self.tableWidget_Patients.horizontalHeader().setVisible(True)
+        self.tableWidget_Patients.horizontalHeader().setVisible(False)
         self.tableWidget_Patients.horizontalHeader().setCascadingSectionResizes(True)
         self.tableWidget_Patients.horizontalHeader().setDefaultSectionSize(150)
         self.tableWidget_Patients.horizontalHeader().setHighlightSections(True)
@@ -599,7 +599,9 @@ class Ui_MainWin(object):
         self.btn_Connect.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.btn_Connect.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.btn_Connect.setAutoFillBackground(False)
-        self.btn_Connect.setStyleSheet("background-color: rgb(65, 65, 65);")
+        self.btn_Connect.setStyleSheet("background-color: rgb(65, 65, 65);\n"
+"selection-background-color: rgb(85, 85, 255);\n"
+"alternate-background-color: rgb(85, 255, 127);")
         icon7 = QtGui.QIcon()
         icon7.addPixmap(QtGui.QPixmap(":/icon/icons/tracker_disconnected.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.btn_Connect.setIcon(icon7)
@@ -647,7 +649,8 @@ class Ui_MainWin(object):
         self.btn_recordToolRef.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.btn_recordToolRef.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.btn_recordToolRef.setAutoFillBackground(False)
-        self.btn_recordToolRef.setStyleSheet("background-color: rgb(65, 65, 65);")
+        self.btn_recordToolRef.setStyleSheet("background-color: rgb(65, 65, 65);\n"
+"border-color: rgb(255, 78, 81);")
         icon9 = QtGui.QIcon()
         icon9.addPixmap(QtGui.QPixmap(":/icon/icons/rec_start.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.btn_recordToolRef.setIcon(icon9)
@@ -1292,7 +1295,7 @@ class Ui_MainWin(object):
         self.toolBar.addAction(self.actionExit)
 
         self.retranslateUi(MainWin)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(3)
         self.comboBox_2DView.setCurrentIndex(0)
         self.tabWidget_2.setCurrentIndex(0)
         self.actionExit.triggered.connect(MainWin.close)
