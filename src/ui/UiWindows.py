@@ -19,6 +19,7 @@ from ui import NewPatientWin, ToolsWin, RegMatWin
 class NewPatientWindow(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.patients_dir = '..\\Patients'
         self.setup()
         self.ui.btn_ViewImage.hide()
         self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
@@ -94,17 +95,17 @@ class NewPatientWindow(QDialog):
                                     [self.XyzToRas[8:12]],
                                     [self.XyzToRas[12:16]]])
             self.ImageData = myPype.GetScriptObject('vmtkimagereader','0').Image
-        patient_dir = os.path.join('Patients', self._name)
+        patient_dir = os.path.join(self.patients_dir , self._name)
         if (not os.path.exists(patient_dir)):
             os.mkdir(patient_dir)
         myWriter = vmtkscripts.vmtkImageWriter()
         myWriter.Image = self.ImageData
-        myWriter.OutputFileName = os.path.join('Patients', self._name, self._imageName + '.nii.gz')
+        myWriter.OutputFileName = os.path.join(self.patients_dir , self._name, self._imageName + '.nii.gz')
         myWriter.RasToIjkMatrixCoefficients = myPype.GetScriptObject('vmtkimagereader','0').RasToIjkMatrixCoefficients
         myWriter.ApplyTransform = 1
         myWriter.Execute()
 
-        XyzToRas_file = os.path.join('Patients', self._name, 'XyzToRasMatrix.npy')
+        XyzToRas_file = os.path.join(self.patients_dir , self._name, 'XyzToRasMatrix.npy')
         np.save(XyzToRas_file, self.XyzToRas)
         
         QApplication.restoreOverrideCursor()

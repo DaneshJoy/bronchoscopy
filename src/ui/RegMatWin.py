@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui/RegMatWin.ui'
+# Form implementation generated from reading ui file 'src/ui/RegMatWin.ui'
 #
 # Created by: PyQt5 UI code generator 5.9.2
 #

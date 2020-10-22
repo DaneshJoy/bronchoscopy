@@ -1,5 +1,0 @@
-numpy==1.18.5
-scipy==1.4.1
-vtk===8.2.0
-pyqt==5.9.2
-scikit-surgerynditracker==0.1.9.1

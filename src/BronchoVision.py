@@ -24,7 +24,8 @@ from viewers.QVtkViewer2D import QVtkViewer2D
 from viewers.QVtkViewer3D import QVtkViewer3D
 from ui import MainWin
 from ui.UiWindows import RegMatWindow, ToolsWindow, NewPatientWindow
-from patients_db import PatientsDB
+from modules.patients_db import PatientsDB
+from modules.patients import Patients
 
 
 class MainWindow(QMainWindow):
@@ -53,15 +54,20 @@ class MainWindow(QMainWindow):
         self.paused = False
         self.size = size
         self.cam_pos = None
-        self.XyzToRas = []
+        
         self.lastUpdate = 0
         self.registered_tool = []
 
+        self.patients_dir = '..\\Patients'
+        self.records_dir = '..\\Records'
+        
         self.toolsWindow = ToolsWindow(self)
         self.regMatWindow = RegMatWindow(self)
         self.newPatientWindow = NewPatientWindow(self)
 
-        self.getPatientsFromDB()
+        self.patients = Patients(self.ui.tableWidget_Patients, self.newPatientWindow, self.patients_dir)
+        self.patients.getPatientsFromDB()
+
         self.ui.btn_LoadPatient.hide()
         self.ui.btn_DeletePatient.hide()
 
@@ -135,106 +141,74 @@ class MainWindow(QMainWindow):
 
         self.ui.tabWidget.currentChanged.connect(self.virtualTabChanged)
 
-    def getPatientsFromDB(self):
-        self.ui.tableWidget_Patients.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.db = PatientsDB()
-        if (not os.path.exists('Patients')):
-            os.mkdir('Patients')
-        self.db_connection = self.db.db_createConnection(os.path.join('Patients', 'patients.db'))
-        patients = self.db.db_getPatients(self.db_connection)
-        print(len(patients))
-        for p in patients:
-            self.addPatientRow([p[1], p[2]])
-
-    def addPatientRow(self, row_data):
-        from ui_from_out_test import addPatientRow
-        addPatientRow(self.ui.tableWidget_Patients, row_data)
-        # row = self.ui.tableWidget_Patients.rowCount()
-        # self.ui.tableWidget_Patients.setRowCount(row+1)
-        # col = 0
-        # for item in row_data:
-        #     cell = QTableWidgetItem(str(item))
-        #     self.ui.tableWidget_Patients.setItem(row, col, cell)
-        #     col += 1
-
+    '''
+    >>> ----------------------------------------
+    >>> Patients ops
+    >>> ----------------------------------------
+    '''
     def newPatient(self):
-        p_num = self.ui.tableWidget_Patients.rowCount()
-        p_name = f'Patient_{p_num+1}'
-        self.newPatientWindow.prepare(p_name)
-        res = self.newPatientWindow.exec()
-        if (res == QDialog.Accepted):
-            _name, _date, _image = self.newPatientWindow.getData()
-            self.db.db_addPatient(self.db_connection, [_name, _date, _image, 0, 0, 0])
-            self.addPatientRow([_name, _date])
-            thread_img = threading.Thread(target=self.loadImage(os.path.join('Patients', _name, _image+'.nii.gz')))
-            thread_img.start()
-
-    def loadPatient(self):
-        # index = self.ui.tableWidget_Patients.selectedIndexes()[0]
-        index = self.ui.tableWidget_Patients.selectionModel().selectedRows()[0]
+        self.patients.newPatient()
+        index = self.ui.tableWidget_Patients.model().index(self.ui.tableWidget_Patients.rowCount()-1,0)
         selected_patient = self.ui.tableWidget_Patients.model().data(index)
-        patient_in_db = self.db.db_getPatient(self.db_connection, selected_patient)
-        selected_image = patient_in_db[0][3] + '.nii.gz'
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        thread_img = threading.Thread(target=self.loadImage(os.path.join('Patients', selected_patient, selected_image)))
-        thread_img.start()
-        self.ui.tableWidget_Patients.clearSelection()
-        self.ui.btn_LoadPatient.hide()
-        self.ui.btn_DeletePatient.hide()
+        self.loadPatient(selected_patient)
 
-    def removePatientDir(self, patient_dir):
-        pdir = os.path.join('Patients', patient_dir)
-        if os.path.exists(pdir):
-            for root, dirs, files in os.walk(pdir, topdown=False):
-                for name in files:
-                    os.remove(os.path.join(root, name))
-                for name in dirs:
-                    os.rmdir(os.path.join(root, name))
-            os.rmdir(pdir)
+    def loadPatient(self, selected_patient):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        if not selected_patient:
+            index = self.ui.tableWidget_Patients.selectionModel().selectedRows()[0]
+            selected_patient = self.ui.tableWidget_Patients.model().data(index)
+        try:
+            self.patients.loadPatient(selected_patient)
+            self.showImages()
+            self.updateSubPanels(self.patients.dims)
+            self.ui.btn_LoadPatient.hide()
+            self.ui.btn_DeletePatient.hide()
+            QApplication.restoreOverrideCursor()
+        except:
+            QApplication.restoreOverrideCursor()
+            QMessageBox.warning(None, 'Wrong Header', 'Can not read Image Origin from header!\nImage position might be wrong')
 
     def deletePatient(self):
         index = self.ui.tableWidget_Patients.selectionModel().selectedRows()[0]
         selected_patient = self.ui.tableWidget_Patients.model().data(index)
-        ret = QMessageBox.question(self, 'Delete Patient',
-                                    f'Do you want to delete {selected_patient} ?\nThis action is NOT reversible',
+        ret = QMessageBox.question(None, 'Delete Patient',
+                                    f'Do you want to delete {selected_patient} ?\nThis action can NOT be undone',
                                     QMessageBox.Yes | QMessageBox.No)
         if ret == QMessageBox.Yes:
-            self.db.db_deletePatient(self.db_connection, selected_patient)
-            self.removePatientDir(selected_patient)
-            self.ui.tableWidget_Patients.removeRow(index.row())
-        self.ui.btn_LoadPatient.hide()
-        self.ui.btn_DeletePatient.hide()
-        self.ui.tableWidget_Patients.clearSelection()
-        self.removeImagesFromViewports()
-
-    def importPatient(self):
-        # TODO: importPatient
-        QMessageBox.information(self, 'Comming Soon...', f'Not Implemented Yet !')
+            if self.patients.deletePatient(selected_patient):
+                self.ui.tableWidget_Patients.removeRow(index.row())
+                self.ui.tableWidget_Patients.clearSelection()
+                self.ui.btn_LoadPatient.hide()
+                self.ui.btn_DeletePatient.hide()
+                self.removeImagesFromViewports()
+            else:
+                QMessageBox.critical(self, 'Failed to delete patient', f'Can not delete this patient!')
 
     def clearPatients(self):
         ret = QMessageBox.question(self, 'Delete All Patients',
                                     f'Are you sure you want to delete all patients ?!\nThis action is NOT reversible!',
                                     QMessageBox.Yes | QMessageBox.No)
         if ret == QMessageBox.Yes:
-            self.db.db_deleteAllPatients(self.db_connection)
-            for d in os.listdir('Patients'):
-                if os.path.isdir(os.path.join('Patients', d)):
-                    self.removePatientDir(d)
-            # Clear table Method1
-            self.ui.tableWidget_Patients.setRowCount(0)
-            # # Clear table Method2
-            # self.ui.tableWidget_Patients.clearContents()
-            # self.ui.tableWidget_Patients.model().removeRows(0, self.ui.tableWidget_Patients.rowCount())
+            self.patients.clearPatients()
             self.ui.btn_LoadPatient.hide()
             self.ui.btn_DeletePatient.hide()
             self.removeImagesFromViewports()
+    
+    def importPatient(self):
+        # TODO: importPatient
+        QMessageBox.information(None, 'Comming Soon...', f'Not Implemented Yet !')
 
+    '''
+    >>> ----------------------------------------
+    >>> Viewers ops
+    >>> ----------------------------------------
+    '''
     def showImages(self):
         self.removeImagesFromViewports()
 
         flipXFilter = vtk.vtkImageFlip()
         flipXFilter.SetFilteredAxis(0); # flip x axis
-        flipXFilter.SetInputConnection(self.imgReader.GetOutputPort())
+        flipXFilter.SetInputConnection(self.patients.imgReader.GetOutputPort())
         flipXFilter.Update()
 
         flipYFilter = vtk.vtkImageFlip()
@@ -244,7 +218,7 @@ class MainWindow(QMainWindow):
 
         self.vtk_widget_3D.show_image(flipYFilter)
         self.vtk_widget_3D_2.show_image(flipYFilter)
-        self.vtk_widget_2D.show_image(flipYFilter, self.dims, self.spacing, self.origin)
+        self.vtk_widget_2D.show_image(flipYFilter, self.patients.dims, self.patients.spacing, self.patients.origin)
         
         self.ui.btn_LoadPoints.setEnabled(True)
         self.ui.btn_LoadRefPoints.setEnabled(True)
@@ -255,81 +229,6 @@ class MainWindow(QMainWindow):
         self.ui.btn_ResetViewports.setEnabled(True)
 
         self.ui.tabWidget_offline.setEnabled(True)
-
-    def loadImage(self, fileName):
-        extension = os.path.splitext(fileName)[1].lower()
-        try:
-            if 'vtk' in extension or 'vtp' in extension:
-                reader = vtk.vtkPolyDataReader()
-                reader.SetFileName(fileName)
-                _extent = reader.GetOutput().GetBounds()
-                self.spacing = (1, 1, 1)
-                self.origin = (0, 0, 0)
-                reader.Update()
-            else:
-                if 'nii' in extension or 'gz' in extension:
-                    reader = vtk.vtkNIFTIImageReader()
-                    reader.SetFileName(fileName)
-                elif 'mhd' in extension or 'mha' in extension:
-                    reader = vtk.vtkMetaImageReader()
-                    reader.SetFileName(fileName)
-                reader.Update()
-                # Load dimensions using `GetDataExtent`
-                # xMin, xMax, yMin, yMax, zMin, zMax = reader.GetDataExtent()
-                _extent = reader.GetDataExtent()
-                self.spacing = reader.GetOutput().GetSpacing()
-                self.origin = reader.GetOutput().GetOrigin()
-            
-            self.dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]   
-            self.XyzToRas = np.load(os.path.join(os.path.dirname(fileName), 'XyzToRasMatrix.npy'))
-        except:
-            QApplication.restoreOverrideCursor()
-            QMessageBox.critical(self, 'Unknown File Type', 'Can not load selected image!')
-            return
-
-        # TODO : Read image orientation and apply IJK to RAS transform (i.e. different flipping for each orientation) 
-        # import SimpleITK as sitk
-        # reader = sitk.ImageFileReader()
-        # reader.SetFileName(fileName)
-        # reader.Execute()
-        # dd = reader.GetDirection()
-        
-        # self.origin = (0, 0, 0)
-
-        # Flip and Translate the image to the right place
-        # flipXFilter = vtk.vtkImageFlip()
-        # flipXFilter.SetFilteredAxis(0); # flip x axis
-        # flipXFilter.SetInputConnection(reader.GetOutputPort())
-        # flipXFilter.Update()
-
-        # flipYFilter = vtk.vtkImageFlip()
-        # flipYFilter.SetFilteredAxis(1); # flip y axis
-        # flipYFilter.SetInputConnection(flipXFilter.GetOutputPort())
-        # flipYFilter.Update()
-
-        if 'nii' in extension or 'gz' in extension:
-            try:
-                _QMatrix = reader.GetQFormMatrix()
-                # self.origin = (0, 0, 0)
-                self.origin = (-_QMatrix.GetElement(0,3), -_QMatrix.GetElement(1,3), _QMatrix.GetElement(2,3))
-                imageInfo = vtk.vtkImageChangeInformation()
-                imageInfo.SetOutputOrigin(self.origin)
-                imageInfo.SetInputConnection(reader.GetOutputPort())
-                self.imgReader = imageInfo
-                self.showImages()
-            except:
-                QMessageBox.warning(self, 'Wrong Header', 'Can not read Image Origin from header!\nImage position might be wrong')
-        else:
-            # origin = (140, 140, -58)
-            # imageInfo = vtk.vtkImageChangeInformation()
-            # imageInfo.SetOutputOrigin(self.origin)
-            # imageInfo.SetInputConnection(reader.GetOutputPort())
-            # self.showImages(imageInfo, self.dims)
-            self.imgReader = reader
-            self.showImages()
-
-        self.updateSubPanels(self.dims)
-        QApplication.restoreOverrideCursor()
 
     def removeImagesFromViewports(self):
         self.vtk_widget_3D.remove_image()
@@ -407,9 +306,9 @@ class MainWindow(QMainWindow):
                     self.trackerRawCoords_ref.append(self.refData) 
                     self.trackerRawCoords_tool.append(self.toolData) 
 
-                if (self.XyzToRas != []):
+                if (self.patients.XyzToRas != []):
                     self.registered_tool = self.applyRegistration(self.toolData, self.refData)
-                    # registered_tool = np.squeeze(np.matmul(self.XyzToRas, registered_tool))
+                    # registered_tool = np.squeeze(np.matmul(self.patients.XyzToRas, registered_tool))
 
                     self.showToolOnViews(self.registered_tool)
 
@@ -486,11 +385,10 @@ class MainWindow(QMainWindow):
             self.ui.btn_recordToolRef.setStyleSheet("background-color: rgb(65, 65, 65)")
             self.ui.btn_registerCenterlines.setEnabled(True)
 
-            recDir = 'Records'
-            if (not os.path.exists(recDir)):
-                os.mkdir(recDir)
-            np.save(os.path.join(recDir, refFile), refcoords)
-            np.save(os.path.join(recDir, toolFile), toolcoords)
+            if (not os.path.exists(self.records_dir)):
+                os.mkdir(self.records_dir)
+            np.save(os.path.join(self.records_dir, refFile), refcoords)
+            np.save(os.path.join(self.records_dir, toolFile), toolcoords)
             
             QMessageBox.information(self, 'Tracker Points Saved', 'Tool points saved to \'' + toolFile + '.npy\'\nRef points saved to \'' + refFile + '.npy\'')
 
@@ -600,7 +498,7 @@ class MainWindow(QMainWindow):
                 if (self.refCoords == []):
                     self.registeredPoints = self.toolCoords
                     for i in range(numPoints):
-                        self.registeredPoints[:,:,i] = np.squeeze(np.matmul(self.XyzToRas, self.registeredPoints[:,:,i]))
+                        self.registeredPoints[:,:,i] = np.squeeze(np.matmul(self.patients.XyzToRas, self.registeredPoints[:,:,i]))
                     # self.registeredPoints = np.swapaxes(self.toolCoords, 1, 2)
                     # self.registeredPoints = np.swapaxes(self.registeredPoints, 0, 2)
                 else:
@@ -618,7 +516,7 @@ class MainWindow(QMainWindow):
                         tmp[:,:,ii] = tool2ref
                         pt_tracker[ii, :] = tool2ref[:,3][:-1]
                         reg = np.squeeze(np.matmul(regMat_inv, tool2ref))
-                        reg_aligned = np.squeeze(np.matmul(self.XyzToRas, reg))
+                        reg_aligned = np.squeeze(np.matmul(self.patients.XyzToRas, reg))
                         self.registeredPoints[:,:,ii] = reg
 
                     np.save('tool2ref.npy', tmp)
@@ -724,24 +622,24 @@ class MainWindow(QMainWindow):
 
     def showToolOn2DView(self, toolMatrix):
         if self.ui.comboBox_2DView.currentText() == 'Axial':
-            axial_slice = int((toolMatrix[2,3] - self.origin[2]) / self.spacing[2])
+            axial_slice = int((toolMatrix[2,3] - self.patients.origin[2]) / self.patients.spacing[2])
             self.vtk_widget_2D.set_slice(axial_slice)
             self.ui.Slider_2D.setValue(axial_slice)
         elif self.ui.comboBox_2DView.currentText() == 'Coronal':
-            coronal_slice = int((toolMatrix[1,3] - self.origin[1]) / self.spacing[1])
+            coronal_slice = int((toolMatrix[1,3] - self.patients.origin[1]) / self.patients.spacing[1])
             self.vtk_widget_2D.set_slice(coronal_slice)
             self.ui.Slider_2D.setValue(coronal_slice)
         else: # self.ui.comboBox_2DView.currentText() == 'Sagittal'
-            sagittal_slice = int((toolMatrix[0,3] - self.origin[0]) / self.spacing[0])
+            sagittal_slice = int((toolMatrix[0,3] - self.patients.origin[0]) / self.patients.spacing[0])
             self.vtk_widget_2D.set_slice(sagittal_slice)
             self.ui.Slider_2D.setValue(sagittal_slice)
 
         if self.ui.comboBox_2DView.currentText() == 'Axial':
             self.vtk_widget_2D.set_cross_position(toolMatrix[0,3], toolMatrix[1,3])
         elif self.ui.comboBox_2DView.currentText() == 'Coronal':
-            self.vtk_widget_2D.set_cross_position(toolMatrix[0,3], toolMatrix[2,3]+self.origin[1])
+            self.vtk_widget_2D.set_cross_position(toolMatrix[0,3], toolMatrix[2,3]+self.patients.origin[1])
         else: # if self.ui.comboBox_2DView.currentText() == 'Sagittal':
-            self.vtk_widget_2D.set_cross_position(toolMatrix[1,3], toolMatrix[2,3]+self.origin[0])
+            self.vtk_widget_2D.set_cross_position(toolMatrix[1,3], toolMatrix[2,3]+self.patients.origin[0])
 
     def playCam(self):
         # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
@@ -795,8 +693,8 @@ class MainWindow(QMainWindow):
         self.vtk_widget_2D.reset_view(is3D=False)
         # self.vtk_widget_2D.RemoveImage()
         self.vtk_widget_2D.viewType = self.ui.comboBox_2DView.currentText()
-        self.vtk_widget_2D.show_image(self.imgReader, self.dims, self.spacing, self.origin)
-        self.updateSubPanels(self.dims)
+        self.vtk_widget_2D.show_image(self.patients.imgReader, self.patients.dims, self.patients.spacing, self.patients.origin)
+        self.updateSubPanels(self.patients.dims)
 
         if not self.vtk_widget_2D.cross == None:
             self.vtk_widget_2D.remove_cross()
@@ -809,7 +707,7 @@ class MainWindow(QMainWindow):
         self.vtk_widget_3D.reset_view(is3D=True)
         self.vtk_widget_3D_2.reset_view(is3D=True)
         self.vtk_widget_2D.reset_view(is3D=False)
-        self.updateSubPanels(self.dims)
+        self.updateSubPanels(self.patients.dims)
         self.ui.slider_threshold3D.setValue(-600)
         self.ui.slider_threshold3D_2.setValue(-600)
 
