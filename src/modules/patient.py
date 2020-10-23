@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QTableWidgetItem, QAbstractItemView, QDialog, QMessa
 from .patients_db import PatientsDB
 
 
-class Patients():
+class Patient():
     def __init__(self, tableWidget_Patients, newPatientWindow, patients_dir):
         super().__init__()
         self.XyzToRas = []
@@ -22,7 +22,7 @@ class Patients():
         self.patients_dir = patients_dir
         self.db = PatientsDB()
 
-    def getPatientsFromDB(self):
+    def get_patients_from_db(self):
         self.tableWidget_Patients.setEditTriggers(QAbstractItemView.NoEditTriggers)
         if (not os.path.exists(self.patients_dir)):
             os.mkdir(self.patients_dir)
@@ -30,9 +30,9 @@ class Patients():
         patients = self.db.db_getPatients(self.db_connection)
         print(len(patients))
         for p in patients:
-            self.addPatientRow([p[1], p[2]])
+            self.add_patient_row([p[1], p[2]])
 
-    def addPatientRow(self, row_data):
+    def add_patient_row(self, row_data):
         row = self.tableWidget_Patients.rowCount()
         self.tableWidget_Patients.setRowCount(row+1)
         col = 0
@@ -41,7 +41,7 @@ class Patients():
             self.tableWidget_Patients.setItem(row, col, cell)
             col += 1
     
-    def newPatient(self):
+    def new_patient(self):
         p_num = self.tableWidget_Patients.rowCount()
         p_name = f'Patient_{p_num+1}'
         self.newPatientWindow.prepare(p_name)
@@ -49,11 +49,11 @@ class Patients():
         if (res == QDialog.Accepted):
             _name, _date, _image = self.newPatientWindow.getData()
             self.db.db_addPatient(self.db_connection, [_name, _date, _image, 0, 0, 0])
-            self.addPatientRow([_name, _date])
-            thread_img = threading.Thread(target=self.loadImage(os.path.join(self.patients_dir, _name, _image+'.nii.gz')))
+            self.add_patient_row([_name, _date])
+            thread_img = threading.Thread(target=self.load_image(os.path.join(self.patients_dir, _name, _image+'.nii.gz')))
             thread_img.start()
 
-    def loadImage(self, fileName):
+    def load_image(self, fileName):
         extension = os.path.splitext(fileName)[1].lower()
         if 'vtk' in extension or 'vtp' in extension:
             reader = vtk.vtkPolyDataReader()
@@ -115,14 +115,14 @@ class Patients():
             # self.showImages(imageInfo, self.dims)
             self.imgReader = reader
         
-    def loadPatient(self, selected_patient):
+    def load_patient(self, selected_patient):
         patient_in_db = self.db.db_getPatient(self.db_connection, selected_patient)
         selected_image = patient_in_db[0][3] + '.nii.gz'
-        thread_img = threading.Thread(target=self.loadImage(os.path.join(self.patients_dir, selected_patient, selected_image)))
+        thread_img = threading.Thread(target=self.load_image(os.path.join(self.patients_dir, selected_patient, selected_image)))
         thread_img.start()
         self.tableWidget_Patients.clearSelection()
 
-    def removePatientDir(self, patient_dir):
+    def remove_patient_dir(self, patient_dir):
         pdir = os.path.join(self.patients_dir, patient_dir)
         if os.path.exists(pdir):
             for root, dirs, files in os.walk(pdir, topdown=False):
@@ -132,21 +132,21 @@ class Patients():
                     os.rmdir(os.path.join(root, name))
             os.rmdir(pdir)
 
-    def deletePatient(self, selected_patient):
+    def delete_patient(self, selected_patient):
         removed = False
         try:
             self.db.db_deletePatient(self.db_connection, selected_patient)
-            self.removePatientDir(selected_patient)
+            self.remove_patient_dir(selected_patient)
             removed = True
         except:
             pass
         return removed
 
-    def clearPatients(self):
+    def clear_patients(self):
         self.db.db_deleteAllPatients(self.db_connection)
         for d in os.listdir(self.patients_dir):
             if os.path.isdir(os.path.join(self.patients_dir, d)):
-                self.removePatientDir(d)
+                self.remove_patient_dir(d)
         # Clear table Method1
         self.tableWidget_Patients.setRowCount(0)
         # # Clear table Method2
