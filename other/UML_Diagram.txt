@@ -1,0 +1,7 @@
+Visual Paradigm:
+ Tools > Code > Instant Reverse…
+
+Pylint + Graphviz
+pyreverse -o pdf -p BronchoVision .
+pyreverse -o pdf -p BronchoVision ./viewers/
+pyreverse -o pdf -p BronchoVision ./viewers/QVtkViewer.py

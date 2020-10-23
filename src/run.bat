@@ -4,4 +4,4 @@ ECHO Starting BronchoVision...
 ECHO =========================
 ECHO.
 CALL conda activate bv
-CALL python src/BronchoVision.py
+CALL python BronchoVision.py
