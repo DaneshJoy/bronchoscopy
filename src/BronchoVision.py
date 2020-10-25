@@ -6,26 +6,28 @@ Created on Mon Jun  3 01:09:45 2019
 """
 
 import os
-import sys
-import vtk
-import numpy as np
-import time
-import threading
-from scipy.io import loadmat
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
-from PyQt5 import QtWidgets, QtCore, uic
-from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QLabel, QTableWidgetItem, QAbstractItemView, QSplashScreen
-from PyQt5.QtGui import QPalette, QColor, QIcon, QPixmap
 import sqlite3
+import sys
+import threading
+import time
+
+import numpy as np
+import vtk
+from PyQt5 import QtCore, QtWidgets, uic
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor, QIcon, QPalette, QPixmap
+from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QDialog,
+                             QFileDialog, QLabel, QMainWindow, QMessageBox,
+                             QSplashScreen, QTableWidgetItem, QWidget)
+from scipy.io import loadmat
+
+from modules.patient import Patient
+from modules.tracker import Tracker
+from ui import MainWin
+from ui.UiWindows import NewPatientWindow, RegMatWindow, ToolsWindow
 # from vmtk import pypes, vmtkscripts, vmtkcenterlines 
 from viewers.QVtkViewer2D import QVtkViewer2D
 from viewers.QVtkViewer3D import QVtkViewer3D
-from ui import MainWin
-from ui.UiWindows import RegMatWindow, ToolsWindow, NewPatientWindow
-from modules.patients_db import PatientsDB
-from modules.patient import Patient
-from modules.tracker import Tracker
 
 
 class MainWindow(QMainWindow):
@@ -50,6 +52,7 @@ class MainWindow(QMainWindow):
         self.paused = False
         self.size = size
         self.cam_pos = None
+        self.exitting = False
         
         self.last_update = 0
         self.registered_tool = []
@@ -225,7 +228,7 @@ class MainWindow(QMainWindow):
             self.disconnect_tracker()
 
     def disconnect_tracker(self):
-        if self.tracker_connected:
+        if self.tracker.tracker_connected:
             print('Disconnecting Tracker...')
             self.tracker.disconnect()
             self.ui.btn_Connect.setText('Connect Tracker')
@@ -236,6 +239,8 @@ class MainWindow(QMainWindow):
 
     def tracker_loop(self):
         while self.tracker.capture_coords:
+            if (exitting):
+                break
             if self.tracker.tracker_connected:
                 ref_mat, tool_mat = self.tracker.get_frame()
                 if np.isnan(tool_mat.sum()) or np.isnan(ref_mat.sum()):
@@ -309,9 +314,11 @@ class MainWindow(QMainWindow):
         flipYFilter.SetInputConnection(flipXFilter.GetOutputPort())
         flipYFilter.Update()
 
-        self.vtk_widget_3D.show_image(flipYFilter)
-        self.vtk_widget_3D_2.show_image(flipYFilter)
-        self.vtk_widget_2D.show_image(flipYFilter, self.patient.dims, self.patient.spacing, self.patient.origin)
+        self.patient.reoriented_image = flipYFilter
+
+        self.vtk_widget_3D.show_image(self.patient.reoriented_image)
+        self.vtk_widget_3D_2.show_image(self.patient.reoriented_image)
+        self.vtk_widget_2D.show_image(self.patient.reoriented_image, self.patient.dims, self.patient.spacing, self.patient.origin)
         
         self.ui.btn_LoadPoints.setEnabled(True)
         self.ui.btn_LoadRefPoints.setEnabled(True)
@@ -333,7 +340,7 @@ class MainWindow(QMainWindow):
             self.tracker.tracker_ready = True
         else:
             self.tracker.tracker_ready = False
-        # print(self.ui.tabWidget.currentIndex(), self.trackerReady)
+        # print(self.ui.tabWidget.currentIndex(), self.tracker.tracker_ready)
         
     def countdown_splash(self):
         splash_pix = QPixmap('ui/icons/5.png')
@@ -389,15 +396,26 @@ class MainWindow(QMainWindow):
         self.show_subPanels()
         # image = reader.GetOutput()
         # dims = image.GetDimensions()
-        if self.ui.comboBox_2DView.currentText() == 'Axial':
-            self.ui.Slider_2D.setRange(0, dims[2]-1)
-            self.ui.Slider_2D.setValue(dims[2]//2)
-        elif self.ui.comboBox_2DView.currentText() == 'Coronal':
-            self.ui.Slider_2D.setRange(0, dims[1]-1)
-            self.ui.Slider_2D.setValue(dims[1]//2)
-        else: # if self.ui.comboBox_2DView.currentText() == 'Sagittal':
+
+        # Commented parts are correct, changed only for this phantom image!
+        # if self.ui.comboBox_2DView.currentText() == 'Axial':
+        if self.ui.comboBox_2DView.currentText() == 'Coronal':    
+            # self.ui.Slider_2D.setRange(0, dims[2]-1)
+            # self.ui.Slider_2D.setValue(dims[2]//2)
             self.ui.Slider_2D.setRange(0, dims[0]-1)
             self.ui.Slider_2D.setValue(dims[0]//2)
+        # elif self.ui.comboBox_2DView.currentText() == 'Coronal':
+        elif self.ui.comboBox_2DView.currentText() == 'Sagittal':
+            # self.ui.Slider_2D.setRange(0, dims[1]-1)
+            # self.ui.Slider_2D.setValue(dims[1]//2)
+            self.ui.Slider_2D.setRange(0, dims[2]-1)
+            self.ui.Slider_2D.setValue(dims[2]//2)
+        # else: self.ui.comboBox_2DView.currentText() == 'Sagittal':
+        elif self.ui.comboBox_2DView.currentText() == 'Axial':
+            # self.ui.Slider_2D.setRange(0, dims[0]-1)
+            # self.ui.Slider_2D.setValue(dims[0]//2)
+            self.ui.Slider_2D.setRange(0, dims[1]-1)
+            self.ui.Slider_2D.setValue(dims[1]//2)
 
     def slider_changed(self):
         self.vtk_widget_2D.set_slice(self.ui.Slider_2D.value())
@@ -587,24 +605,34 @@ class MainWindow(QMainWindow):
         
 
     def show_tool_on_2D_view(self, tool_mat):
-        if self.ui.comboBox_2DView.currentText() == 'Axial':
-            axial_slice = int((tool_mat[2,3] - self.patient.origin[2]) / self.patient.spacing[2])
+        # Commented parts are correct, changed only for this phantom image!
+        # if self.ui.comboBox_2DView.currentText() == 'Axial':
+        if self.ui.comboBox_2DView.currentText() == 'Coronal':
+            # axial_slice = int((tool_mat[2,3] - self.patient.origin[2]) / self.patient.spacing[2])
+            axial_slice = int((tool_mat[0,3] - self.patient.origin[0]) / self.patient.spacing[0])
             self.vtk_widget_2D.set_slice(axial_slice)
             self.ui.Slider_2D.setValue(axial_slice)
-        elif self.ui.comboBox_2DView.currentText() == 'Coronal':
-            coronal_slice = int((tool_mat[1,3] - self.patient.origin[1]) / self.patient.spacing[1])
+        # elif self.ui.comboBox_2DView.currentText() == 'Coronal':
+        elif self.ui.comboBox_2DView.currentText() == 'Sagittal':
+            # coronal_slice = int((tool_mat[1,3] - self.patient.origin[1]) / self.patient.spacing[1])
+            coronal_slice = int((tool_mat[2,3] - self.patient.origin[2]) / self.patient.spacing[2])
             self.vtk_widget_2D.set_slice(coronal_slice)
             self.ui.Slider_2D.setValue(coronal_slice)
-        else: # self.ui.comboBox_2DView.currentText() == 'Sagittal'
-            sagittal_slice = int((tool_mat[0,3] - self.patient.origin[0]) / self.patient.spacing[0])
+        # elif self.ui.comboBox_2DView.currentText() == 'Sagittal':
+        elif self.ui.comboBox_2DView.currentText() == 'Axial':
+            # sagittal_slice = int((tool_mat[0,3] - self.patient.origin[0]) / self.patient.spacing[0])
+            sagittal_slice = int((tool_mat[1,3] - self.patient.origin[1]) / self.patient.spacing[1])
             self.vtk_widget_2D.set_slice(sagittal_slice)
             self.ui.Slider_2D.setValue(sagittal_slice)
 
-        if self.ui.comboBox_2DView.currentText() == 'Axial':
+        # if self.ui.comboBox_2DView.currentText() == 'Axial':
+        if self.ui.comboBox_2DView.currentText() == 'Sagittal':
             self.vtk_widget_2D.set_cross_position(tool_mat[0,3], tool_mat[1,3])
-        elif self.ui.comboBox_2DView.currentText() == 'Coronal':
+        # elif self.ui.comboBox_2DView.currentText() == 'Coronal':
+        elif self.ui.comboBox_2DView.currentText() == 'Axial':
             self.vtk_widget_2D.set_cross_position(tool_mat[0,3], tool_mat[2,3]+self.patient.origin[1])
-        else: # if self.ui.comboBox_2DView.currentText() == 'Sagittal':
+        # else: # if self.ui.comboBox_2DView.currentText() == 'Sagittal':
+        elif self.ui.comboBox_2DView.currentText() == 'Coronal':
             self.vtk_widget_2D.set_cross_position(tool_mat[1,3], tool_mat[2,3]+self.patient.origin[0])
 
     def play_cam(self):
@@ -625,6 +653,8 @@ class MainWindow(QMainWindow):
 
     def play_cam_loop(self):
         for i in range(self.ui.slider_Frames.value(),self.registered_points.shape[-1]):
+            if (self.exitting):
+                break
             if self.paused:
                 break
 
@@ -658,13 +688,23 @@ class MainWindow(QMainWindow):
     def change_2D_view(self):
         self.vtk_widget_2D.reset_view(is3D=False)
         # self.vtk_widget_2D.RemoveImage()
-        self.vtk_widget_2D.viewType = self.ui.comboBox_2DView.currentText()
-        self.vtk_widget_2D.show_image(self.patient.imgReader, self.patient.dims, self.patient.spacing, self.patient.origin)
+
+        # Messed up! only for this phantom image!
+        if self.ui.comboBox_2DView.currentText() == 'Axial':
+            phantom_view = 'Coronal'
+        elif self.ui.comboBox_2DView.currentText() == 'Coronal':
+            phantom_view = 'Sagittal'
+        elif self.ui.comboBox_2DView.currentText() == 'Sagittal':
+            phantom_view = 'Axial'
+        self.vtk_widget_2D.viewType = phantom_view
+        
+        # self.vtk_widget_2D.viewType = self.ui.comboBox_2DView.currentText()
+        self.vtk_widget_2D.show_image(self.patient.reoriented_image, self.patient.dims, self.patient.spacing, self.patient.origin)
         self.update_subPanels(self.patient.dims)
 
-        if not self.vtk_widget_2D.cross == None:
+        if self.vtk_widget_2D.cross != None:
             self.vtk_widget_2D.remove_cross()
-            if (self.tracker.trackerReady and self.tracker_connected):
+            if (self.tracker.tracker_ready and self.tracker_connected):
                 self.show_tool_on_views(self.tool_mat)
             else:
                 self.show_tool_on_views(self.cam_pos)
@@ -705,13 +745,25 @@ class MainWindow(QMainWindow):
         # self.resize(size.width(), size.height())
         self.vtk_widget_3D = QVtkViewer3D(self.ui.vtk_panel_3D_1, size, 'Virtual')
         self.vtk_widget_3D_2 = QVtkViewer3D(self.ui.vtk_panel_3D_2, size, 'Normal')
-        self.vtk_widget_2D = QVtkViewer2D(self.ui.vtk_panel_2D, size, self.ui.comboBox_2DView.currentText())
+
+        # Messed up! only for this phantom image!
+        if self.ui.comboBox_2DView.currentText() == 'Axial':
+            phantom_view = 'Coronal'
+        elif self.ui.comboBox_2DView.currentText() == 'Coronal':
+            phantom_view = 'Sagittal'
+        elif self.ui.comboBox_2DView.currentText() == 'Sagittal':
+            phantom_view = 'Axial'
+        viewType = phantom_view
+
+        # viewType = self.ui.comboBox_2DView.currentText()
+        self.vtk_widget_2D = QVtkViewer2D(self.ui.vtk_panel_2D, size, viewType)
         self.hide_subPanels()
 
     def initialize(self):
         pass
 
     def closeEvent(self, event):
+        self.exitting = True
         print('Exitting Application...')
         self.disconnect_tracker()
         event.accept()

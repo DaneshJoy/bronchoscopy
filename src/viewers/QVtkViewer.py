@@ -7,6 +7,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 import numpy as np
 from abc import abstractmethod
 
+'''
 class MyInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
     def __init__(self, outer_instance):
         self.outer_instance = outer_instance
@@ -40,6 +41,7 @@ class MyInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         # self.outer_instance.updateTextActor()
         self.OnMouseWheelBackward()
         return
+'''
 
 class QVTKViewer(QFrame):
     def __init__(self, panel, size, viewType):
@@ -78,9 +80,9 @@ class QVTKViewer(QFrame):
         self.ren = vtk.vtkOpenGLRenderer()
         self.interactor.GetRenderWindow().AddRenderer(self.ren)
 
-        # self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
-        interactor = MyInteractorStyle(self)
-        self.interactor.SetInteractorStyle(interactor)
+        self.interactor.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
+        # interactor = MyInteractorStyle(self)
+        # self.interactor.SetInteractorStyle(interactor)
         self.ren.SetBackground(0, 0, 0)
         # ren.SetBackground(colors.GetColor3D("BkgColor"))
         self.interactor.Initialize()

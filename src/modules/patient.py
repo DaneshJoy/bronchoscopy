@@ -17,6 +17,8 @@ class Patient():
     def __init__(self, tableWidget_Patients, newPatientWindow, patients_dir):
         super().__init__()
         self.XyzToRas = []
+        self.imgReader = None
+        self.reoriented_image = None
         self.tableWidget_Patients = tableWidget_Patients
         self.newPatientWindow = newPatientWindow
         self.patients_dir = patients_dir

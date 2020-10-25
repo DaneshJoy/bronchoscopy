@@ -126,42 +126,73 @@ class QVtkViewer3D(QVTKViewer):
 
         self.interactor.Initialize()
 
-    def show_orientation_widget(self):
-        # # Cube Actor
-        # cubeActor = vtk.vtkAnnotatedCubeActor()
-        # cubeActor.SetXPlusFaceText('+X')
-        # cubeActor.SetXMinusFaceText('-X')
-        # cubeActor.SetYMinusFaceText('-Y')
-        # cubeActor.SetYPlusFaceText('+Y')
-        # cubeActor.SetZMinusFaceText('-Z')
-        # cubeActor.SetZPlusFaceText('+Z')
-        # cubeActor.GetTextEdgesProperty().SetColor(0,1,1)
-        # cubeActor.GetTextEdgesProperty().SetLineWidth(1)
-        # cubeActor.GetCubeProperty().SetColor(0.7,0.7,0.7)
+    def show_orientation_widget(self, widget_type='human'):
+        '''
+        widget_type optins: cube, axes, human
+        '''
+        # TODO: handle invalid widget_type
 
-        # Axes Actor
-        # axesActor = vtk.vtkAxesActor()
-
-        # Human Actor.
-        readerH = vtk.vtkXMLPolyDataReader()
-        readerH.SetFileName('ui\\Human.vtp')
-        readerH.Update()
-        humanMapper = vtk.vtkPolyDataMapper()
-        humanMapper.SetInputConnection(readerH.GetOutputPort())
-        humanMapper.SetScalarModeToUsePointFieldData()
-        humanMapper.SelectColorArray("Color")
-        humanMapper.SetColorModeToDirectScalars()
-        humanActor = vtk.vtkActor()
-        humanActor.SetMapper(humanMapper)
-        bounds = self.surface.GetBounds()
-        humanActor.SetScale(max(bounds)/10.0)
+        if widget_type == 'cube':
+            # Cube Actor
+            cubeActor = vtk.vtkAnnotatedCubeActor();
+            cubeActor.SetXPlusFaceText('R')
+            cubeActor.SetXMinusFaceText('L')
+            cubeActor.SetYMinusFaceText('H')
+            cubeActor.SetYPlusFaceText('F')
+            cubeActor.SetZMinusFaceText('P')
+            cubeActor.SetZPlusFaceText('A')
+            cubeActor.GetTextEdgesProperty().SetColor(1,1,1)
+            cubeActor.GetTextEdgesProperty().SetLineWidth(1)
+            cubeActor.GetCubeProperty().SetColor(0,0.5,0.5)
+            widget_actor = cubeActor
+        elif widget_type == 'axes':
+            # Axes Actor
+            axesActor = vtk.vtkAxesActor()
+            axesActor.AxisLabelsOn()
+            axesActor.SetShaftTypeToCylinder()
+            axesActor.SetCylinderRadius(0.05)
+            widget_actor = axesActor
+        elif widget_type == 'human':
+            # Human Actor
+            readerH = vtk.vtkXMLPolyDataReader()
+            readerH.SetFileName('ui\\Human.vtp')
+            readerH.Update()
+            humanMapper = vtk.vtkPolyDataMapper()
+            humanMapper.SetInputConnection(readerH.GetOutputPort())
+            humanMapper.SetScalarModeToUsePointFieldData()
+            humanMapper.SelectColorArray("Color")
+            humanMapper.SetColorModeToDirectScalars()
+            humanActor = vtk.vtkActor()
+            humanActor.SetMapper(humanMapper)
+            bounds = self.surface.GetBounds()
+            humanActor.SetScale(max(bounds)/10.0)
+            widget_actor = humanActor
         
-        self.axes.SetOrientationMarker(humanActor)
+        # flipXFilter = vtk.vtkImageFlip()
+        # flipXFilter.SetFilteredAxis(0); # flip x axis
+        # flipXFilter.SetInputConnection(widget_actor.GetOutput())
+        # flipXFilter.Update()
+
+        # flipYFilter = vtk.vtkImageFlip()
+        # flipYFilter.SetFilteredAxis(1); # flip y axis
+        # flipYFilter.SetInputConnection(flipXFilter.GetOutput())
+        # flipYFilter.Update()
+
+        # widget_actor_reoriented = flipYFliter
+
+
+        self.axes.SetOrientationMarker(widget_actor)
         self.axes.SetInteractor(self.interactor)
         # Position lower left in the viewport.
         self.axes.SetViewport(0.0, 0.85, 0.15, 1.0)  # (xmin,ymin,xmax,ymax)
         self.axes.EnabledOn() # <== application freeze-crash
         self.axes.InteractiveOn()
+
+        t = vtk.vtkTransform()
+        t.RotateX(90)
+        # t.RotateY(180)
+        t.RotateZ(90)
+        widget_actor.SetUserTransform(t)
 
     def update_text_actor(self):
         # create a text actor
