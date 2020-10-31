@@ -17,6 +17,7 @@ class Patient():
     def __init__(self, tableWidget_Patients, newPatientWindow, patients_dir):
         super().__init__()
         self.XyzToRas = []
+        self.centerline = []
         self.imgReader = None
         self.reoriented_image = None
         self.tableWidget_Patients = tableWidget_Patients
@@ -30,7 +31,7 @@ class Patient():
             os.mkdir(self.patients_dir)
         self.db_connection = self.db.db_createConnection(os.path.join(self.patients_dir, 'patients.db'))
         patients = self.db.db_getPatients(self.db_connection)
-        print(len(patients))
+        print(f'{len(patients)} Patients Loaded')
         for p in patients:
             self.add_patient_row([p[1], p[2]])
 
@@ -79,7 +80,7 @@ class Patient():
             self.origin = reader.GetOutput().GetOrigin()
         
         self.dims = [_extent[1]-_extent[0]+1, _extent[3]-_extent[2]+1, _extent[5]-_extent[4]+1]   
-        self.XyzToRas = np.load(os.path.join(os.path.dirname(fileName), 'XyzToRasMatrix.npy'))
+        self.XyzToRas = np.squeeze(np.load(os.path.join(os.path.dirname(fileName), 'XyzToRasMatrix.npy')))
 
         # TODO : Read image orientation and apply IJK to RAS transform (i.e. different flipping for each orientation) 
         # import SimpleITK as sitk

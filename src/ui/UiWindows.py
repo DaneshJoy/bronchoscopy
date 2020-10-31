@@ -131,7 +131,7 @@ class RegMatWindow(QDialog):
     def setData(self, regMat):
         for i in range(4):
             for j in range(4):
-                newitem = QTableWidgetItem(str(regMat[i, j]))
+                newitem = QTableWidgetItem(str(regMat[i, j].round(3)))
                 self.ui.table_regMat.setItem(i, j, newitem)
 
     def getData(self):

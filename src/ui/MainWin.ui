@@ -1232,7 +1232,7 @@ color: rgb(157, 205, 216);</string>
             <item>
              <widget class="QGroupBox" name="groupBox_segmentation">
               <property name="enabled">
-               <bool>false</bool>
+               <bool>true</bool>
               </property>
               <property name="font">
                <font>
@@ -1261,7 +1261,7 @@ color: rgb(157, 205, 216);</string>
               <property name="checkable">
                <bool>false</bool>
               </property>
-              <layout class="QVBoxLayout" name="verticalLayout_15">
+              <layout class="QVBoxLayout" name="verticalLayout_9">
                <item>
                 <widget class="QToolButton" name="btn_Segment">
                  <property name="enabled">
@@ -1315,7 +1315,23 @@ color: rgb(157, 205, 216);</string>
                 </widget>
                </item>
                <item>
-                <widget class="QToolButton" name="btn_Centerline">
+                <spacer name="verticalSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Minimum</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QToolButton" name="btn_extractCenterline">
                  <property name="enabled">
                   <bool>false</bool>
                  </property>
@@ -1363,6 +1379,71 @@ color: rgb(157, 205, 216);</string>
                  </property>
                  <property name="autoRaise">
                   <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QToolButton" name="btn_loadCenterline">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>10</pointsize>
+                  </font>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="layoutDirection">
+                  <enum>Qt::LeftToRight</enum>
+                 </property>
+                 <property name="autoFillBackground">
+                  <bool>false</bool>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">background-color: rgb(65, 65, 65);</string>
+                 </property>
+                 <property name="text">
+                  <string>Load Centerline ...</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="resources.qrc">
+                   <normaloff>:/icon/icons/centerLine.png</normaloff>:/icon/icons/centerLine.png</iconset>
+                 </property>
+                 <property name="iconSize">
+                  <size>
+                   <width>50</width>
+                   <height>50</height>
+                  </size>
+                 </property>
+                 <property name="checkable">
+                  <bool>false</bool>
+                 </property>
+                 <property name="toolButtonStyle">
+                  <enum>Qt::ToolButtonTextBesideIcon</enum>
+                 </property>
+                 <property name="autoRaise">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="checkBox_showCenterline">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="text">
+                  <string>Show Centerline</string>
+                 </property>
+                 <property name="checked">
+                  <bool>false</bool>
                  </property>
                 </widget>
                </item>
@@ -1591,6 +1672,80 @@ alternate-background-color: rgb(85, 255, 127);</string>
                     </spacer>
                    </item>
                    <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_16">
+                     <property name="spacing">
+                      <number>7</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QLabel" name="label">
+                       <property name="font">
+                        <font>
+                         <pointsize>10</pointsize>
+                        </font>
+                       </property>
+                       <property name="text">
+                        <string>Image Centerline:</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_imageCenterline">
+                       <property name="font">
+                        <font>
+                         <pointsize>10</pointsize>
+                        </font>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">color: rgb(255, 55, 120);</string>
+                       </property>
+                       <property name="text">
+                        <string>Not Available</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_17">
+                     <item>
+                      <widget class="QLabel" name="label_6">
+                       <property name="font">
+                        <font>
+                         <pointsize>10</pointsize>
+                        </font>
+                       </property>
+                       <property name="text">
+                        <string>Tracker Centerline:</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_trackerCenterline">
+                       <property name="font">
+                        <font>
+                         <pointsize>10</pointsize>
+                        </font>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">color: rgb(255, 55, 120);</string>
+                       </property>
+                       <property name="text">
+                        <string>Not Available</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
                     <widget class="QToolButton" name="btn_recordToolRef">
                      <property name="enabled">
                       <bool>false</bool>
@@ -1810,7 +1965,7 @@ border-color: rgb(255, 78, 81);</string>
                     </widget>
                    </item>
                    <item>
-                    <widget class="QToolButton" name="btn_LoadPoints">
+                    <widget class="QToolButton" name="btn_LoadToolPoints">
                      <property name="enabled">
                       <bool>false</bool>
                      </property>
@@ -2269,7 +2424,7 @@ border-color: rgb(255, 78, 81);</string>
            <string notr="true">color: rgb(157, 205, 216);</string>
           </property>
           <property name="text">
-           <string>2020-08 (Beta)  </string>
+           <string>2020-11 (Phantom Version)  </string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

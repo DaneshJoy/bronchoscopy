@@ -120,7 +120,7 @@ class MainWindow(QMainWindow):
 
         self.ui.Slider_2D.valueChanged.connect(self.slider_changed)
 
-        self.ui.btn_LoadPoints.clicked.connect(self.read_points)
+        self.ui.btn_LoadToolPoints.clicked.connect(self.read_tool_points)
         self.ui.btn_LoadRefPoints.clicked.connect(self.read_ref_points)
         self.ui.checkBox_showPoints.stateChanged.connect(self.show_hide_points)
         self.ui.btn_playCam.clicked.connect(self.play_cam)
@@ -139,6 +139,7 @@ class MainWindow(QMainWindow):
         self.ui.btn_recordToolRef.clicked.connect(self.coords_record)
 
         self.ui.tabWidget.currentChanged.connect(self.virtual_tab_changed)
+        self.ui.btn_loadCenterline.clicked.connect(self.load_centerline)
 
     '''
     >>> ----------------------------------------
@@ -162,6 +163,15 @@ class MainWindow(QMainWindow):
             self.update_subPanels(self.patient.dims)
             self.ui.btn_LoadPatient.hide()
             self.ui.btn_DeletePatient.hide()
+
+            # TODO : check and load image centerline if available
+            # self.ui.label_imageCenterline.setText('Available')
+            # self.ui.label_imageCenterline.setStyleSheet("color: rgb(100, 255, 130);")
+            self.ui.label_imageCenterline.setText('Not Available')
+            self.ui.label_imageCenterline.setStyleSheet("color: rgb(255, 55, 120);")
+            self.ui.label_trackerCenterline.setText('Not Available')
+            self.ui.label_trackerCenterline.setStyleSheet("color: rgb(255, 55, 120);")
+            
             QApplication.restoreOverrideCursor()
         except:
             QApplication.restoreOverrideCursor()
@@ -239,7 +249,7 @@ class MainWindow(QMainWindow):
 
     def tracker_loop(self):
         while self.tracker.capture_coords:
-            if (exitting):
+            if (self.exitting):
                 break
             if self.tracker.tracker_connected:
                 ref_mat, tool_mat = self.tracker.get_frame()
@@ -320,8 +330,11 @@ class MainWindow(QMainWindow):
         self.vtk_widget_3D_2.show_image(self.patient.reoriented_image)
         self.vtk_widget_2D.show_image(self.patient.reoriented_image, self.patient.dims, self.patient.spacing, self.patient.origin)
         
-        self.ui.btn_LoadPoints.setEnabled(True)
+        self.ui.btn_LoadToolPoints.setEnabled(True)
         self.ui.btn_LoadRefPoints.setEnabled(True)
+        self.ui.btn_extractCenterline.setEnabled(True)
+        self.ui.btn_loadCenterline.setEnabled(True)
+        self.ui.btn_Segment.setEnabled(True)
         self.ui.groupBox_Viewports.setEnabled(True)
 
         self.ui.slider_threshold3D.setEnabled(True)
@@ -452,59 +465,71 @@ class MainWindow(QMainWindow):
         return reg
 
     def read_points(self):
-        #Read tool points
-        self.registered_points = []
-        self.remove_points()
-        from vtk.util.numpy_support import vtk_to_numpy
+        points = []
+        # from vtk.util.numpy_support import vtk_to_numpy
         options = QFileDialog.Options()
         # options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, "Read Points from File", "", "All Data Types (*.mat *.npy *.npz);;Matlab (*.mat);;Numpy (*.npy *.npz);;All Files (*)", options=options)
-
+        fileName, _ = QFileDialog.getOpenFileName(self, "Read Points from File", "",
+                                                "All Data Types (*.mat *.npy *.npz);;Matlab (*.mat);;Numpy (*.npy *.npz);;All Files (*)",
+                                                options=options)
         if fileName:
             extension = os.path.splitext(fileName)[1].lower()
-            
             if 'mat' in extension:
                 matFile = loadmat(fileName)
                 # self.registered_points = matFile['EMT_cor']
-                self.registered_points = matFile[list(matFile)[-1]]
+                points = matFile[list(matFile)[-1]]
             elif 'np' in extension:
-                self.tool_coords = np.load(fileName)
-                self.tool_coords = np.squeeze(self.tool_coords)
-                # self.toolCoords = np.swapaxes(self.toolCoords, 0, 2)
-                # self.toolCoords = np.swapaxes(self.toolCoords, 0, 1)
+                points = np.load(fileName)
+                points = np.squeeze(points)
+        return points
 
+    def load_centerline(self):
+        self.patient.centerline = self.read_points()
+        self.ui.label_imageCenterline.setText('Available')
+        self.ui.label_imageCenterline.setStyleSheet("color: rgb(100, 255, 130);")
+        # TODO : edit patient and add centerline to dir + db
+
+    def read_tool_points(self):
+        #Read tool points
+        points = self.read_points()
+        if points != []:
+            self.registered_points = []
+            self.remove_points()
+            self.tool_coords = points
+            # self.toolCoords = np.swapaxes(self.toolCoords, 0, 2)
+            # self.toolCoords = np.swapaxes(self.toolCoords, 0, 1)
+            # self.toolCoords = np.swapaxes(self.toolCoords, 1, 2)
+
+            tmp = np.zeros_like(self.tool_coords)
+            # tmp = np.swapaxes(tmp, 0, 2)
+            numPoints = self.tool_coords.shape[-1]
+
+            if (self.ref_coords == []):
+                self.registered_points = self.tool_coords
+                for i in range(numPoints):
+                    self.registered_points[:,:,i] = np.squeeze(np.matmul(self.patient.XyzToRas, self.registered_points[:,:,i]))
+                # self.registered_points = np.swapaxes(self.toolCoords, 1, 2)
+                # self.registered_pointsregistered_points = np.swapaxes(self.registered_points, 0, 2)
+            else:
                 # self.toolCoords = np.swapaxes(self.toolCoords, 1, 2)
+                self.registered_points = np.zeros_like(self.tool_coords)
+                # self.registered_points = np.swapaxes(self.registered_points, 0, 2)
+                regMat_inv = np.linalg.inv(self.regMat)
+                pt_tracker = np.zeros([numPoints, 3], dtype='float')
+                # for ref, tool in zip(self.refCoords, self.toolCoords):
+                for ii in range(numPoints):
+                    ref = self.ref_coords[:,:,ii]
+                    tool = self.tool_coords[:,:,ii]
+                    ref_inv = np.linalg.inv(ref)
+                    tool2ref = np.squeeze(np.matmul(ref_inv, tool))
+                    tmp[:,:,ii] = tool2ref
+                    pt_tracker[ii, :] = tool2ref[:,3][:-1]
+                    reg = np.squeeze(np.matmul(regMat_inv, tool2ref))
+                    reg_aligned = np.squeeze(np.matmul(self.patient.XyzToRas, reg))
+                    self.registered_points[:,:,ii] = reg
 
-                tmp = np.zeros_like(self.tool_coords)
-                # tmp = np.swapaxes(tmp, 0, 2)
-                numPoints = self.tool_coords.shape[-1]
-
-                if (self.ref_coords == []):
-                    self.registered_points = self.tool_coords
-                    for i in range(numPoints):
-                        self.registered_points[:,:,i] = np.squeeze(np.matmul(self.patient.XyzToRas, self.registered_points[:,:,i]))
-                    # self.registered_points = np.swapaxes(self.toolCoords, 1, 2)
-                    # self.registered_pointsregistered_points = np.swapaxes(self.registered_points, 0, 2)
-                else:
-                    # self.toolCoords = np.swapaxes(self.toolCoords, 1, 2)
-                    self.registered_points = np.zeros_like(self.tool_coords)
-                    # self.registered_points = np.swapaxes(self.registered_points, 0, 2)
-                    regMat_inv = np.linalg.inv(self.regMat)
-                    pt_tracker = np.zeros([numPoints, 3], dtype='float')
-                    # for ref, tool in zip(self.refCoords, self.toolCoords):
-                    for ii in range(numPoints):
-                        ref = self.ref_coords[:,:,ii]
-                        tool = self.tool_coords[:,:,ii]
-                        ref_inv = np.linalg.inv(ref)
-                        tool2ref = np.squeeze(np.matmul(ref_inv, tool))
-                        tmp[:,:,ii] = tool2ref
-                        pt_tracker[ii, :] = tool2ref[:,3][:-1]
-                        reg = np.squeeze(np.matmul(regMat_inv, tool2ref))
-                        reg_aligned = np.squeeze(np.matmul(self.patient.XyzToRas, reg))
-                        self.registered_points[:,:,ii] = reg
-
-                    np.save('tool2ref.npy', tmp)
-                # self.vtk_widget_3D.register(pt_tracker)
+                np.save('tool2ref.npy', tmp)
+            # self.vtk_widget_3D.register(pt_tracker)
             numPoints = self.registered_points.shape[-1]
 
             # # Flip/Rotate points to match the orientation of the image
@@ -533,21 +558,12 @@ class MainWindow(QMainWindow):
 
     def read_ref_points(self):
         # Read Reference Points
-        options = QFileDialog.Options()
-        # options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, "Read Points from File", "", "All Data Types (*.mat *.npy *.npz);;Matlab (*.mat);;Numpy (*.npy *.npz);;All Files (*)", options=options)
-
-        if fileName:
-            extension = os.path.splitext(fileName)[1].lower()
-
-            if 'mat' in extension:
-                matFile = loadmat(fileName)
-                # self.registered_points = matFile['EMT_cor']
-                self.ref_coords = matFile[list(matFile)[-1]]
-            elif 'np' in extension:
-                self.ref_coords = np.load(fileName)
-                # self.ref_coords = np.swapaxes(self.ref_coords, 0, 2)
-                # self.ref_coords = np.swapaxes(self.ref_coords, 0, 1)
+        self.ref_coords = self.read_points()
+        if self.ref_coords != []:
+            self.registered_points = []
+            self.remove_points()
+        # self.ref_coords = np.swapaxes(self.ref_coords, 0, 2)
+        # self.ref_coords = np.swapaxes(self.ref_coords, 0, 1)
 
     def show_hide_points(self):
         if self.ui.checkBox_showPoints.isChecked():
@@ -747,6 +763,7 @@ class MainWindow(QMainWindow):
         self.vtk_widget_3D_2 = QVtkViewer3D(self.ui.vtk_panel_3D_2, size, 'Normal')
 
         # Messed up! only for this phantom image!
+        phantom_view = ''
         if self.ui.comboBox_2DView.currentText() == 'Axial':
             phantom_view = 'Coronal'
         elif self.ui.comboBox_2DView.currentText() == 'Coronal':

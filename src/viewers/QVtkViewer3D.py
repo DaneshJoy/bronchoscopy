@@ -310,8 +310,8 @@ class QVtkViewer3D(QVTKViewer):
         from pycpd import rigid_registration
         reg = rigid_registration(**{ 'X': pt_tracker, 'Y':pt_ct })
         reg.register()
-        print(reg.R)
-        print(reg.t)
+        # print(reg.R)
+        # print(reg.t)
 
         # reg_mat = np.array([[RR[0][0], RR[0][1], RR[0][2], tt[0]],
         #                     [RR[1][0], RR[1][1], RR[1][2], tt[1]],

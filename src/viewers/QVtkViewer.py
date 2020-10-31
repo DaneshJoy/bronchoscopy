@@ -133,15 +133,14 @@ class QVTKViewer(QFrame):
         line1 = vtk.vtkLine()
         line1.GetPointIds().SetId(0, 2)
         line1.GetPointIds().SetId(1, 3)
-        if is3D:
-            line2 = vtk.vtkLine()
-            line2.GetPointIds().SetId(0, 4)
-            line2.GetPointIds().SetId(1, 5)
         # Create a cell array to store the lines
         lines = vtk.vtkCellArray()
         lines.InsertNextCell(line0)
         lines.InsertNextCell(line1)
         if is3D:
+            line2 = vtk.vtkLine()
+            line2.GetPointIds().SetId(0, 4)
+            line2.GetPointIds().SetId(1, 5)
             lines.InsertNextCell(line2)
 
         # Create a polydata to store everything in
