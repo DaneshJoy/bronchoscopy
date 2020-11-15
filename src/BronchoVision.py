@@ -54,6 +54,11 @@ class MainWindow(QMainWindow):
         self.size = size
         self.cam_pos = None
         self.exitting = False
+
+        self.is_segmented = False
+        self.is_image_cl = False
+        self.is_tracker_cl = False
+        self.is_registered = False
         
         self.last_update = 0
         self.registered_tool = []
@@ -148,7 +153,7 @@ class MainWindow(QMainWindow):
 
         self.ui.tabWidget.currentChanged.connect(self.virtual_tab_changed)
         self.ui.btn_loadCenterline.clicked.connect(self.load_centerline)
-        self.ui.btn_extractCenterline.clicked.connect(self.centerline_extract)
+        self.ui.btn_extractCenterline.clicked.connect(self.extract_centerline)
 
     '''
     >>> ----------------------------------------
@@ -185,6 +190,9 @@ class MainWindow(QMainWindow):
         except:
             QApplication.restoreOverrideCursor()
             QMessageBox.warning(None, 'Wrong Header', 'Can not read Image Origin from header!\nImage position might be wrong')
+
+    def update_patient(self):
+        self.patient_cls.update_patient(self.curr_patient, self.is_segmented, self.is_image_cl, self.is_tracker_cl, self.is_registered)
 
     def delete_patient(self):
         index = self.ui.tableWidget_Patients.selectionModel().selectedRows()[0]
@@ -509,7 +517,8 @@ class MainWindow(QMainWindow):
             self.ui.label_imageCenterline.setText('Available')
             self.ui.label_imageCenterline.setStyleSheet("color: rgb(100, 255, 130);")
             self.save_image_centerline()
-        # TODO : edit patient and add centerline to dir + db
+            self.is_image_cl = True
+            self.update_patient()
 
     def save_image_centerline(self):
         try:
@@ -794,7 +803,7 @@ class MainWindow(QMainWindow):
         self.ref_coords = []
         self.tool_coords == []
 
-    def centerline_extract(self):
+    def extract_centerline(self):
         if self.centerline != None:
             del self.centerline
         self.centerline = Centerline(self.patient_cls.image_path)

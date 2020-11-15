@@ -23,7 +23,8 @@ class PatientsDB():
                                 date DATE,
                                 image TEXT,
                                 segmented BOOLEAN NOT NULL CHECK(segmented IN (0,1)),
-                                centerline BOOLEAN NOT NULL CHECK(centerline IN (0,1)),
+                                image_cl BOOLEAN NOT NULL CHECK(image_cl IN (0,1)),
+                                tracker_cl BOOLEAN NOT NULL CHECK(tracker_cl IN (0,1)),
                                 registered BOOLEAN NOT NULL CHECK(registered IN (0,1))
                                 );''')
                 conn.commit()
@@ -41,8 +42,8 @@ class PatientsDB():
         :param patient:
         :return: patient id
         """
-        sql = ''' INSERT INTO patients(name, date, image, segmented, centerline, registered)
-                VALUES (?, ?, ?, ?, ?, ?); '''
+        sql = ''' INSERT INTO patients(name, date, image, segmented, image_cl, tracker_cl, registered)
+                VALUES (?, ?, ?, ?, ?, ?, ?); '''
         cur = conn.cursor()
         cur.execute(sql, patient)
         conn.commit()
@@ -56,11 +57,12 @@ class PatientsDB():
         """
         sql = ''' UPDATE patients
                 SET segmented=? ,
-                    centerline=? ,
+                    image_cl=? ,
+                    tracker_cl=? ,
                     registered=?
                 WHERE name=? '''
         cur = conn.cursor()
-        cur.execute(sql, task)
+        cur.execute(sql, patient)
         conn.commit()
 
     def db_getPatients(self, conn):

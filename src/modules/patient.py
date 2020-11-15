@@ -52,10 +52,13 @@ class Patient():
         res = self.newPatientWindow.exec()
         if (res == QDialog.Accepted):
             _name, _date, _image = self.newPatientWindow.getData()
-            self.db.db_addPatient(self.db_connection, [_name, _date, _image, 0, 0, 0])
+            self.db.db_addPatient(self.db_connection, [_name, _date, _image, 0, 0, 0, 0])
             self.add_patient_row([_name, _date])
             thread_img = threading.Thread(target=self.load_image(os.path.join(self.patients_dir, _name, _image+'.nii.gz')))
             thread_img.start()
+
+    def update_patient(self, name, segmented, image_cl, tracker_cl, registered):
+        self.db.db_updatePatient(self.db_connection, [segmented, image_cl, tracker_cl, registered, name])
 
     def load_image(self, fileName):
         extension = os.path.splitext(fileName)[1].lower()
