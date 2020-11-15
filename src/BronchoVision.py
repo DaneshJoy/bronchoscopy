@@ -69,13 +69,14 @@ class MainWindow(QMainWindow):
 
         os.path.abspath
 
-        self.patient = Patient(self.ui.tableWidget_Patients, self.newPatientWindow, self.patients_dir)
-        self.patient.get_patients_from_db()
-        self.tracker = Tracker()
-        self.centerline = None
+        self.patient_cls = Patient(self.ui.tableWidget_Patients, self.newPatientWindow, self.patients_dir)
+        self.patient_cls.get_patients_from_db()
+        self.tracker_cls = Tracker()
+        self.centerline_cls = None
 
         self.ui.btn_LoadPatient.hide()
         self.ui.btn_DeletePatient.hide()
+        self.ui.checkBox_showCenterline_image.hide()
 
         self.ui.toolBar.hide()
 
@@ -129,7 +130,7 @@ class MainWindow(QMainWindow):
         self.ui.btn_LoadToolPoints.clicked.connect(self.read_tool_points)
         self.ui.btn_LoadRefPoints.clicked.connect(self.read_ref_points)
         self.ui.checkBox_showPoints.stateChanged.connect(self.show_hide_points)
-        self.ui.checkBox_showCenterline.stateChanged.connect(self.show_hide_centerline)
+        self.ui.checkBox_showCenterline_image.stateChanged.connect(self.show_hide_centerline_image)
         self.ui.btn_playCam.clicked.connect(self.play_cam)
         self.ui.btn_pauseCam.clicked.connect(self.pause_cam)
         self.ui.btn_stopCam.clicked.connect(self.stop_cam)
@@ -155,7 +156,7 @@ class MainWindow(QMainWindow):
     >>> ----------------------------------------
     '''
     def new_patient(self):
-        self.patient.new_patient()
+        self.patient_cls.new_patient()
         index = self.ui.tableWidget_Patients.model().index(self.ui.tableWidget_Patients.rowCount()-1,0)
         self.curr_patient = self.ui.tableWidget_Patients.model().data(index)
         self.load_patient()
@@ -166,9 +167,9 @@ class MainWindow(QMainWindow):
             index = self.ui.tableWidget_Patients.selectionModel().selectedRows()[0]
             self.curr_patient = self.ui.tableWidget_Patients.model().data(index)
         try:
-            self.patient.load_patient(self.curr_patient)
+            self.patient_cls.load_patient(self.curr_patient)
             self.show_images()
-            self.update_subPanels(self.patient.dims)
+            self.update_subPanels(self.patient_cls.dims)
             self.ui.btn_LoadPatient.hide()
             self.ui.btn_DeletePatient.hide()
 
@@ -192,7 +193,7 @@ class MainWindow(QMainWindow):
                                     f'Do you want to delete {selected_patient} ?\nThis action can NOT be undone',
                                     QMessageBox.Yes | QMessageBox.No)
         if ret == QMessageBox.Yes:
-            if self.patient.delete_patient(selected_patient):
+            if self.patient_cls.delete_patient(selected_patient):
                 self.ui.tableWidget_Patients.removeRow(index.row())
                 self.ui.tableWidget_Patients.clearSelection()
                 self.ui.btn_LoadPatient.hide()
@@ -209,7 +210,7 @@ class MainWindow(QMainWindow):
                                     f'Are you sure you want to delete all patients ?!\nThis action is NOT reversible!',
                                     QMessageBox.Yes | QMessageBox.No)
         if ret == QMessageBox.Yes:
-            self.patient.clear_patients()
+            self.patient_cls.clear_patients()
             self.ui.btn_LoadPatient.hide()
             self.ui.btn_DeletePatient.hide()
             self.set_ui_elements_enabled(False)
@@ -226,10 +227,10 @@ class MainWindow(QMainWindow):
     '''
 
     def connect_tracker(self):
-        if self.tracker.tracker_connected == False:
+        if self.tracker_cls.tracker_connected == False:
             self.ui.btn_Connect.setText('Connecting...')
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            if self.tracker.connect():
+            if self.tracker_cls.connect():
                 self.ui.btn_Connect.setText('Disconnect Tracker')
                 self.ui.btn_ToolsWindow.setEnabled(True)
                 self.ui.btn_recordToolRef.setEnabled(True)
@@ -250,9 +251,9 @@ class MainWindow(QMainWindow):
             self.disconnect_tracker()
 
     def disconnect_tracker(self):
-        if self.tracker.tracker_connected:
+        if self.tracker_cls.tracker_connected:
             print('Disconnecting Tracker...')
-            self.tracker.disconnect()
+            self.tracker_cls.disconnect()
             self.ui.btn_Connect.setText('Connect Tracker')
             self.ui.btn_ToolsWindow.setEnabled(False)
             self.ui.btn_recordToolRef.setEnabled(False)
@@ -260,11 +261,11 @@ class MainWindow(QMainWindow):
             self.ui.btn_Connect.setIcon(icon)
 
     def tracker_loop(self):
-        while self.tracker.capture_coords:
+        while self.tracker_cls.capture_coords:
             if (self.exitting):
                 break
-            if self.tracker.tracker_connected:
-                ref_mat, tool_mat = self.tracker.get_frame()
+            if self.tracker_cls.tracker_connected:
+                ref_mat, tool_mat = self.tracker_cls.get_frame()
                 if np.isnan(tool_mat.sum()) or np.isnan(ref_mat.sum()):
                     # TODO: Show some messages or info
                     continue
@@ -285,7 +286,7 @@ class MainWindow(QMainWindow):
         return
         
     def coords_record(self):
-        if (self.record_coords == False) and (self.tracker.tracker_connected):
+        if (self.record_coords == False) and (self.tracker_cls.tracker_connected):
             self.ui.btn_recordToolRef.setEnabled(False)
             self.countdownSplash()
             self.ui.btn_recordToolRef.setEnabled(True)
@@ -328,7 +329,7 @@ class MainWindow(QMainWindow):
 
         flipXFilter = vtk.vtkImageFlip()
         flipXFilter.SetFilteredAxis(0); # flip x axis
-        flipXFilter.SetInputConnection(self.patient.imgReader.GetOutputPort())
+        flipXFilter.SetInputConnection(self.patient_cls.imgReader.GetOutputPort())
         flipXFilter.Update()
 
         flipYFilter = vtk.vtkImageFlip()
@@ -336,11 +337,11 @@ class MainWindow(QMainWindow):
         flipYFilter.SetInputConnection(flipXFilter.GetOutputPort())
         flipYFilter.Update()
 
-        self.patient.reoriented_image = flipYFilter
+        self.patient_cls.reoriented_image = flipYFilter
 
-        self.vtk_widget_3D.show_image(self.patient.reoriented_image)
-        self.vtk_widget_3D_2.show_image(self.patient.reoriented_image)
-        self.vtk_widget_2D.show_image(self.patient.reoriented_image, self.patient.dims, self.patient.spacing, self.patient.origin)
+        self.vtk_widget_3D.show_image(self.patient_cls.reoriented_image)
+        self.vtk_widget_3D_2.show_image(self.patient_cls.reoriented_image)
+        self.vtk_widget_2D.show_image(self.patient_cls.reoriented_image, self.patient_cls.dims, self.patient_cls.spacing, self.patient_cls.origin)
         
         self.set_ui_elements_enabled(True)
 
@@ -365,10 +366,10 @@ class MainWindow(QMainWindow):
 
     def virtual_tab_changed(self):
         if (self.ui.tabWidget_2.currentIndex() == 0):
-            self.tracker.tracker_ready = True
+            self.tracker_cls.tracker_ready = True
         else:
-            self.tracker.tracker_ready = False
-        # print(self.ui.tabWidget.currentIndex(), self.tracker.tracker_ready)
+            self.tracker_cls.tracker_ready = False
+        # print(self.ui.tabWidget.currentIndex(), self.tracker_cls.tracker_ready)
         
     def countdown_splash(self):
         splash_pix = QPixmap('ui/icons/5.png')
@@ -499,12 +500,25 @@ class MainWindow(QMainWindow):
         return points
 
     def load_centerline(self):
-        self.patient.centerline = self.read_points()
-        if self.patient.centerline != []:
-            self.ui.checkBox_showCenterline.setEnabled(True)
+        self.patient_cls.centerline = self.read_points()
+        if self.patient_cls.centerline != []:
+            self.ui.checkBox_showCenterline_image.show()
+            self.ui.checkBox_showCenterline_image.setEnabled(True)
+            self.ui.checkBox_showCenterline_image.setChecked(True)
+            self.show_hide_centerline_image()
             self.ui.label_imageCenterline.setText('Available')
             self.ui.label_imageCenterline.setStyleSheet("color: rgb(100, 255, 130);")
+            self.save_image_centerline()
         # TODO : edit patient and add centerline to dir + db
+
+    def save_image_centerline(self):
+        try:
+            image_centerline_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'centerline_image.npy')
+            if os.path.exists(image_centerline_path):
+                os.remove(image_centerline_path)
+            np.save(image_centerline_path, self.patient_cls.centerline)
+        except:
+            QMessageBox.critical(self, 'Centerline NOT Saved', 'There was a problem saving the centerline!')
 
     def read_tool_points(self):
         #Read tool points
@@ -524,7 +538,7 @@ class MainWindow(QMainWindow):
             if (self.ref_coords == []):
                 self.registered_points = self.tool_coords
                 for i in range(numPoints):
-                    self.registered_points[:,:,i] = np.squeeze(np.matmul(self.patient.XyzToRas, self.registered_points[:,:,i]))
+                    self.registered_points[:,:,i] = np.squeeze(np.matmul(self.patient_cls.XyzToRas, self.registered_points[:,:,i]))
                 # self.registered_points = np.swapaxes(self.toolCoords, 1, 2)
                 # self.registered_pointsregistered_points = np.swapaxes(self.registered_points, 0, 2)
             else:
@@ -542,7 +556,7 @@ class MainWindow(QMainWindow):
                     tmp[:,:,ii] = tool2ref
                     pt_tracker[ii, :] = tool2ref[:,3][:-1]
                     reg = np.squeeze(np.matmul(regMat_inv, tool2ref))
-                    reg_aligned = np.squeeze(np.matmul(self.patient.XyzToRas, reg))
+                    reg_aligned = np.squeeze(np.matmul(self.patient_cls.XyzToRas, reg))
                     self.registered_points[:,:,ii] = reg
 
                 np.save('tool2ref.npy', tmp)
@@ -588,9 +602,9 @@ class MainWindow(QMainWindow):
         else:
             self.remove_points()
 
-    def show_hide_centerline(self):
-        if self.ui.checkBox_showCenterline.isChecked():
-            self.draw_centerline(self.patient.centerline)
+    def show_hide_centerline_image(self):
+        if self.ui.checkBox_showCenterline_image.isChecked():
+            self.draw_centerline(self.patient_cls.centerline)
         else:
             self.remove_centerline()
 
@@ -655,20 +669,20 @@ class MainWindow(QMainWindow):
         # Commented parts are correct, changed only for this phantom image!
         # if self.ui.comboBox_2DView.currentText() == 'Axial':
         if self.ui.comboBox_2DView.currentText() == 'Coronal':
-            # axial_slice = int((tool_mat[2,3] - self.patient.origin[2]) / self.patient.spacing[2])
-            axial_slice = int((tool_mat[0,3] - self.patient.origin[0]) / self.patient.spacing[0])
+            # axial_slice = int((tool_mat[2,3] - self.patient_cls.origin[2]) / self.patient_cls.spacing[2])
+            axial_slice = int((tool_mat[0,3] - self.patient_cls.origin[0]) / self.patient_cls.spacing[0])
             self.vtk_widget_2D.set_slice(axial_slice)
             self.ui.Slider_2D.setValue(axial_slice)
         # elif self.ui.comboBox_2DView.currentText() == 'Coronal':
         elif self.ui.comboBox_2DView.currentText() == 'Sagittal':
-            # coronal_slice = int((tool_mat[1,3] - self.patient.origin[1]) / self.patient.spacing[1])
-            coronal_slice = int((tool_mat[2,3] - self.patient.origin[2]) / self.patient.spacing[2])
+            # coronal_slice = int((tool_mat[1,3] - self.patient_cls.origin[1]) / self.patient_cls.spacing[1])
+            coronal_slice = int((tool_mat[2,3] - self.patient_cls.origin[2]) / self.patient_cls.spacing[2])
             self.vtk_widget_2D.set_slice(coronal_slice)
             self.ui.Slider_2D.setValue(coronal_slice)
         # elif self.ui.comboBox_2DView.currentText() == 'Sagittal':
         elif self.ui.comboBox_2DView.currentText() == 'Axial':
-            # sagittal_slice = int((tool_mat[0,3] - self.patient.origin[0]) / self.patient.spacing[0])
-            sagittal_slice = int((tool_mat[1,3] - self.patient.origin[1]) / self.patient.spacing[1])
+            # sagittal_slice = int((tool_mat[0,3] - self.patient_cls.origin[0]) / self.patient_cls.spacing[0])
+            sagittal_slice = int((tool_mat[1,3] - self.patient_cls.origin[1]) / self.patient_cls.spacing[1])
             self.vtk_widget_2D.set_slice(sagittal_slice)
             self.ui.Slider_2D.setValue(sagittal_slice)
 
@@ -677,10 +691,10 @@ class MainWindow(QMainWindow):
             self.vtk_widget_2D.set_cross_position(tool_mat[0,3], tool_mat[1,3])
         # elif self.ui.comboBox_2DView.currentText() == 'Coronal':
         elif self.ui.comboBox_2DView.currentText() == 'Axial':
-            self.vtk_widget_2D.set_cross_position(tool_mat[0,3], tool_mat[2,3]+self.patient.origin[1])
+            self.vtk_widget_2D.set_cross_position(tool_mat[0,3], tool_mat[2,3]+self.patient_cls.origin[1])
         # else: # if self.ui.comboBox_2DView.currentText() == 'Sagittal':
         elif self.ui.comboBox_2DView.currentText() == 'Coronal':
-            self.vtk_widget_2D.set_cross_position(tool_mat[1,3], tool_mat[2,3]+self.patient.origin[0])
+            self.vtk_widget_2D.set_cross_position(tool_mat[1,3], tool_mat[2,3]+self.patient_cls.origin[0])
 
     def play_cam(self):
         # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
@@ -746,12 +760,12 @@ class MainWindow(QMainWindow):
         self.vtk_widget_2D.viewType = phantom_view
         
         # self.vtk_widget_2D.viewType = self.ui.comboBox_2DView.currentText()
-        self.vtk_widget_2D.show_image(self.patient.reoriented_image, self.patient.dims, self.patient.spacing, self.patient.origin)
-        self.update_subPanels(self.patient.dims)
+        self.vtk_widget_2D.show_image(self.patient_cls.reoriented_image, self.patient_cls.dims, self.patient_cls.spacing, self.patient_cls.origin)
+        self.update_subPanels(self.patient_cls.dims)
 
         if self.vtk_widget_2D.cross != None:
             self.vtk_widget_2D.remove_cross()
-            if (self.tracker.tracker_ready and self.tracker_connected):
+            if (self.tracker_cls.tracker_ready and self.tracker_connected):
                 self.show_tool_on_views(self.tool_mat)
             else:
                 self.show_tool_on_views(self.cam_pos)
@@ -760,7 +774,7 @@ class MainWindow(QMainWindow):
         self.vtk_widget_3D.reset_view(is3D=True)
         self.vtk_widget_3D_2.reset_view(is3D=True)
         self.vtk_widget_2D.reset_view(is3D=False)
-        self.update_subPanels(self.patient.dims)
+        self.update_subPanels(self.patient_cls.dims)
         self.ui.slider_threshold3D.setValue(-600)
         self.ui.slider_threshold3D_2.setValue(-600)
 
@@ -783,9 +797,9 @@ class MainWindow(QMainWindow):
     def centerline_extract(self):
         if self.centerline != None:
             del self.centerline
-        self.centerline = Centerline(self.patient.image_path)
+        self.centerline = Centerline(self.patient_cls.image_path)
 
-        self.patient.centerline = self.centerline.extract()
+        self.patient_cls.centerline = self.centerline_cls.extract()
 
     def setup(self, size):
         self.ui = MainWin.Ui_MainWin()

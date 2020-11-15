@@ -1522,7 +1522,7 @@ color: rgb(157, 205, 216);</string>
                       </widget>
                      </item>
                      <item>
-                      <widget class="QCheckBox" name="checkBox_showCenterline">
+                      <widget class="QCheckBox" name="checkBox_showCenterline_image">
                        <property name="enabled">
                         <bool>false</bool>
                        </property>
@@ -1673,7 +1673,7 @@ border-color: rgb(255, 78, 81);</string>
                       </widget>
                      </item>
                      <item>
-                      <widget class="QCheckBox" name="checkBox_showCenterline_2">
+                      <widget class="QCheckBox" name="checkBox_showCenterline_tracker">
                        <property name="enabled">
                         <bool>false</bool>
                        </property>
