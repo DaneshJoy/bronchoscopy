@@ -1,4 +1,6 @@
 from viewers.QVtkViewer import QVTKViewer
+from vtk.util.numpy_support import numpy_to_vtkIdTypeArray
+from pycpd import rigid_registration
 import vtk
 import numpy as np
 
@@ -286,8 +288,10 @@ class QVtkViewer3D(QVTKViewer):
 
         # self.updateTextActor() # This function has interactor.ReInitialize() in it
 
-    def register(self, pt_tracker):
+    def register(self, pt_tracker, pt_centerline):
+           
         ### Decimate points for registration
+        from vtk.util.numpy_support import vtk_to_numpy
         self.surfaceExtractor.Update()
         inputPolyData = self.surfaceExtractor.GetOutput()
 
@@ -302,37 +306,32 @@ class QVtkViewer3D(QVTKViewer):
 
         deciPol = vtk.vtkPolyData()
         deciPol.ShallowCopy(deci.GetOutput())
+
         # print(deciPol.GetNumberOfPoints())
         # print(deciPol.GetNumberOfPolys())
-
         pt_ct = vtk_to_numpy(deciPol.GetPoints().GetData())
-
-        from pycpd import rigid_registration
+        
         reg = rigid_registration(**{ 'X': pt_tracker, 'Y':pt_ct })
         reg.register()
+        RR = reg.R
+        tt = reg.t
         # print(reg.R)
         # print(reg.t)
-
-        # reg_mat = np.array([[RR[0][0], RR[0][1], RR[0][2], tt[0]],
-        #                     [RR[1][0], RR[1][1], RR[1][2], tt[1]],
-        #                     [RR[2][0], RR[2][1], RR[2][2], tt[2]],
-        #                     [0       , 0       , 0       , 1]])
-
-        reg_mat = np.array([[RR[0][0], RR[0][1], RR[0][2], 0],
-                            [RR[1][0], RR[1][1], RR[1][2], 0],
-                            [RR[2][0], RR[2][1], RR[2][2], 0],
-                            [tt[0]   , tt[1]   , tt[2]   , 1]])
-        reg_mat = np.transpose(reg_mat)
 
         # R R R 0
         # R R R 0
         # R R R 0
         # t t t 1
         # then transpose
+        reg_mat = np.array([[RR[0][0], RR[0][1], RR[0][2], 0],
+                            [RR[1][0], RR[1][1], RR[1][2], 0],
+                            [RR[2][0], RR[2][1], RR[2][2], 0],
+                            [tt[0]   , tt[1]   , tt[2]   , 1]])
+        reg_mat = np.transpose(reg_mat)
+
         return reg_mat
 
     def draw_points(self, points):         
-        from vtk.util.numpy_support import numpy_to_vtkIdTypeArray
 
         pts = vtk.vtkPoints()
         conn = vtk.vtkCellArray()
@@ -376,6 +375,40 @@ class QVtkViewer3D(QVTKViewer):
         self.interactor.ReInitialize()
         # self.ren.ResetCameraClippingRange()
     
+    def draw_centerline(self, points):         
+        pts = vtk.vtkPoints()
+        conn = vtk.vtkCellArray()
+        poly = vtk.vtkPolyData()
+        nPoints = points.shape[-1]
+
+        for i in range(0,nPoints):
+            pos = points[:,:,i]
+            pts.InsertNextPoint(pos[0,3], pos[1,3], pos[2,3])
+
+        cells = np.hstack((np.ones((nPoints, 1)),
+                                np.arange(nPoints).reshape(-1, 1)))
+        cells = np.ascontiguousarray(cells, dtype=np.int64)
+
+        conn.SetCells(nPoints, numpy_to_vtkIdTypeArray(cells, deep=True))
+
+        poly.SetPoints(pts)
+        poly.SetVerts(conn)
+
+        pmap = vtk.vtkPolyDataMapper()
+
+        pmap.SetInputDataObject(poly)
+
+        # actor
+        self.centerline = vtk.vtkActor()
+        self.centerline.SetMapper(pmap)
+        self.centerline.GetProperty().SetPointSize(2)
+        self.centerline.GetProperty().SetColor(1,0.5,0.5) # (R,G,B)
+
+        # assign actor to the renderer
+        self.ren.AddActor(self.centerline)
+        self.interactor.ReInitialize()
+        # self.ren.ResetCameraClippingRange()
+
     def remove_points(self):
         if self.points == None:
             return
@@ -386,6 +419,13 @@ class QVtkViewer3D(QVTKViewer):
         self.points = None
         self.startPoint = None
         self.endPoint = None
+
+    def remove_centerline(self):
+        if self.centerline == None:
+            return
+        self.ren.RemoveActor(self.centerline)
+        self.interactor.ReInitialize()
+        self.centerline = None
     
     def add_start_point(self, pos, color=[0,1,0]):
         # create source

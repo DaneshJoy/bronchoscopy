@@ -73,6 +73,7 @@ class QVTKViewer(QFrame):
 
         self.cross = None
         self.points = None
+        self.centerline = None
 
         self.actor = vtk.vtkImageActor()
 

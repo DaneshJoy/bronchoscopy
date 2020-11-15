@@ -23,9 +23,10 @@ from scipy.io import loadmat
 
 from modules.patient import Patient
 from modules.tracker import Tracker
+from modules.registration import Registration
+from modules.centerline import Centerline
 from ui import MainWin
 from ui.UiWindows import NewPatientWindow, RegMatWindow, ToolsWindow
-# from vmtk import pypes, vmtkscripts, vmtkcenterlines 
 from viewers.QVtkViewer2D import QVtkViewer2D
 from viewers.QVtkViewer3D import QVtkViewer3D
 
@@ -58,15 +59,20 @@ class MainWindow(QMainWindow):
         self.registered_tool = []
 
         self.patients_dir = '..\\Patients'
+        # TODO: record in the patient_dir 
         self.records_dir = '..\\Records'
+        self.curr_patient = None
         
         self.toolsWindow = ToolsWindow(self)
         self.regMatWindow = RegMatWindow(self)
         self.newPatientWindow = NewPatientWindow(self)
 
+        os.path.abspath
+
         self.patient = Patient(self.ui.tableWidget_Patients, self.newPatientWindow, self.patients_dir)
         self.patient.get_patients_from_db()
         self.tracker = Tracker()
+        self.centerline = None
 
         self.ui.btn_LoadPatient.hide()
         self.ui.btn_DeletePatient.hide()
@@ -123,6 +129,7 @@ class MainWindow(QMainWindow):
         self.ui.btn_LoadToolPoints.clicked.connect(self.read_tool_points)
         self.ui.btn_LoadRefPoints.clicked.connect(self.read_ref_points)
         self.ui.checkBox_showPoints.stateChanged.connect(self.show_hide_points)
+        self.ui.checkBox_showCenterline.stateChanged.connect(self.show_hide_centerline)
         self.ui.btn_playCam.clicked.connect(self.play_cam)
         self.ui.btn_pauseCam.clicked.connect(self.pause_cam)
         self.ui.btn_stopCam.clicked.connect(self.stop_cam)
@@ -140,6 +147,7 @@ class MainWindow(QMainWindow):
 
         self.ui.tabWidget.currentChanged.connect(self.virtual_tab_changed)
         self.ui.btn_loadCenterline.clicked.connect(self.load_centerline)
+        self.ui.btn_extractCenterline.clicked.connect(self.centerline_extract)
 
     '''
     >>> ----------------------------------------
@@ -149,16 +157,16 @@ class MainWindow(QMainWindow):
     def new_patient(self):
         self.patient.new_patient()
         index = self.ui.tableWidget_Patients.model().index(self.ui.tableWidget_Patients.rowCount()-1,0)
-        selected_patient = self.ui.tableWidget_Patients.model().data(index)
-        self.load_patient(selected_patient)
+        self.curr_patient = self.ui.tableWidget_Patients.model().data(index)
+        self.load_patient()
 
-    def load_patient(self, selected_patient):
+    def load_patient(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        if not selected_patient:
+        if not self.curr_patient:
             index = self.ui.tableWidget_Patients.selectionModel().selectedRows()[0]
-            selected_patient = self.ui.tableWidget_Patients.model().data(index)
+            self.curr_patient = self.ui.tableWidget_Patients.model().data(index)
         try:
-            self.patient.load_patient(selected_patient)
+            self.patient.load_patient(self.curr_patient)
             self.show_images()
             self.update_subPanels(self.patient.dims)
             self.ui.btn_LoadPatient.hide()
@@ -189,7 +197,10 @@ class MainWindow(QMainWindow):
                 self.ui.tableWidget_Patients.clearSelection()
                 self.ui.btn_LoadPatient.hide()
                 self.ui.btn_DeletePatient.hide()
-                self.remove_images_from_viewports()
+                if selected_patient == self.curr_patient:
+                    self.curr_patient = None
+                    self.set_ui_elements_enabled(False)
+                    self.remove_images_from_viewports()
             else:
                 QMessageBox.critical(self, 'Failed to delete patient', f'Can not delete this patient!')
 
@@ -201,6 +212,7 @@ class MainWindow(QMainWindow):
             self.patient.clear_patients()
             self.ui.btn_LoadPatient.hide()
             self.ui.btn_DeletePatient.hide()
+            self.set_ui_elements_enabled(False)
             self.remove_images_from_viewports()
     
     def import_patient(self):
@@ -330,18 +342,21 @@ class MainWindow(QMainWindow):
         self.vtk_widget_3D_2.show_image(self.patient.reoriented_image)
         self.vtk_widget_2D.show_image(self.patient.reoriented_image, self.patient.dims, self.patient.spacing, self.patient.origin)
         
-        self.ui.btn_LoadToolPoints.setEnabled(True)
-        self.ui.btn_LoadRefPoints.setEnabled(True)
-        self.ui.btn_extractCenterline.setEnabled(True)
-        self.ui.btn_loadCenterline.setEnabled(True)
-        self.ui.btn_Segment.setEnabled(True)
-        self.ui.groupBox_Viewports.setEnabled(True)
-
-        self.ui.slider_threshold3D.setEnabled(True)
-        self.ui.slider_threshold3D_2.setEnabled(True)
-        self.ui.btn_ResetViewports.setEnabled(True)
+        self.set_ui_elements_enabled(True)
 
         self.ui.tabWidget_offline.setEnabled(True)
+
+    def set_ui_elements_enabled(self, isEnabled):
+        self.ui.btn_LoadToolPoints.setEnabled(isEnabled)
+        self.ui.btn_LoadRefPoints.setEnabled(isEnabled)
+        self.ui.btn_extractCenterline.setEnabled(isEnabled)
+        self.ui.btn_loadCenterline.setEnabled(isEnabled)
+        self.ui.btn_Segment.setEnabled(isEnabled)
+        self.ui.groupBox_Viewports.setEnabled(isEnabled)
+
+        self.ui.slider_threshold3D.setEnabled(isEnabled)
+        self.ui.slider_threshold3D_2.setEnabled(isEnabled)
+        self.ui.btn_ResetViewports.setEnabled(isEnabled)
 
     def remove_images_from_viewports(self):
         self.vtk_widget_3D.remove_image()
@@ -485,8 +500,10 @@ class MainWindow(QMainWindow):
 
     def load_centerline(self):
         self.patient.centerline = self.read_points()
-        self.ui.label_imageCenterline.setText('Available')
-        self.ui.label_imageCenterline.setStyleSheet("color: rgb(100, 255, 130);")
+        if self.patient.centerline != []:
+            self.ui.checkBox_showCenterline.setEnabled(True)
+            self.ui.label_imageCenterline.setText('Available')
+            self.ui.label_imageCenterline.setStyleSheet("color: rgb(100, 255, 130);")
         # TODO : edit patient and add centerline to dir + db
 
     def read_tool_points(self):
@@ -571,6 +588,12 @@ class MainWindow(QMainWindow):
         else:
             self.remove_points()
 
+    def show_hide_centerline(self):
+        if self.ui.checkBox_showCenterline.isChecked():
+            self.draw_centerline(self.patient.centerline)
+        else:
+            self.remove_centerline()
+
     def draw_points(self, points):
         self.vtk_widget_3D.draw_points(points)
         self.vtk_widget_3D.add_start_point(points[:,:,0]) # start point
@@ -581,9 +604,17 @@ class MainWindow(QMainWindow):
         self.vtk_widget_3D_2.add_end_point(points[:,:,-1]) # end point
         # self.playCam(points)
 
+    def draw_centerline(self, points):
+        self.vtk_widget_3D.draw_centerline(points)
+        self.vtk_widget_3D_2.draw_centerline(points)
+
     def remove_points(self):
         self.vtk_widget_3D.remove_points()
         self.vtk_widget_3D_2.remove_points()
+    
+    def remove_centerline(self):
+        self.vtk_widget_3D.remove_centerline()
+        self.vtk_widget_3D_2.remove_centerline()
         
     def frame_changed(self):
         if self.registered_points is None:
@@ -750,8 +781,11 @@ class MainWindow(QMainWindow):
         self.tool_coords == []
 
     def centerline_extract(self):
-        myArguments = 'vmtksurfacereader -ifile m01_AirwaySegments.vtk --pipe vmtkcenterlines --pipe vmtkrenderer --pipe vmtksurfaceviewer -opacity 0.25 --pipe vmtksurfaceviewer -i @vmtkcenterlines.o -array MaximumInscribedSphereRadius'
-        myPype = pypes.PypeRun(myArguments)
+        if self.centerline != None:
+            del self.centerline
+        self.centerline = Centerline(self.patient.image_path)
+
+        self.patient.centerline = self.centerline.extract()
 
     def setup(self, size):
         self.ui = MainWin.Ui_MainWin()

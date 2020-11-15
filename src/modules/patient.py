@@ -18,6 +18,7 @@ class Patient():
         super().__init__()
         self.XyzToRas = []
         self.centerline = []
+        self.image_path = []
         self.imgReader = None
         self.reoriented_image = None
         self.tableWidget_Patients = tableWidget_Patients
@@ -121,7 +122,8 @@ class Patient():
     def load_patient(self, selected_patient):
         patient_in_db = self.db.db_getPatient(self.db_connection, selected_patient)
         selected_image = patient_in_db[0][3] + '.nii.gz'
-        thread_img = threading.Thread(target=self.load_image(os.path.join(self.patients_dir, selected_patient, selected_image)))
+        self.image_path = os.path.join(self.patients_dir, selected_patient, selected_image)
+        thread_img = threading.Thread(target=self.load_image(self.image_path))
         thread_img.start()
         self.tableWidget_Patients.clearSelection()
 
