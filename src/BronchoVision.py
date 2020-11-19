@@ -65,12 +65,9 @@ class MainWindow(QMainWindow):
 
         self.patients_dir = '..\\Patients'
         # TODO: record in the patient_dir 
-        self.records_dir = '..\\Records'
+        self.records_dir = ''
         self.curr_patient = None
         
-        self.toolsWindow = ToolsWindow(self)
-        self.regMatWindow = RegMatWindow(self)
-        self.newPatientWindow = NewPatientWindow(self)
 
         os.path.abspath
 
@@ -79,81 +76,17 @@ class MainWindow(QMainWindow):
         self.tracker_cls = Tracker()
         self.centerline_cls = None
 
-        self.ui.btn_LoadPatient.hide()
-        self.ui.btn_DeletePatient.hide()
-        self.ui.checkBox_showCenterline_image.hide()
-
-        self.ui.toolBar.hide()
-
-        self.ui.tabWidget.setCurrentIndex(0)
+        
 
         # self.regMat = np.array([[0.84,      0.09,   -0.53,  -35.67],
         #                         [-0.51,     -0.14,  -0.85,  -202.98],
         #                         [-0.15,     0.99,   -0.07,  -22.7],
         #                         [0,         0,      0,          1]])
 
-        # self.regMat = np.array([[  9.6680e-02,  -1.0480e-01,  -9.8978e-01,   3.8618e+01], 
-        #                         [ -6.0031e-02,   9.9201e-01,  -1.1090e-01,  -4.0377e+01], 
-        #                         [  9.9350e-01,   7.0140e-02,   8.9617e-02,   1.3952e+02], 
-        #                         [  0,   0,   0,   1]])
-
-        # self.regMat = np.array([[  0.0967,  -0.1048,   -0.9898,   125],
-        #                         [ -0.0600,   0.9920,   -0.1109,   58],
-        #                         [  0.9935,   0.0701,    0.0896,  -58],
-        #                         [  0,   0,   0,   1]])
-
-        # self.regMat = np.array([[  7.35563581e-02,  -1.71236069e-01,   9.82480367e-01,   2.67630473e+02],
-        #                         [  1.72677134e-01,   9.72456305e-01,   1.56560985e-01,   3.17539388e+02],
-        #                         [ -9.82228115e-01,   1.58135838e-01,   1.01098898e-01,   1.62724952e+02],
-        #                         [  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,   1.00000000e+00]])
-
-        # self.regMat = np.array([[  6.46888431e-02,  -3.14844735e-01,  -9.46936189e-01,   4.25743133e+01],
-        #                         [ -2.01626482e-02,   9.48317634e-01,  -3.16681437e-01,   9.24174545e+01],
-        #                         [  9.97701770e-01,   3.95784970e-02,   5.49974670e-02,   3.43897444e+01],
-        #                         [  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,   1.00000000e+00]])
-
-        # self.regMat = np.array([[  6.46888431e-02,  -3.14844735e-01,  -9.46936189e-01,   50],
-        #                         [ -2.01626482e-02,   9.48317634e-01,  -3.16681437e-01,   -100],
-        #                         [  9.97701770e-01,   3.95784970e-02,   5.49974670e-02,   -50],
-        #                         [  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,   1.00000000e+00]])
-
         self.regMat = np.array([[  2.12947445e-01,  -9.39494389e-01,   2.68335012e-01,   -88],
                                 [  2.37930485e-01,   3.16228932e-01,   9.18361774e-01,  -138],
                                 [ -9.47651027e-01,  -1.31717714e-01,   2.90874499e-01,   -50],
                                 [  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,   1.00000000e+00]])
-
-
-
-        self.ui.btn_NewPatient.clicked.connect(self.new_patient)
-        self.ui.btn_LoadPatient.clicked.connect(self.load_patient)
-        self.ui.btn_DeletePatient.clicked.connect(self.delete_patient)
-        self.ui.btn_ImportPatient.clicked.connect(self.import_patient)
-        self.ui.btn_ClearPatients.clicked.connect(self.clear_patients)
-
-        self.ui.Slider_2D.valueChanged.connect(self.slider_changed)
-
-        self.ui.btn_LoadToolPoints.clicked.connect(self.read_tool_points)
-        self.ui.btn_LoadRefPoints.clicked.connect(self.read_ref_points)
-        self.ui.checkBox_showPoints.stateChanged.connect(self.show_hide_points)
-        self.ui.checkBox_showCenterline_image.stateChanged.connect(self.show_hide_centerline_image)
-        self.ui.btn_playCam.clicked.connect(self.play_cam)
-        self.ui.btn_pauseCam.clicked.connect(self.pause_cam)
-        self.ui.btn_stopCam.clicked.connect(self.stop_cam)
-        self.ui.slider_Frames.valueChanged.connect(self.frame_changed)
-        self.ui.slider_threshold3D.valueChanged.connect(self.slider_3D_changed)
-        self.ui.slider_threshold3D_2.valueChanged.connect(self.slider_3D_changed_2)
-        self.ui.btn_ResetViewports.clicked.connect(self.reset_viewports)
-        self.ui.btn_ResetVB.clicked.connect(self.reset_VB)
-        self.ui.comboBox_2DView.currentIndexChanged.connect(self.change_2D_view)
-
-        self.ui.btn_Connect.clicked.connect(self.connect_tracker)
-        self.ui.btn_ToolsWindow.clicked.connect(self.show_tools_window)
-        self.ui.btn_regMat.clicked.connect(self.show_regMat_window)
-        self.ui.btn_recordToolRef.clicked.connect(self.coords_record)
-
-        self.ui.tabWidget.currentChanged.connect(self.virtual_tab_changed)
-        self.ui.btn_loadCenterline.clicked.connect(self.load_centerline)
-        self.ui.btn_extractCenterline.clicked.connect(self.extract_centerline)
 
     '''
     >>> ----------------------------------------
@@ -174,6 +107,7 @@ class MainWindow(QMainWindow):
         try:
             self.patient_cls.load_patient(self.curr_patient)
             self.show_images()
+            self.set_ui_elements_enabled(True)
             self.update_subPanels(self.patient_cls.dims)
             self.ui.btn_LoadPatient.hide()
             self.ui.btn_DeletePatient.hide()
@@ -235,13 +169,23 @@ class MainWindow(QMainWindow):
     '''
 
     def connect_tracker(self):
-        if self.tracker_cls.tracker_connected == False:
+        if not self.tracker_cls.tracker_connected:
             self.ui.btn_Connect.setText('Connecting...')
+            self.ui.btn_ToolsWindow.setEnabled(False)
+            self.ui.btn_recordCoords.setEnabled(False)
             QApplication.setOverrideCursor(Qt.WaitCursor)
             if self.tracker_cls.connect():
+                # Multithreading Method 1 (recomended)
+                thread_tracker = threading.Thread(target=self.tracker_loop)
+                thread_tracker.start()
+                # thread_updateViews = threading.Thread(target=self.show_tool_on_views(self.registered_tool))
+                # thread_updateViews.start()
+                # Multithreading Method 2 (not recomended)
+                # Use QApplication.processEvents() inside the loop
+
                 self.ui.btn_Connect.setText('Disconnect Tracker')
                 self.ui.btn_ToolsWindow.setEnabled(True)
-                self.ui.btn_recordToolRef.setEnabled(True)
+                self.ui.btn_recordCoords.setEnabled(True)
                 icon = QIcon(":/icon/icons/tracker_connected.png")
                 self.ui.btn_Connect.setIcon(icon)
                 QApplication.restoreOverrideCursor()
@@ -264,7 +208,6 @@ class MainWindow(QMainWindow):
             self.tracker_cls.disconnect()
             self.ui.btn_Connect.setText('Connect Tracker')
             self.ui.btn_ToolsWindow.setEnabled(False)
-            self.ui.btn_recordToolRef.setEnabled(False)
             icon = QIcon(":/icon/icons/tracker_disconnected.png")
             self.ui.btn_Connect.setIcon(icon)
 
@@ -282,11 +225,12 @@ class MainWindow(QMainWindow):
                     self.trackerRawCoords_ref.append(ref_mat) 
                     self.trackerRawCoords_tool.append(tool_mat) 
 
-                if (self.patients.XyzToRas != []):
-                    self.registered_tool = self.applyRegistration(tool_mat, ref_mat)
+                if (self.patient_cls.XyzToRas != []):
+                    self.registered_tool = self.apply_registration(tool_mat, ref_mat)
+                    # TODO: check this out!
                     # registered_tool = np.squeeze(np.matmul(self.patients.XyzToRas, registered_tool))
 
-                    self.showToolOnViews(self.registered_tool)
+                    self.show_tool_on_views(self.registered_tool)
 
                 self.toolsWindow.setData(ref_mat, tool_mat)
 
@@ -294,38 +238,65 @@ class MainWindow(QMainWindow):
         return
         
     def coords_record(self):
-        if (self.record_coords == False) and (self.tracker_cls.tracker_connected):
-            self.ui.btn_recordToolRef.setEnabled(False)
-            self.countdownSplash()
-            self.ui.btn_recordToolRef.setEnabled(True)
+        if (not self.tracker_cls.tracker_connected) and (not self.record_coords):
+            self.connect_tracker()
+            # TODO: change ui elements in tracking tab
+
+        if (not self.record_coords) and (self.tracker_cls.tracker_connected):
+            self.ui.btn_recordCoords.setEnabled(False)
+            self.countdown_splash()
+            self.ui.btn_recordCoords.setEnabled(True)
             self.record_coords = True
-            self.ui.btn_recordToolRef.setText(' Stop Record')
+            self.ui.btn_recordCoords.setText(' Stop Record')
             icon = QIcon(":/icon/icons/rec_stop.png")
-            self.ui.btn_recordToolRef.setIcon(icon)
-            self.ui.btn_recordToolRef.setStyleSheet("background-color: rgba(235, 25, 75, 100)")
+            self.ui.btn_recordCoords.setIcon(icon)
+            self.ui.btn_recordCoords.setStyleSheet("background-color: rgba(235, 25, 75, 100)")
         else:
             self.record_coords = False
-            self.ui.btn_recordToolRef.setText(' Start Record')
+            self.ui.btn_recordCoords.setText(' Start Record')
             icon = QIcon(":/icon/icons/rec_start.png")
-            self.ui.btn_recordToolRef.setIcon(icon)
-            refFile = 'RefPoints_'+str(int(time.time()))
-            toolFile = 'ToolPoints_'+str(int(time.time()))
+            self.ui.btn_recordCoords.setIcon(icon)
+            self.ui.btn_recordCoords.setStyleSheet("background-color: rgb(65, 65, 65)")
+
             refcoords = np.array(self.trackerRawCoords_ref)
             refcoords = np.swapaxes(refcoords, 0, 2)
             refcoords = np.swapaxes(refcoords, 0, 1)
             toolcoords = np.array(self.trackerRawCoords_tool)
             toolcoords = np.swapaxes(toolcoords, 0, 2)
             toolcoords = np.swapaxes(toolcoords, 0, 1)
+            numPoints = refcoords.shape[-1]
+            tool2ref = np.zeros_like(refcoords)
+            for ii in range(numPoints):
+                    ref = refcoords[:,:,ii]
+                    tool = toolcoords[:,:,ii]
+                    ref_inv = np.linalg.inv(ref)
+                    tool2ref[:,:,ii] = np.squeeze(np.matmul(ref_inv, tool))
 
-            self.ui.btn_recordToolRef.setStyleSheet("background-color: rgb(65, 65, 65)")
-            self.ui.btn_registerCenterlines.setEnabled(True)
+            self.tracker_cls.centerline = tool2ref
+            self.ui.checkBox_showTrackerCenterline.show()
+            self.draw_points(self.tracker_cls.centerline)
+            self.ui.label_trackerCenterline.setText('Available')
+            self.ui.label_trackerCenterline.setStyleSheet("color: rgb(100, 255, 130);")
+            self.is_tracker_cl = True
+            if self.is_image_cl and self.is_tracker_cl:
+                self.ui.btn_registerCenterlines.setEnabled(True)
+            self.update_patient()
 
-            if (not os.path.exists(self.records_dir)):
-                os.mkdir(self.records_dir)
-            np.save(os.path.join(self.records_dir, refFile), refcoords)
-            np.save(os.path.join(self.records_dir, toolFile), toolcoords)
-            
-            QMessageBox.information(self, 'Tracker Points Saved', 'Tool points saved to \'' + toolFile + '.npy\'\nRef points saved to \'' + refFile + '.npy\'')
+            self.records_dir = os.path.join(self.patients_dir, self.curr_patient, 'Records')
+            tool2ref_file = f'centerline_tracker_{str(int(time.time()))}.npy'
+            refFile = f'RefPoints_{str(int(time.time()))}.npy'
+            toolFile = f'ToolPoints_{str(int(time.time()))}.npy'
+
+            try:
+                if (not os.path.exists(self.records_dir)):
+                    os.mkdir(self.records_dir)
+                np.save(os.path.join(self.records_dir, tool2ref_file), tool2ref)
+                np.save(os.path.join(self.records_dir, refFile), refcoords)
+                np.save(os.path.join(self.records_dir, toolFile), toolcoords)
+            except:
+                QMessageBox.critical(self, f'Saving Failed!', 'Failed to save the recorded points\nPoints would not be available after closing the application.')
+
+            QMessageBox.information(self, f'Tracker Points Saved', 'Tool/Ref points saved to \' {self.records_dir} \'')
 
     '''
     >>> ----------------------------------------
@@ -350,18 +321,14 @@ class MainWindow(QMainWindow):
         self.vtk_widget_3D.show_image(self.patient_cls.reoriented_image)
         self.vtk_widget_3D_2.show_image(self.patient_cls.reoriented_image)
         self.vtk_widget_2D.show_image(self.patient_cls.reoriented_image, self.patient_cls.dims, self.patient_cls.spacing, self.patient_cls.origin)
-        
-        self.set_ui_elements_enabled(True)
-
-        self.ui.tabWidget_offline.setEnabled(True)
 
     def set_ui_elements_enabled(self, isEnabled):
+        self.ui.groupBox_Viewports.setEnabled(isEnabled)
+        self.ui.btn_Segment.setEnabled(isEnabled)
+        self.ui.frame_imageCenterline.setEnabled(isEnabled)
+        self.ui.frame_trackerCenterline.setEnabled(isEnabled)
         self.ui.btn_LoadToolPoints.setEnabled(isEnabled)
         self.ui.btn_LoadRefPoints.setEnabled(isEnabled)
-        self.ui.btn_extractCenterline.setEnabled(isEnabled)
-        self.ui.btn_loadCenterline.setEnabled(isEnabled)
-        self.ui.btn_Segment.setEnabled(isEnabled)
-        self.ui.groupBox_Viewports.setEnabled(isEnabled)
 
         self.ui.slider_threshold3D.setEnabled(isEnabled)
         self.ui.slider_threshold3D_2.setEnabled(isEnabled)
@@ -371,13 +338,6 @@ class MainWindow(QMainWindow):
         self.vtk_widget_3D.remove_image()
         self.vtk_widget_3D_2.remove_image()
         self.vtk_widget_2D.remove_image()
-
-    def virtual_tab_changed(self):
-        if (self.ui.tabWidget_2.currentIndex() == 0):
-            self.tracker_cls.tracker_ready = True
-        else:
-            self.tracker_cls.tracker_ready = False
-        # print(self.ui.tabWidget.currentIndex(), self.tracker_cls.tracker_ready)
         
     def countdown_splash(self):
         splash_pix = QPixmap('ui/icons/5.png')
@@ -507,22 +467,28 @@ class MainWindow(QMainWindow):
                 points = np.squeeze(points)
         return points
 
-    def load_centerline(self):
+    def load_image_centerline(self):
         self.patient_cls.centerline = self.read_points()
         if self.patient_cls.centerline != []:
-            self.ui.checkBox_showCenterline_image.show()
-            self.ui.checkBox_showCenterline_image.setEnabled(True)
-            self.ui.checkBox_showCenterline_image.setChecked(True)
+            self.ui.checkBox_showImageCenterline.show()
+            self.ui.checkBox_showImageCenterline.setEnabled(True)
+            self.ui.checkBox_showImageCenterline.setChecked(True)
             self.show_hide_centerline_image()
             self.ui.label_imageCenterline.setText('Available')
             self.ui.label_imageCenterline.setStyleSheet("color: rgb(100, 255, 130);")
             self.save_image_centerline()
             self.is_image_cl = True
+            if self.is_image_cl and self.is_tracker_cl:
+                self.ui.btn_registerCenterlines.setEnabled(True)
             self.update_patient()
+
+    def load_tracker_centerline(self):
+        # TODO: load tool2ref
+        pass 
 
     def save_image_centerline(self):
         try:
-            image_centerline_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'centerline_image.npy')
+            image_centerline_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'image_centerline.npy')
             if os.path.exists(image_centerline_path):
                 os.remove(image_centerline_path)
             np.save(image_centerline_path, self.patient_cls.centerline)
@@ -606,13 +572,17 @@ class MainWindow(QMainWindow):
         # self.ref_coords = np.swapaxes(self.ref_coords, 0, 1)
 
     def show_hide_points(self):
+        _sender = self.sender()
         if self.ui.checkBox_showPoints.isChecked():
-            self.draw_points(self.registered_points)
+            if _sender.objectName() == 'checkBox_showPoints':
+                self.draw_points(self.registered_points)
+            else:
+                self.draw_points(self.tracker_cls.centerline)
         else:
             self.remove_points()
 
     def show_hide_centerline_image(self):
-        if self.ui.checkBox_showCenterline_image.isChecked():
+        if self.ui.checkBox_showImageCenterline.isChecked():
             self.draw_centerline(self.patient_cls.centerline)
         else:
             self.remove_centerline()
@@ -774,7 +744,7 @@ class MainWindow(QMainWindow):
 
         if self.vtk_widget_2D.cross != None:
             self.vtk_widget_2D.remove_cross()
-            if (self.tracker_cls.tracker_ready and self.tracker_connected):
+            if (self.tracker_connected):
                 self.show_tool_on_views(self.tool_mat)
             else:
                 self.show_tool_on_views(self.cam_pos)
@@ -804,11 +774,16 @@ class MainWindow(QMainWindow):
         self.tool_coords == []
 
     def extract_centerline(self):
-        if self.centerline != None:
-            del self.centerline
-        self.centerline = Centerline(self.patient_cls.image_path)
+        if self.centerline_cls != None:
+            del self.centerline_cls
+        self.centerline_cls = Centerline(self.patient_cls.image_path)
 
         self.patient_cls.centerline = self.centerline_cls.extract()
+        if self.patient_cls.centerline != []:
+            self.is_image_cl = True
+            if self.is_image_cl and self.is_tracker_cl:
+                    self.ui.btn_registerCenterlines.setEnabled(True)
+            self.update_patient()
 
     def setup(self, size):
         self.ui = MainWin.Ui_MainWin()
@@ -816,8 +791,55 @@ class MainWindow(QMainWindow):
         # sizeObject = QtWidgets.QDesktopWidget().screenGeometry(-1)
         # self.resize(sizeObject.width(), sizeObject.height())
         # self.resize(size.width(), size.height())
+
+        self.ui.btn_NewPatient.clicked.connect(self.new_patient)
+        self.ui.btn_LoadPatient.clicked.connect(self.load_patient)
+        self.ui.btn_DeletePatient.clicked.connect(self.delete_patient)
+        self.ui.btn_ImportPatient.clicked.connect(self.import_patient)
+        self.ui.btn_ClearPatients.clicked.connect(self.clear_patients)
+
+        self.ui.Slider_2D.valueChanged.connect(self.slider_changed)
+
+        self.ui.btn_LoadToolPoints.clicked.connect(self.read_tool_points)
+        self.ui.btn_LoadRefPoints.clicked.connect(self.read_ref_points)
+        self.ui.checkBox_showPoints.stateChanged.connect(self.show_hide_points)
+        self.ui.checkBox_showImageCenterline.stateChanged.connect(self.show_hide_centerline_image)
+        self.ui.checkBox_showTrackerCenterline.stateChanged.connect(self.show_hide_points)
+        self.ui.btn_playCam.clicked.connect(self.play_cam)
+        self.ui.btn_pauseCam.clicked.connect(self.pause_cam)
+        self.ui.btn_stopCam.clicked.connect(self.stop_cam)
+        self.ui.slider_Frames.valueChanged.connect(self.frame_changed)
+        self.ui.slider_threshold3D.valueChanged.connect(self.slider_3D_changed)
+        self.ui.slider_threshold3D_2.valueChanged.connect(self.slider_3D_changed_2)
+        self.ui.btn_ResetViewports.clicked.connect(self.reset_viewports)
+        self.ui.btn_ResetVB.clicked.connect(self.reset_VB)
+        self.ui.comboBox_2DView.currentIndexChanged.connect(self.change_2D_view)
+
+        self.ui.btn_Connect.clicked.connect(self.connect_tracker)
+        self.ui.btn_ToolsWindow.clicked.connect(self.show_tools_window)
+        self.ui.btn_regMat.clicked.connect(self.show_regMat_window)
+
+        self.ui.btn_extractCenterline.clicked.connect(self.extract_centerline)
+        self.ui.btn_loadCenterline_image.clicked.connect(self.load_image_centerline)
+        self.ui.btn_recordCoords.clicked.connect(self.coords_record)
+
+        self.ui.btn_loadCenterline_tracker.clicked.connect(self.load_tracker_centerline)
+
         self.vtk_widget_3D = QVtkViewer3D(self.ui.vtk_panel_3D_1, size, 'Virtual')
         self.vtk_widget_3D_2 = QVtkViewer3D(self.ui.vtk_panel_3D_2, size, 'Normal')
+
+        self.toolsWindow = ToolsWindow(self)
+        self.regMatWindow = RegMatWindow(self)
+        self.newPatientWindow = NewPatientWindow(self)
+
+        self.set_ui_elements_enabled(False)
+        self.ui.btn_LoadPatient.hide()
+        self.ui.btn_DeletePatient.hide()
+        self.ui.checkBox_showImageCenterline.hide()
+        self.ui.checkBox_showTrackerCenterline.hide()
+        self.ui.toolBar.hide()
+        
+        self.ui.tabWidget.setCurrentIndex(0)
 
         # Messed up! only for this phantom image!
         phantom_view = ''
@@ -832,6 +854,7 @@ class MainWindow(QMainWindow):
         # viewType = self.ui.comboBox_2DView.currentText()
         self.vtk_widget_2D = QVtkViewer2D(self.ui.vtk_panel_2D, size, viewType)
         self.hide_subPanels()
+        
 
     def initialize(self):
         pass

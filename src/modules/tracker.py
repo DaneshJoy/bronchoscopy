@@ -16,6 +16,7 @@ class Tracker():
         self.tracker_ready = False
         self.tracker_connected = False
         self.capture_coords = False
+        self.centerline = []
 
     def connect(self):
         if self.tracker is None:
@@ -25,19 +26,13 @@ class Tracker():
                 self.tracker = NDITracker(settings_aurora)
                 self.captureCoordinates = True
                 self.tracker.start_tracking()
-                tool_desc = self.tracker.get_tool_descriptions()
+                # tool_desc = self.tracker.get_tool_descriptions()
                 self.tracker_connected = True
-
-                # Multithreading Method 1 (recomended)
-                thread_tracker = threading.Thread(target=self.trackerLoop)
-                thread_tracker.start()
-                # thread_updateViews = threading.Thread(target=self.showToolOnViews(self.registered_tool))
-                # thread_updateViews.start()
-                # Multithreading Method 2 (not recomended)
-                # Use QApplication.processEvents() inside the loop
+                self.capture_coords = True
                 return True
             except:
                 self.tracker_connected = False
+                self.capture_coords = False
                 return False
             
     def disconnect(self):

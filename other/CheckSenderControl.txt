@@ -1,0 +1,4 @@
+def coords_record(self):
+	sender_button = self.sender()
+	if sender_button.objectName() == 'btn_recordCenterline':
+		pass
