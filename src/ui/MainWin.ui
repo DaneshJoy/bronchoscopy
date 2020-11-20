@@ -1506,7 +1506,7 @@ color: rgb(157, 205, 216);</string>
                      <string>Show Image Centerline</string>
                     </property>
                     <property name="checked">
-                     <bool>true</bool>
+                     <bool>false</bool>
                     </property>
                    </widget>
                   </item>
@@ -1696,7 +1696,7 @@ border-color: rgb(255, 78, 81);</string>
                      <string>Show Tracker Centerline</string>
                     </property>
                     <property name="checked">
-                     <bool>true</bool>
+                     <bool>false</bool>
                     </property>
                    </widget>
                   </item>

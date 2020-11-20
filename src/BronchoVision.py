@@ -112,13 +112,20 @@ class MainWindow(QMainWindow):
             self.ui.btn_LoadPatient.hide()
             self.ui.btn_DeletePatient.hide()
 
-            # TODO : check and load image centerline if available
-            # self.ui.label_imageCenterline.setText('Available')
-            # self.ui.label_imageCenterline.setStyleSheet("color: rgb(100, 255, 130);")
-            self.ui.label_imageCenterline.setText('Not Available')
-            self.ui.label_imageCenterline.setStyleSheet("color: rgb(255, 55, 120);")
-            self.ui.label_trackerCenterline.setText('Not Available')
-            self.ui.label_trackerCenterline.setStyleSheet("color: rgb(255, 55, 120);")
+            # Check and load image and tracker centerlines if available
+            image_centerline_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'image_centerline.npy')
+            if (os.path.exists(image_centerline_path)):
+                self.patient_cls.centerline = self.read_points(image_centerline_path)
+                self.is_image_cl = True
+                self.ui.checkBox_showImageCenterline.show()
+            tracker_centerline_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'tracker_centerline.npy')
+            if (os.path.exists(tracker_centerline_path)):
+                self.tracker_cls.centerline = self.read_points(tracker_centerline_path)
+                self.is_tracker_cl = True
+                self.ui.checkBox_showTrackerCenterline.show()
+            if self.is_image_cl and self.is_tracker_cl:
+                self.ui.btn_registerCenterlines.setEnabled(True)
+            self.set_centerline_available_labels()
             
             QApplication.restoreOverrideCursor()
         except:
@@ -274,7 +281,7 @@ class MainWindow(QMainWindow):
 
             self.tracker_cls.centerline = tool2ref
             self.ui.checkBox_showTrackerCenterline.show()
-            self.draw_points(self.tracker_cls.centerline)
+            self.ui.checkBox_showTrackerCenterline.setChecked(True)
             self.ui.label_trackerCenterline.setText('Available')
             self.ui.label_trackerCenterline.setStyleSheet("color: rgb(100, 255, 130);")
             self.is_tracker_cl = True
@@ -456,49 +463,48 @@ class MainWindow(QMainWindow):
         reg = np.squeeze(np.matmul(regMat_inv, tool2ref))
         return reg
 
-    def read_points(self):
+    def read_points(self, filepath=None):
         points = []
-        # from vtk.util.numpy_support import vtk_to_numpy
-        options = QFileDialog.Options()
-        # options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, "Read Points from File", "",
-                                                "All Data Types (*.mat *.npy *.npz);;Matlab (*.mat);;Numpy (*.npy *.npz);;All Files (*)",
-                                                options=options)
-        if fileName:
-            extension = os.path.splitext(fileName)[1].lower()
+        if filepath == None:
+            # from vtk.util.numpy_support import vtk_to_numpy
+            options = QFileDialog.Options()
+            # options |= QFileDialog.DontUseNativeDialog
+            filepath, _ = QFileDialog.getOpenFileName(self, "Read Points from File", "",
+                                                    "All Data Types (*.mat *.npy *.npz);;Matlab (*.mat);;Numpy (*.npy *.npz);;All Files (*)",
+                                                    options=options)
+        if filepath:
+            extension = os.path.splitext(filepath)[1].lower()
             if 'mat' in extension:
-                matFile = loadmat(fileName)
+                matFile = loadmat(filepath)
                 # self.registered_points = matFile['EMT_cor']
                 points = matFile[list(matFile)[-1]]
             elif 'np' in extension:
-                points = np.load(fileName)
+                points = np.load(filepath)
                 points = np.squeeze(points)
         return points
 
     def load_image_centerline(self):
         self.patient_cls.centerline = self.read_points()
         if self.patient_cls.centerline != []:
+            self.remove_centerline()
             self.ui.checkBox_showImageCenterline.show()
-            self.ui.checkBox_showImageCenterline.setEnabled(True)
+            self.ui.checkBox_showImageCenterline.setChecked(False)
             self.ui.checkBox_showImageCenterline.setChecked(True)
-            self.show_hide_image_centerline()
-            self.ui.label_imageCenterline.setText('Available')
-            self.ui.label_imageCenterline.setStyleSheet("color: rgb(100, 255, 130);")
+            self.set_centerline_available_labels()
             self.save_image_centerline()
             self.is_image_cl = True
             if self.is_image_cl and self.is_tracker_cl:
                 self.ui.btn_registerCenterlines.setEnabled(True)
             self.update_patient()
 
-    def load_tracker_centerline(self):
+    def load_tracker_centerline(self):        
         self.tracker_cls.centerline = self.read_points()
         if self.tracker_cls.centerline != []:
+            self.remove_points()
             self.ui.checkBox_showTrackerCenterline.show()
-            self.ui.checkBox_showTrackerCenterline.setEnabled(True)
+            self.ui.checkBox_showTrackerCenterline.setChecked(False)
             self.ui.checkBox_showTrackerCenterline.setChecked(True)
-            self.show_hide_tracker_centerline()
-            self.ui.label_trackerCenterline.setText('Available')
-            self.ui.label_trackerCenterline.setStyleSheet("color: rgb(100, 255, 130);")
+            self.set_centerline_available_labels()
             self.save_tracker_centerline()
             self.is_tracker_cl = True
             if self.is_image_cl and self.is_tracker_cl:
@@ -522,6 +528,21 @@ class MainWindow(QMainWindow):
             np.save(tracker_centerline_path, self.tracker_cls.centerline)
         except:
             QMessageBox.critical(self, 'Centerline NOT Saved', 'There was a problem saving the centerline!')
+
+    def set_centerline_available_labels(self):
+        if self.is_image_cl:
+            self.ui.label_imageCenterline.setText('Available')
+            self.ui.label_imageCenterline.setStyleSheet("color: rgb(100, 255, 130);")
+        else:
+            self.ui.label_imageCenterline.setText('Not Available')
+            self.ui.label_imageCenterline.setStyleSheet("color: rgb(255, 55, 120);")
+        
+        if self.is_tracker_cl:
+            self.ui.label_trackerCenterline.setText('Available')
+            self.ui.label_trackerCenterline.setStyleSheet("color: rgb(100, 255, 130);")
+        else:
+            self.ui.label_trackerCenterline.setText('Not Available')
+            self.ui.label_trackerCenterline.setStyleSheet("color: rgb(255, 55, 120);")
 
     def read_tool_points(self):
         #Read tool points
@@ -815,6 +836,8 @@ class MainWindow(QMainWindow):
         self.patient_cls.centerline = self.centerline_cls.extract()
         if self.patient_cls.centerline != []:
             self.is_image_cl = True
+            self.ui.checkBox_showImageCenterline.show()
+            self.ui.checkBox_showImageCenterline.setChecked(True)
             if self.is_image_cl and self.is_tracker_cl:
                     self.ui.btn_registerCenterlines.setEnabled(True)
             self.update_patient()
