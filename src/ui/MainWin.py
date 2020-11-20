@@ -1511,7 +1511,7 @@ class Ui_MainWin(object):
         self.btn_recordCoords.setText(_translate("MainWin", " Start Record"))
         self.btn_loadtrackerCenterline.setText(_translate("MainWin", " Load ..."))
         self.checkBox_showTrackerCenterline.setText(_translate("MainWin", "Show Tracker Centerline"))
-        self.btn_registerCenterlines.setText(_translate("MainWin", " Register Centerlines"))
+        self.btn_registerCenterlines.setText(_translate("MainWin", " Register Centerlines ..."))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_process), _translate("MainWin", "Prep."))
         self.groupBox_online.setTitle(_translate("MainWin", "Online"))
         self.btn_Connect.setText(_translate("MainWin", " Connect Tracker"))

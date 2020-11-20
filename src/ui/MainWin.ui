@@ -1764,7 +1764,7 @@ border-color: rgb(255, 78, 81);</string>
                      <string notr="true">background-color: rgb(65, 65, 65);</string>
                     </property>
                     <property name="text">
-                     <string> Register Centerlines</string>
+                     <string> Register Centerlines ...</string>
                     </property>
                     <property name="icon">
                      <iconset resource="resources.qrc">

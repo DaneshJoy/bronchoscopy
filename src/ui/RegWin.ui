@@ -32,8 +32,11 @@
    </item>
    <item>
     <widget class="QProgressBar" name="progressBar">
-     <property name="value">
-      <number>0</number>
+     <property name="maximum">
+      <number>100</number>
+     </property>
+     <property name="textVisible">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
