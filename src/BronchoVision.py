@@ -240,7 +240,6 @@ class MainWindow(QMainWindow):
     def coords_record(self):
         if (not self.tracker_cls.tracker_connected) and (not self.record_coords):
             self.connect_tracker()
-            # TODO: change ui elements in tracking tab
 
         if (not self.record_coords) and (self.tracker_cls.tracker_connected):
             self.ui.btn_recordCoords.setEnabled(False)
@@ -258,6 +257,7 @@ class MainWindow(QMainWindow):
             self.ui.btn_recordCoords.setIcon(icon)
             self.ui.btn_recordCoords.setStyleSheet("background-color: rgb(65, 65, 65)")
 
+            # Calculate Tool2Ref (tracker centerline)
             refcoords = np.array(self.trackerRawCoords_ref)
             refcoords = np.swapaxes(refcoords, 0, 2)
             refcoords = np.swapaxes(refcoords, 0, 1)
@@ -282,12 +282,20 @@ class MainWindow(QMainWindow):
                 self.ui.btn_registerCenterlines.setEnabled(True)
             self.update_patient()
 
+            # Output paths
+            tracker_centerline_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'tracker_centerline.npy')
             self.records_dir = os.path.join(self.patients_dir, self.curr_patient, 'Records')
-            tool2ref_file = f'centerline_tracker_{str(int(time.time()))}.npy'
+            tool2ref_file = f'tracker_centerline_{str(int(time.time()))}.npy'
             refFile = f'RefPoints_{str(int(time.time()))}.npy'
             toolFile = f'ToolPoints_{str(int(time.time()))}.npy'
 
+            # Save files
             try:
+                # Save/Replace the tracker centerline
+                if os.path.exists(tracker_centerline_path):
+                    os.remove(tracker_centerline_path)
+                np.save(tracker_centerline_path, self.tracker_cls.centerline)
+                # Save tool/ref/tool2ref(tracker enterline) for each record
                 if (not os.path.exists(self.records_dir)):
                     os.mkdir(self.records_dir)
                 np.save(os.path.join(self.records_dir, tool2ref_file), tool2ref)
@@ -473,7 +481,7 @@ class MainWindow(QMainWindow):
             self.ui.checkBox_showImageCenterline.show()
             self.ui.checkBox_showImageCenterline.setEnabled(True)
             self.ui.checkBox_showImageCenterline.setChecked(True)
-            self.show_hide_centerline_image()
+            self.show_hide_image_centerline()
             self.ui.label_imageCenterline.setText('Available')
             self.ui.label_imageCenterline.setStyleSheet("color: rgb(100, 255, 130);")
             self.save_image_centerline()
@@ -483,8 +491,19 @@ class MainWindow(QMainWindow):
             self.update_patient()
 
     def load_tracker_centerline(self):
-        # TODO: load tool2ref
-        pass 
+        self.tracker_cls.centerline = self.read_points()
+        if self.tracker_cls.centerline != []:
+            self.ui.checkBox_showTrackerCenterline.show()
+            self.ui.checkBox_showTrackerCenterline.setEnabled(True)
+            self.ui.checkBox_showTrackerCenterline.setChecked(True)
+            self.show_hide_tracker_centerline()
+            self.ui.label_trackerCenterline.setText('Available')
+            self.ui.label_trackerCenterline.setStyleSheet("color: rgb(100, 255, 130);")
+            self.save_tracker_centerline()
+            self.is_tracker_cl = True
+            if self.is_image_cl and self.is_tracker_cl:
+                self.ui.btn_registerCenterlines.setEnabled(True)
+            self.update_patient() 
 
     def save_image_centerline(self):
         try:
@@ -492,6 +511,15 @@ class MainWindow(QMainWindow):
             if os.path.exists(image_centerline_path):
                 os.remove(image_centerline_path)
             np.save(image_centerline_path, self.patient_cls.centerline)
+        except:
+            QMessageBox.critical(self, 'Centerline NOT Saved', 'There was a problem saving the centerline!')
+    
+    def save_tracker_centerline(self):
+        try:
+            tracker_centerline_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'tracker_centerline.npy')
+            if os.path.exists(tracker_centerline_path):
+                os.remove(tracker_centerline_path)
+            np.save(tracker_centerline_path, self.tracker_cls.centerline)
         except:
             QMessageBox.critical(self, 'Centerline NOT Saved', 'There was a problem saving the centerline!')
 
@@ -534,7 +562,7 @@ class MainWindow(QMainWindow):
                     reg_aligned = np.squeeze(np.matmul(self.patient_cls.XyzToRas, reg))
                     self.registered_points[:,:,ii] = reg
 
-                np.save('tool2ref.npy', tmp)
+                # np.save('tool2ref.npy', tmp)
             # self.vtk_widget_3D.register(pt_tracker)
             numPoints = self.registered_points.shape[-1]
 
@@ -573,19 +601,25 @@ class MainWindow(QMainWindow):
 
     def show_hide_points(self):
         _sender = self.sender()
-        if self.ui.checkBox_showPoints.isChecked():
+        if _sender.isChecked():
             if _sender.objectName() == 'checkBox_showPoints':
                 self.draw_points(self.registered_points)
             else:
-                self.draw_points(self.tracker_cls.centerline)
+                self.show_hide_tracker_centerline()
         else:
             self.remove_points()
 
-    def show_hide_centerline_image(self):
+    def show_hide_image_centerline(self):
         if self.ui.checkBox_showImageCenterline.isChecked():
             self.draw_centerline(self.patient_cls.centerline)
         else:
             self.remove_centerline()
+
+    def show_hide_tracker_centerline(self):
+        if self.ui.checkBox_showTrackerCenterline.isChecked():
+            self.draw_points(self.tracker_cls.centerline)
+        else:
+            self.remove_points()
 
     def draw_points(self, points):
         self.vtk_widget_3D.draw_points(points)
@@ -803,7 +837,7 @@ class MainWindow(QMainWindow):
         self.ui.btn_LoadToolPoints.clicked.connect(self.read_tool_points)
         self.ui.btn_LoadRefPoints.clicked.connect(self.read_ref_points)
         self.ui.checkBox_showPoints.stateChanged.connect(self.show_hide_points)
-        self.ui.checkBox_showImageCenterline.stateChanged.connect(self.show_hide_centerline_image)
+        self.ui.checkBox_showImageCenterline.stateChanged.connect(self.show_hide_image_centerline)
         self.ui.checkBox_showTrackerCenterline.stateChanged.connect(self.show_hide_points)
         self.ui.btn_playCam.clicked.connect(self.play_cam)
         self.ui.btn_pauseCam.clicked.connect(self.pause_cam)
@@ -820,10 +854,10 @@ class MainWindow(QMainWindow):
         self.ui.btn_regMat.clicked.connect(self.show_regMat_window)
 
         self.ui.btn_extractCenterline.clicked.connect(self.extract_centerline)
-        self.ui.btn_loadCenterline_image.clicked.connect(self.load_image_centerline)
+        self.ui.btn_loadImageCenterline.clicked.connect(self.load_image_centerline)
         self.ui.btn_recordCoords.clicked.connect(self.coords_record)
 
-        self.ui.btn_loadCenterline_tracker.clicked.connect(self.load_tracker_centerline)
+        self.ui.btn_loadtrackerCenterline.clicked.connect(self.load_tracker_centerline)
 
         self.vtk_widget_3D = QVtkViewer3D(self.ui.vtk_panel_3D_1, size, 'Virtual')
         self.vtk_widget_3D_2 = QVtkViewer3D(self.ui.vtk_panel_3D_2, size, 'Normal')

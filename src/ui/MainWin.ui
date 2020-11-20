@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>1462</width>
-    <height>1030</height>
+    <height>1032</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1445,7 +1445,7 @@ color: rgb(157, 205, 216);</string>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QToolButton" name="btn_loadCenterline_image">
+                   <widget class="QToolButton" name="btn_loadImageCenterline">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                       <horstretch>0</horstretch>
@@ -1635,7 +1635,7 @@ border-color: rgb(255, 78, 81);</string>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QToolButton" name="btn_loadCenterline_tracker">
+                   <widget class="QToolButton" name="btn_loadtrackerCenterline">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                       <horstretch>0</horstretch>
