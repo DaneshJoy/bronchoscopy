@@ -6,7 +6,6 @@ Created on Mon Jun  3 01:09:45 2019
 """
 
 import os
-import sqlite3
 import sys
 import threading
 import time
@@ -75,6 +74,7 @@ class MainWindow(QMainWindow):
         self.patient_cls.get_patients_from_db()
         self.tracker_cls = Tracker()
         self.centerline_cls = None
+        self.register_cls = None
 
         
 
@@ -123,6 +123,10 @@ class MainWindow(QMainWindow):
                 self.tracker_cls.centerline = self.read_points(tracker_centerline_path)
                 self.is_tracker_cl = True
                 self.ui.checkBox_showTrackerCenterline.show()
+            regmat_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'registration_matrix.npy')
+            if (os.path.exists(regmat_path)):
+                self.regMat = self.load_regmat(regmat_path)
+
             if self.is_image_cl and self.is_tracker_cl:
                 self.ui.btn_registerCenterlines.setEnabled(True)
             self.set_centerline_available_labels()
@@ -233,6 +237,10 @@ class MainWindow(QMainWindow):
                     self.trackerRawCoords_tool.append(tool_mat) 
 
                 if (self.patient_cls.XyzToRas != []):
+                    # refcoords = np.swapaxes(refcoords, 0, 2)
+                    # refcoords = np.swapaxes(ref_mat, 0, 1)
+                    # toolcoords = np.swapaxes(toolcoords, 0, 2)
+                    # toolcoords = np.swapaxes(tool_mat, 0, 1)
                     self.registered_tool = self.apply_registration(tool_mat, ref_mat)
                     # TODO: check this out!
                     # registered_tool = np.squeeze(np.matmul(self.patients.XyzToRas, registered_tool))
@@ -266,16 +274,17 @@ class MainWindow(QMainWindow):
 
             # Calculate Tool2Ref (tracker centerline)
             refcoords = np.array(self.trackerRawCoords_ref)
-            refcoords = np.swapaxes(refcoords, 0, 2)
-            refcoords = np.swapaxes(refcoords, 0, 1)
+            # refcoords = np.swapaxes(refcoords, 0, 2)
+            # refcoords = np.swapaxes(refcoords, 0, 1)
             toolcoords = np.array(self.trackerRawCoords_tool)
-            toolcoords = np.swapaxes(toolcoords, 0, 2)
-            toolcoords = np.swapaxes(toolcoords, 0, 1)
-            numPoints = refcoords.shape[-1]
+            # toolcoords = np.swapaxes(toolcoords, 0, 2)
+            # toolcoords = np.swapaxes(toolcoords, 0, 1)
+            numPoints = refcoords.shape[0]
             tool2ref = np.zeros_like(refcoords)
+            tool2ref = np.swapaxes(tool2ref, 0, 2)
             for ii in range(numPoints):
-                    ref = refcoords[:,:,ii]
-                    tool = toolcoords[:,:,ii]
+                    ref = refcoords[ii,:,:]
+                    tool = toolcoords[ii,:,:]
                     ref_inv = np.linalg.inv(ref)
                     tool2ref[:,:,ii] = np.squeeze(np.matmul(ref_inv, tool))
 
@@ -461,6 +470,7 @@ class MainWindow(QMainWindow):
         ref_inv = np.linalg.inv(refMat)
         tool2ref = np.squeeze(np.matmul(ref_inv, toolMat))
         reg = np.squeeze(np.matmul(regMat_inv, tool2ref))
+        # reg = np.squeeze(np.matmul(self.patient_cls.XyzToRas, reg))
         return reg
 
     def read_points(self, filepath=None):
@@ -528,6 +538,27 @@ class MainWindow(QMainWindow):
             np.save(tracker_centerline_path, self.tracker_cls.centerline)
         except:
             QMessageBox.critical(self, 'Centerline NOT Saved', 'There was a problem saving the centerline!')
+
+    def load_regmat(self, filepath=None):
+        points = []
+        if filepath == None:
+            # from vtk.util.numpy_support import vtk_to_numpy
+            options = QFileDialog.Options()
+            # options |= QFileDialog.DontUseNativeDialog
+            filepath, _ = QFileDialog.getOpenFileName(self, "Read Points from File", "",
+                                                    "All Data Types (*.mat *.npy *.npz);;Matlab (*.mat);;Numpy (*.npy *.npz);;All Files (*)",
+                                                    options=options)
+        if filepath:
+            extension = os.path.splitext(filepath)[1].lower()
+            if 'mat' in extension:
+                matFile = loadmat(filepath)
+                # self.registered_points = matFile['EMT_cor']
+                points = matFile[list(matFile)[-1]]
+            elif 'np' in extension:
+                points = np.load(filepath)
+                points = np.squeeze(points)
+        return points
+
 
     def set_centerline_available_labels(self):
         if self.is_image_cl:
@@ -638,9 +669,43 @@ class MainWindow(QMainWindow):
 
     def show_hide_tracker_centerline(self):
         if self.ui.checkBox_showTrackerCenterline.isChecked():
+            regMat_inv = np.linalg.inv(self.regMat)
+            self.tracker_cls.centerline = np.squeeze(np.matmul(regMat_inv, self.tracker_cls.centerline))
             self.draw_points(self.tracker_cls.centerline)
         else:
             self.remove_points()
+
+    def register_centerlines(self):
+        # TODO: registration
+        from ui.UiWindows import RegWindow
+        regWindow = RegWindow(self)
+        regWindow.setData(self.patient_cls.centerline, self.tracker_cls.centerline)
+        res =  regWindow.exec()
+        if (res == QDialog.Accepted) and (regWindow.reg_mat):
+            self.regMat = regWindow.reg_mat
+            print(self.regMat)
+            self.save_regmat()
+            self.is_registered = True
+            self.update_patient()
+
+        # self.register_cls = Registration(self.patient_cls.centerline, self.tracker_cls.centerline)
+        # thread_reg = threading.Thread(target=self.register_cls.register())
+        # thread_reg.start()
+        # thread_reg.join()
+        # self.regMat = self.register_cls.reg_mat
+        # # self.regMat = self.register_cls.register()
+        # self.save_regmat()
+        # self.is_registered = True
+        # self.update_patient()
+
+    def save_regmat(self):
+        try:
+            regmat_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'registration_matrix.npy')
+            if os.path.exists(regmat_path):
+                os.remove(regmat_path)
+            np.save(regmat_path, self.regMat)
+        except:
+            QMessageBox.critical(self, 'Centerline NOT Saved', 'There was a problem saving the centerline!')
 
     def draw_points(self, points):
         self.vtk_widget_3D.draw_points(points)
@@ -700,6 +765,8 @@ class MainWindow(QMainWindow):
         
 
     def show_tool_on_2D_view(self, tool_mat):
+        if (np.isnan(tool_mat).any()):
+            return
         # Commented parts are correct, changed only for this phantom image!
         # if self.ui.comboBox_2DView.currentText() == 'Axial':
         if self.ui.comboBox_2DView.currentText() == 'Coronal':
@@ -879,8 +946,8 @@ class MainWindow(QMainWindow):
         self.ui.btn_extractCenterline.clicked.connect(self.extract_centerline)
         self.ui.btn_loadImageCenterline.clicked.connect(self.load_image_centerline)
         self.ui.btn_recordCoords.clicked.connect(self.coords_record)
-
         self.ui.btn_loadtrackerCenterline.clicked.connect(self.load_tracker_centerline)
+        self.ui.btn_registerCenterlines.clicked.connect(self.register_centerlines)
 
         self.vtk_widget_3D = QVtkViewer3D(self.ui.vtk_panel_3D_1, size, 'Virtual')
         self.vtk_widget_3D_2 = QVtkViewer3D(self.ui.vtk_panel_3D_2, size, 'Normal')

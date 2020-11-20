@@ -8,12 +8,22 @@ Created on Tue Mar 10 23:06:25 2020
 import os
 import vtk
 import threading
+from functools import partial
+from PyQt5 import QtWidgets
 from PyQt5.Qt import QDialog
-from PyQt5.QtWidgets import QApplication, QTableWidgetItem, QFileDialog, QMessageBox, QDialogButtonBox
+from PyQt5.QtWidgets import QApplication, QTableWidgetItem, QFileDialog, QMessageBox, QDialogButtonBox, QVBoxLayout
 from PyQt5.QtCore import Qt, QDateTime
+import matplotlib
+matplotlib.use("Qt5Agg")
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.figure import Figure
 import numpy as np
 from vmtk import pypes, vmtkscripts
-from ui import NewPatientWin, ToolsWin, RegMatWin
+from pycpd import RigidRegistration
+from ui import NewPatientWin, ToolsWin, RegMatWin, RegWin
 
 
 class NewPatientWindow(QDialog):
@@ -144,6 +154,95 @@ class RegMatWindow(QDialog):
     def setup(self):
         self.ui = RegMatWin.Ui_RegMatWin()
         self.ui.setupUi(self)
+
+class RegWindow(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setup()
+        self.steps = 0
+        self.regmat = None
+        self.is_canceled = False
+
+    def setData(self, image_coords, tracker_coords):
+        self.target_coords = image_coords
+        self.source_coords = tracker_coords
+
+    def coord2points(self, coords):
+        numPoints = coords.shape[-1]
+        # numPoints = len(coords)
+        points = np.zeros([numPoints, 3])
+        for i in range(numPoints):
+            points[i,:] = coords[:,:,i][:,3][:-1]
+        return points
+
+    def prepare_main_frame(self):
+        # Create the mpl Figure and FigCanvas objects. 
+        self.fig = Figure()
+        self.canvas = FigureCanvas(self.fig)
+        self.canvas.setParent(self.ui.frame_main)
+        self.mpl_toolbar = NavigationToolbar(self.canvas, self.ui.frame_main)
+
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.mpl_toolbar)
+        vbox.addWidget(self.canvas)
+        self.ui.frame_main.setLayout(vbox)
+
+        self.axes = self.fig.add_subplot(111, projection='3d')
+        # Create the navigation toolbar, tied to the canvas
+        
+    def start(self):      
+        self.ui.btn_start.hide()  
+        X = self.coord2points(self.target_coords)
+        Y = self.coord2points(self.source_coords)
+        callback = partial(self.visualize, ax=self.axes)
+        reg = RigidRegistration(**{'X': X, 'Y': Y})
+        reg.register(callback)
+        
+        self.ui.progressBar.setMaximum(self.steps)
+        self.ui.progressBar.setValue(self.steps)
+
+        RR = reg.R
+        tt = reg.t
+        # reg_mat = np.array([[RR[0][0], RR[0][1], RR[0][2], tt[0]],
+        #                     [RR[1][0], RR[1][1], RR[1][2], tt[1]],
+        #                     [RR[2][0], RR[2][1], RR[2][2], tt[2]],
+        #                     [0,         0,      0,          1]])
+
+        self.reg_mat = np.array([[RR[0][0], RR[1][0], RR[2][0], tt[0]],
+                            [RR[0][1], RR[1][1], RR[2][1], tt[1]],
+                            [RR[0][2], RR[1][2], RR[2][2], tt[2]],
+                            [0,         0,      0,          1]])
+
+
+    def visualize(self, iteration, error, X, Y, ax):
+        if self.is_canceled:
+            return
+        ax.cla()
+        # plt.cla()
+        ax.scatter(X[:, 0],  X[:, 1], X[:, 2], color='red', marker='+', label='Image Points')
+        ax.scatter(Y[:, 0],  Y[:, 1], Y[:, 2], color='blue', marker='.', label='Tracker Points')
+        ax.text2D(0.87, 0.92, 'Iteration: {:d}\nQ: {:06.4f}'.format(
+            iteration, error), horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, fontsize='x-large')
+        ax.legend(loc='upper left', fontsize='x-large')
+        self.canvas.draw()
+
+        # if you remove the progressBar value incrementation, you can't see the realtime plot anymore!
+        # acts like plt.pause
+        self.ui.progressBar.setMaximum(0)
+        self.steps += 1
+        self.ui.progressBar.setValue(self.ui.progressBar.value() + 1)
+        QApplication.processEvents()
+        # plt.pause(0.003)
+
+    def cancel_reg(self):
+        self.is_canceled = True
+        
+    def setup(self):
+        self.ui = RegWin.Ui_RegWin()
+        self.ui.setupUi(self)
+        self.prepare_main_frame()
+        self.ui.btn_start.clicked.connect(self.start)
+        self.ui.buttonBox.rejected.connect(self.cancel_reg)
 
 
 class ToolsWindow(QDialog):

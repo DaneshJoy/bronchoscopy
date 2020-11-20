@@ -13,6 +13,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from pycpd import RigidRegistration
 
 
+
 class Registration():
     '''
     Rigid registration using PyCPD
@@ -21,11 +22,10 @@ class Registration():
         - image_coords:     numpy array of the calculated centerline
         - tracker_coords:   numpy array of the recorded tool coords
     '''
-    def __init__(self, image_coords, tracker_coords, patient_dir):
+    def __init__(self, image_coords, tracker_coords):
         super().__init__()
         self.target_coords = image_coords
         self.source_coords = tracker_coords
-        self.patient_dir = patient_dir
 
     def visualize(self, X, ax, color):
         plt.cla()
@@ -44,8 +44,8 @@ class Registration():
         plt.pause(0.001)
 
     def coord2points(self, coords):
-        # numPoints = coords.shape[-1]
-        numPoints = len(coords)
+        numPoints = coords.shape[-1]
+        # numPoints = len(coords)
         points = np.zeros([numPoints, 3])
         for i in range(numPoints):
             points[i,:] = coords[:,:,i][:,3][:-1]
@@ -61,27 +61,33 @@ class Registration():
         return np.array(data_clean)
 
     def register(self):
+        fig = plt.figure()
+        # ax = fig.gca(projection='3d')
+        ax = fig.add_subplot(111, projection='3d')
+
+
+        # if (res == QDialog.Accepted):
+        #     pass
+
+        callback = partial(self.visualize, ax=ax)
+        
         X = self.coord2points(self.target_coords)
         Y = self.coord2points(self.source_coords)
-
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        # ax = fig.add_subplot(111, projection='3d')
-        callback = partial(self.visualize, ax=ax)
-
         reg = RigidRegistration(**{'X': X, 'Y': Y})
         reg.register(callback)
 
         RR = reg.R
         tt = reg.t
-        reg_mat = np.array([[RR[0][0], RR[0][1], RR[0][2], tt[0]],
-                            [RR[1][0], RR[1][1], RR[1][2], tt[1]],
-                            [RR[2][0], RR[2][1], RR[2][2], tt[2]],
+        # reg_mat = np.array([[RR[0][0], RR[0][1], RR[0][2], tt[0]],
+        #                     [RR[1][0], RR[1][1], RR[1][2], tt[1]],
+        #                     [RR[2][0], RR[2][1], RR[2][2], tt[2]],
+        #                     [0,         0,      0,          1]])
+
+        self.reg_mat = np.array([[RR[0][0], RR[1][0], RR[2][0], tt[0]],
+                            [RR[0][1], RR[1][1], RR[2][1], tt[1]],
+                            [RR[0][2], RR[1][2], RR[2][2], tt[2]],
                             [0,         0,      0,          1]])
 
-        print(reg_mat)
-        plt.show()
-
-        # TODO: save reg_mat in patient_dir
-        return reg_mat
-
+        print(self.reg_mat)
+        # plt.show()
+        return self.reg_mat
