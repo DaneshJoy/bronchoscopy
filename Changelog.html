@@ -1,5 +1,5 @@
 <!DOCTYPE html><html><head>
-      <title>README</title>
+      <title>Changelog</title>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       
@@ -261,69 +261,30 @@ pre[data-line] .line-highlight[data-end]:after {
     </head>
     <body for="html-export">
       <div class="mume markdown-preview  ">
-      <h1 class="mume-header" id="bronchovision">BronchoVision</h1>
+      <h2 class="mume-header" id="changelog">Changelog</h2>
 
-<h3 class="mume-header" id="navigation-with-electromagnetic-tracker-in-bronchoscopy">Navigation with Electromagnetic Tracker in Bronchoscopy</h3>
-
-<p><a href="http://parsiss.com/"><img src="https://img.shields.io/badge/Copyright-Parsiss-blue.svg?style=for-the-badge&amp;logo=c" alt="Parsiss"></a></p>
 <hr>
-<h3 class="mume-header" id="application-requirements">Application Requirements</h3>
+<h3 class="mume-header" id="2020-11-phantom-version">2020-11 (Phantom version)</h3>
 
-<ol>
-<li>
-<p><strong>Install <a href="https://anaconda.org/">Anaconda</a> or <a href="https://docs.conda.io/en/latest/miniconda.html">Miniconda</a></strong></p>
-</li>
-<li>
-<p><strong>Create an environment and install the requirements:</strong></p>
-<pre data-role="codeBlock" data-info class="language-"><code>&gt; conda create --name bv python=3.6
-&gt; conda activate bv
-&gt; conda install --force-reinstall -c vmtk vmtk
-&gt; conda install scipy=1.1 pyqt=5.9.2 matplotlib
-&gt; pip install scikit-surgerynditracker pypiwin32 pycpd
-</code></pre><blockquote>
-<p>NOTE: You can change the name (bv) to whatever you want, but you should do the the same change in the compile_ui.bat and run.bat files</p>
-</blockquote>
-</li>
-<li>
-<p><strong>Run the application</strong></p>
-<pre data-role="codeBlock" data-info class="language-"><code>&gt; run.bat
-</code></pre></li>
-</ol>
-<hr>
-<h3 class="mume-header" id="tracker-installation">Tracker Installation</h3>
-
-<ol>
-<li>
-<p><strong>Install NDI_ToolBox</strong></p>
-</li>
-<li>
-<p><strong>in Windows Device Manager:</strong></p>
-<ol>
-<li>First Driver
 <ul>
-<li>Under &quot;Other Devices&quot;, right click &quot;NDI Host USB Converter&quot; or &quot;NDI Aurora SCU&quot;<br>
-(which has a yellow mark on it)</li>
-<li>Select &quot;Update Driver Software...&quot; then select &quot;Browse my computer for driver software&quot;</li>
-<li>Select &quot;Program Files\Northern Digital Inc\ToolBox\USB Driver&quot;. Select Next and install</li>
+<li><strong>New Features</strong>
+<ul>
+<li>Adjusted orientation widget (man model) to match the orientation of the Phantom</li>
+<li>Adjusted 2D views for the phantom</li>
+<li>Extract/Load Image Centerline</li>
+<li>Record/Load Tracker Centerline</li>
+<li>Integrated Registration Process</li>
+<li>Complete and working registration process</li>
+<li>Added tracker status splash messages</li>
 </ul>
 </li>
-<li>Second Driver
+<li><strong>Fixes</strong>
 <ul>
-<li>Under &quot;Other Devices&quot; and right click on &quot;USB Serial Port&quot;<br>
-(which has a yellow mark on it)</li>
-<li>Select &quot;Update Driver Software...&quot; then select &quot;Browse my computer for driver software&quot;</li>
-<li>Select &quot;Program Files\Northern Digital Inc\ToolBox\USB Driver&quot;. Select Next and install</li>
+<li>Fixed 2D view problem</li>
+<li>Fixed tracker&apos;s crash</li>
 </ul>
 </li>
-</ol>
-</li>
-<li>
-<p><strong>Attach the &quot;Reference&quot; sensor to the 1st port and the &quot;Tool&quot; sensor to the 2nd port</strong></p>
-</li>
-</ol>
-<blockquote>
-<p>Check the &quot;NDI Track&quot; application to test the tracker and sensors</p>
-</blockquote>
+</ul>
 
       </div>
       

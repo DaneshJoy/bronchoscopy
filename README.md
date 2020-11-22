@@ -5,7 +5,7 @@
 
 -----------
 
-## Instructions (Windows)
+### Application Requirements
 
 1. **Install [Anaconda](https://anaconda.org/) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html)**
 
@@ -24,5 +24,25 @@
     > run.bat
     ```
 --------------
+
+### Tracker Installation
+
+1. **Install NDI_ToolBox**
+
+2. **in Windows Device Manager:**
+    1. First Driver
+        - Under "Other Devices", right click "NDI Host USB Converter" or "NDI Aurora SCU"
+        (which has a yellow mark on it)
+        - Select "Update Driver Software..." then select "Browse my computer for driver software"
+        - Select "Program Files\Northern Digital Inc\ToolBox\USB Driver". Select Next and install
+    2. Second Driver
+        - Under "Other Devices" and right click on "USB Serial Port"
+        (which has a yellow mark on it)
+        - Select "Update Driver Software..." then select "Browse my computer for driver software"
+        - Select "Program Files\Northern Digital Inc\ToolBox\USB Driver". Select Next and install
+
+3. **Attach the "Reference" sensor to the 1st port and the "Tool" sensor to the 2nd port**
+
+> Check the "NDI Track" application to test the tracker and sensors
 
 

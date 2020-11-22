@@ -1,3 +1,0 @@
-## 2020-11 (Phantom version)
- - Fixed 2D view problem
- - Adjusted orientation widget (man model) to match the orientation of the Phantom
