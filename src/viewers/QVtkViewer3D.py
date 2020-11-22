@@ -7,6 +7,8 @@ import numpy as np
 class QVtkViewer3D(QVTKViewer):
     def __init__(self, panel, size, viewType):
         super().__init__(panel, size, viewType)
+        self.startPoint = None
+        self.endPoint = None
 
     def show_image(self, reader):
         
@@ -332,7 +334,6 @@ class QVtkViewer3D(QVTKViewer):
         return reg_mat
 
     def draw_points(self, points):         
-
         pts = vtk.vtkPoints()
         conn = vtk.vtkCellArray()
         poly = vtk.vtkPolyData()
@@ -413,8 +414,9 @@ class QVtkViewer3D(QVTKViewer):
         if self.points == None:
             return
         self.ren.RemoveActor(self.points)
-        self.ren.RemoveActor(self.startPoint)
-        self.ren.RemoveActor(self.endPoint)
+        if self.startPoint and self.endPoint:
+            self.ren.RemoveActor(self.startPoint)
+            self.ren.RemoveActor(self.endPoint)
         self.interactor.ReInitialize()
         self.points = None
         self.startPoint = None

@@ -22,7 +22,6 @@ from scipy.io import loadmat
 
 from modules.patient import Patient
 from modules.tracker import Tracker
-from modules.registration import Registration
 from modules.centerline import Centerline
 from ui import MainWin
 from ui.UiWindows import NewPatientWindow, RegMatWindow, ToolsWindow
@@ -36,6 +35,7 @@ class MainWindow(QMainWindow):
         self.db = None
         self.db_connection = None
         
+        self.pause_tracker_loop = False
         self.record_coords = False
 
         self.trackerRawCoords_ref = []
@@ -76,17 +76,10 @@ class MainWindow(QMainWindow):
         self.centerline_cls = None
         self.register_cls = None
 
-        
-
-        # self.regMat = np.array([[0.84,      0.09,   -0.53,  -35.67],
-        #                         [-0.51,     -0.14,  -0.85,  -202.98],
-        #                         [-0.15,     0.99,   -0.07,  -22.7],
-        #                         [0,         0,      0,          1]])
-
-        self.regMat = np.array([[  2.12947445e-01,  -9.39494389e-01,   2.68335012e-01,   -88],
-                                [  2.37930485e-01,   3.16228932e-01,   9.18361774e-01,  -138],
-                                [ -9.47651027e-01,  -1.31717714e-01,   2.90874499e-01,   -50],
-                                [  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,   1.00000000e+00]])
+        self.regMat = np.array([[1, 0, 0, 0],
+                                [0, 1, 0, 0],
+                                [0, 0, 1, 0],
+                                [0, 0, 0, 1]])
 
     '''
     >>> ----------------------------------------
@@ -94,10 +87,10 @@ class MainWindow(QMainWindow):
     >>> ----------------------------------------
     '''
     def new_patient(self):
-        self.patient_cls.new_patient()
-        index = self.ui.tableWidget_Patients.model().index(self.ui.tableWidget_Patients.rowCount()-1,0)
-        self.curr_patient = self.ui.tableWidget_Patients.model().data(index)
-        self.load_patient()
+        if self.patient_cls.new_patient():
+            index = self.ui.tableWidget_Patients.model().index(self.ui.tableWidget_Patients.rowCount()-1,0)
+            self.curr_patient = self.ui.tableWidget_Patients.model().data(index)
+            self.load_patient()
 
     def load_patient(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -143,7 +136,7 @@ class MainWindow(QMainWindow):
         index = self.ui.tableWidget_Patients.selectionModel().selectedRows()[0]
         selected_patient = self.ui.tableWidget_Patients.model().data(index)
         ret = QMessageBox.question(None, 'Delete Patient',
-                                    f'Do you want to delete {selected_patient} ?\nThis action can NOT be undone',
+                                    f'Do you want to delete {selected_patient} ?\nThis action is NOT reversible!',
                                     QMessageBox.Yes | QMessageBox.No)
         if ret == QMessageBox.Yes:
             if self.patient_cls.delete_patient(selected_patient):
@@ -181,16 +174,25 @@ class MainWindow(QMainWindow):
 
     def connect_tracker(self):
         if not self.tracker_cls.tracker_connected:
+            splash_pix = QPixmap('ui/icons/connecting.png')
+            splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+            x_pos = self.geometry().x()+self.ui.frame_Viewports.x()+int((self.ui.vtk_panel_endoscope.width()-splash.width())/2)+20
+            y_pos = self.geometry().y()+self.ui.vtk_panel_3D_1.height()+self.ui.SubPanel_3D.height()+int((self.ui.vtk_panel_endoscope.height()-splash.height())/2)+20
+            splash.move(x_pos, y_pos)
+            splash.show()
             self.ui.btn_Connect.setText('Connecting...')
             self.ui.btn_ToolsWindow.setEnabled(False)
             self.ui.btn_recordCoords.setEnabled(False)
             QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.processEvents()
             if self.tracker_cls.connect():
                 # Multithreading Method 1 (recomended)
                 thread_tracker = threading.Thread(target=self.tracker_loop)
                 thread_tracker.start()
+
                 # thread_updateViews = threading.Thread(target=self.show_tool_on_views(self.registered_tool))
                 # thread_updateViews.start()
+
                 # Multithreading Method 2 (not recomended)
                 # Use QApplication.processEvents() inside the loop
 
@@ -200,8 +202,11 @@ class MainWindow(QMainWindow):
                 icon = QIcon(":/icon/icons/tracker_connected.png")
                 self.ui.btn_Connect.setIcon(icon)
                 QApplication.restoreOverrideCursor()
+                splash.close()
+                # QApplication.processEvents()
             else:
                 QApplication.restoreOverrideCursor()
+                splash.close()
                 msg = 'Please check the following:\n' \
                         '  1) NDI device connection\n' \
                         '  2) Is the NDI device switched on?!\n' \
@@ -210,12 +215,14 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, 'Tracker Connection Failed', f'Can not connect to the tracker!\n{msg}')
                 self.ui.btn_Connect.setText('Connect Tracker')
                 self.ui.btn_Connect.setStyleSheet("background-color: rgb(65, 65, 65)")
+                QApplication.processEvents()
         else:
             self.disconnect_tracker()
 
     def disconnect_tracker(self):
         if self.tracker_cls.tracker_connected:
             print('Disconnecting Tracker...')
+            self.record_coords = False
             self.tracker_cls.disconnect()
             self.ui.btn_Connect.setText('Connect Tracker')
             self.ui.btn_ToolsWindow.setEnabled(False)
@@ -223,13 +230,66 @@ class MainWindow(QMainWindow):
             self.ui.btn_Connect.setIcon(icon)
 
     def tracker_loop(self):
+        warmup_counter = 0
+
+        splash_tool_shown = False
+        splash_ref_shown = False
+        splash_pix_ref = QPixmap('ui/icons/ref_not_detected.png')
+        splash_ref = QSplashScreen(splash_pix_ref, Qt.WindowStaysOnTopHint)
+        splash_pix_tool = QPixmap('ui/icons/tool_not_detected.png')
+        splash_tool = QSplashScreen(splash_pix_tool, Qt.WindowStaysOnTopHint)
+
+        x_pos = self.geometry().x()+self.ui.frame_Viewports.x()+int((self.ui.vtk_panel_endoscope.width()-splash_ref.width())/2)+20
+        y_pos = self.geometry().y()+self.ui.vtk_panel_3D_1.height()+self.ui.SubPanel_3D.height()+int((self.ui.vtk_panel_endoscope.height()-splash_ref.height())/2)+20
+        splash_ref.move(x_pos, y_pos-int(splash_tool.height()/2))
+        x_pos = self.geometry().x()+self.ui.frame_Viewports.x()+int((self.ui.vtk_panel_endoscope.width()-splash_tool.width())/2)+20
+        y_pos = self.geometry().y()+self.ui.vtk_panel_3D_1.height()+self.ui.SubPanel_3D.height()+int((self.ui.vtk_panel_endoscope.height()-splash_tool.height())/2)+20
+        splash_tool.move(x_pos, y_pos+int(splash_ref.height()/2))
+
+        non_vis_counter_ref = 0
+        non_vis_counter_tool = 0
+
         while self.tracker_cls.capture_coords:
             if (self.exitting):
                 break
-            if self.tracker_cls.tracker_connected:
+
+            # if warmup_counter < 10:
+            #     warmup_counter += 1
+            #     time.sleep(0.1)
+            #     continue
+
+            if self.tracker_cls.tracker_connected and not self.pause_tracker_loop:
                 ref_mat, tool_mat = self.tracker_cls.get_frame()
-                if np.isnan(tool_mat.sum()) or np.isnan(ref_mat.sum()):
-                    # TODO: Show some messages or info
+                if np.isnan(ref_mat.sum()):
+                    if non_vis_counter_ref > 10:
+                        if not splash_ref_shown:
+                            splash_ref.show()
+                            QApplication.processEvents()
+                            splash_ref_shown = True
+                    else:
+                        non_vis_counter_ref += 1
+                elif splash_ref_shown:
+                    splash_ref.close()
+                    QApplication.processEvents()
+                    splash_ref_shown = False
+                    non_vis_counter_ref = 0
+                
+
+                if np.isnan(tool_mat.sum()):
+                    if non_vis_counter_tool > 10:
+                        if not splash_tool_shown:
+                            splash_tool.show()
+                            QApplication.processEvents()
+                            splash_tool_shown = True
+                    else:
+                        non_vis_counter_tool += 1
+                elif splash_tool_shown:
+                    splash_tool.close()
+                    QApplication.processEvents()
+                    splash_tool_shown = False
+                    non_vis_counter_tool = 0
+
+                if np.isnan(ref_mat.sum()) or np.isnan(tool_mat.sum()):
                     continue
 
                 if (self.record_coords):
@@ -243,7 +303,7 @@ class MainWindow(QMainWindow):
                     # toolcoords = np.swapaxes(tool_mat, 0, 1)
                     self.registered_tool = self.apply_registration(tool_mat, ref_mat)
                     # TODO: check this out!
-                    # registered_tool = np.squeeze(np.matmul(self.patients.XyzToRas, registered_tool))
+                    # registered_tool = np.squeeze(np.matmul(self.patient_cls.XyzToRas, registered_tool))
 
                     self.show_tool_on_views(self.registered_tool)
 
@@ -257,20 +317,27 @@ class MainWindow(QMainWindow):
             self.connect_tracker()
 
         if (not self.record_coords) and (self.tracker_cls.tracker_connected):
+            self.pause_tracker_loop = True
             self.ui.btn_recordCoords.setEnabled(False)
             self.countdown_splash()
             self.ui.btn_recordCoords.setEnabled(True)
-            self.record_coords = True
             self.ui.btn_recordCoords.setText(' Stop Record')
             icon = QIcon(":/icon/icons/rec_stop.png")
             self.ui.btn_recordCoords.setIcon(icon)
             self.ui.btn_recordCoords.setStyleSheet("background-color: rgba(235, 25, 75, 100)")
+            QApplication.processEvents()
+            self.record_coords = True
+            self.pause_tracker_loop = False
         else:
             self.record_coords = False
             self.ui.btn_recordCoords.setText(' Start Record')
             icon = QIcon(":/icon/icons/rec_start.png")
             self.ui.btn_recordCoords.setIcon(icon)
             self.ui.btn_recordCoords.setStyleSheet("background-color: rgb(65, 65, 65)")
+
+            ret = QMessageBox.question(self, f'Accept the Record?', 'Save and Use This Record?', QMessageBox.Ok | QMessageBox.Cancel)
+            if ret == QMessageBox.Cancel:
+                return
 
             # Calculate Tool2Ref (tracker centerline)
             refcoords = np.array(self.trackerRawCoords_ref)
@@ -289,6 +356,8 @@ class MainWindow(QMainWindow):
                     tool2ref[:,:,ii] = np.squeeze(np.matmul(ref_inv, tool))
 
             self.tracker_cls.centerline = tool2ref
+            self.trackerRawCoords_ref = []
+            self.trackerRawCoords_tool = []
             self.ui.checkBox_showTrackerCenterline.show()
             self.ui.checkBox_showTrackerCenterline.setChecked(True)
             self.ui.label_trackerCenterline.setText('Available')
@@ -320,7 +389,7 @@ class MainWindow(QMainWindow):
             except:
                 QMessageBox.critical(self, f'Saving Failed!', 'Failed to save the recorded points\nPoints would not be available after closing the application.')
 
-            QMessageBox.information(self, f'Tracker Points Saved', 'Tool/Ref points saved to \' {self.records_dir} \'')
+            QMessageBox.information(self, f'Tracker Points Saved', f'Tool/Ref points saved to \"{self.records_dir}\" ')
 
     '''
     >>> ----------------------------------------
@@ -352,7 +421,6 @@ class MainWindow(QMainWindow):
         self.ui.frame_imageCenterline.setEnabled(isEnabled)
         self.ui.frame_trackerCenterline.setEnabled(isEnabled)
         self.ui.btn_LoadToolPoints.setEnabled(isEnabled)
-        self.ui.btn_LoadRefPoints.setEnabled(isEnabled)
 
         self.ui.slider_threshold3D.setEnabled(isEnabled)
         self.ui.slider_threshold3D_2.setEnabled(isEnabled)
@@ -366,6 +434,9 @@ class MainWindow(QMainWindow):
     def countdown_splash(self):
         splash_pix = QPixmap('ui/icons/5.png')
         splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+        x_pos = self.geometry().x()+self.ui.frame_Viewports.x()+int((self.ui.vtk_panel_endoscope.width()-splash.width())/2)+20
+        y_pos = self.geometry().y()+self.ui.vtk_panel_3D_1.height()+self.ui.SubPanel_3D.height()+int((self.ui.vtk_panel_endoscope.height()-splash.height())/2)+20
+        splash.move(x_pos, y_pos)
         splash.show()
         # splash.showMessage("<h1><font color='orange'>Ready for record</font></h1>", Qt.AlignTop | Qt.AlignCenter, Qt.black)
         timer = QtCore.QElapsedTimer()
@@ -375,6 +446,7 @@ class MainWindow(QMainWindow):
         splash.hide()
         splash_pix = QPixmap('ui/icons/4.png')
         splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+        splash.move(x_pos, y_pos)
         splash.show()
         timer.start()
         while timer.elapsed() < 1000 :
@@ -382,6 +454,7 @@ class MainWindow(QMainWindow):
         splash.hide()
         splash_pix = QPixmap('ui/icons/3.png')
         splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+        splash.move(x_pos, y_pos)
         splash.show()
         timer.start()
         while timer.elapsed() < 1000 :
@@ -389,6 +462,7 @@ class MainWindow(QMainWindow):
         splash.hide()
         splash_pix = QPixmap('ui/icons/2.png')
         splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+        splash.move(x_pos, y_pos)
         splash.show()
         timer.start()
         while timer.elapsed() < 1000 :
@@ -396,6 +470,7 @@ class MainWindow(QMainWindow):
         splash.hide()
         splash_pix = QPixmap('ui/icons/1.png')
         splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+        splash.move(x_pos, y_pos)
         splash.show()
         timer.start()
         while timer.elapsed() < 1000 :
@@ -467,8 +542,8 @@ class MainWindow(QMainWindow):
         # registeredTool = inv(regMat) * tool2ref
 
         regMat_inv = np.linalg.inv(self.regMat)
-        ref_inv = np.linalg.inv(refMat)
-        tool2ref = np.squeeze(np.matmul(ref_inv, toolMat))
+        refMat_inv = np.linalg.inv(refMat)
+        tool2ref = np.squeeze(np.matmul(refMat_inv, toolMat))
         reg = np.squeeze(np.matmul(regMat_inv, tool2ref))
         # reg = np.squeeze(np.matmul(self.patient_cls.XyzToRas, reg))
         return reg
@@ -592,29 +667,13 @@ class MainWindow(QMainWindow):
 
             if (self.ref_coords == []):
                 self.registered_points = self.tool_coords
+                regMat_inv = np.linalg.inv(self.regMat)
                 for i in range(numPoints):
+                    self.registered_points[:,:,i] = np.squeeze(np.matmul(regMat_inv, self.registered_points[:,:,i] ))
                     self.registered_points[:,:,i] = np.squeeze(np.matmul(self.patient_cls.XyzToRas, self.registered_points[:,:,i]))
                 # self.registered_points = np.swapaxes(self.toolCoords, 1, 2)
                 # self.registered_pointsregistered_points = np.swapaxes(self.registered_points, 0, 2)
-            else:
-                # self.toolCoords = np.swapaxes(self.toolCoords, 1, 2)
-                self.registered_points = np.zeros_like(self.tool_coords)
-                # self.registered_points = np.swapaxes(self.registered_points, 0, 2)
-                regMat_inv = np.linalg.inv(self.regMat)
-                pt_tracker = np.zeros([numPoints, 3], dtype='float')
-                # for ref, tool in zip(self.refCoords, self.toolCoords):
-                for ii in range(numPoints):
-                    ref = self.ref_coords[:,:,ii]
-                    tool = self.tool_coords[:,:,ii]
-                    ref_inv = np.linalg.inv(ref)
-                    tool2ref = np.squeeze(np.matmul(ref_inv, tool))
-                    tmp[:,:,ii] = tool2ref
-                    pt_tracker[ii, :] = tool2ref[:,3][:-1]
-                    reg = np.squeeze(np.matmul(regMat_inv, tool2ref))
-                    reg_aligned = np.squeeze(np.matmul(self.patient_cls.XyzToRas, reg))
-                    self.registered_points[:,:,ii] = reg
 
-                # np.save('tool2ref.npy', tmp)
             # self.vtk_widget_3D.register(pt_tracker)
             numPoints = self.registered_points.shape[-1]
 
@@ -636,26 +695,17 @@ class MainWindow(QMainWindow):
             self.ui.slider_Frames.setRange(0, numPoints-1)
             self.ui.lbl_FrameNum.setText(str(self.ui.slider_Frames.value()) + ' of ' + str(self.registered_points.shape[-1]))
             if self.ui.checkBox_showPoints.isChecked():
-                self.draw_points(self.registered_points)
+                self.draw_points(self.registered_points, draw_start_end=True)
             self.ui.btn_playCam.setEnabled(True)
             self.ui.slider_Frames.setEnabled(True)
             self.ui.checkBox_showPoints.setEnabled(True)
             self.ui.btn_ResetVB.setEnabled(True)
 
-    def read_ref_points(self):
-        # Read Reference Points
-        self.ref_coords = self.read_points()
-        if self.ref_coords != []:
-            self.registered_points = []
-            self.remove_points()
-        # self.ref_coords = np.swapaxes(self.ref_coords, 0, 2)
-        # self.ref_coords = np.swapaxes(self.ref_coords, 0, 1)
-
     def show_hide_points(self):
         _sender = self.sender()
         if _sender.isChecked():
             if _sender.objectName() == 'checkBox_showPoints':
-                self.draw_points(self.registered_points)
+                self.draw_points(self.registered_points, draw_start_end=True)
             else:
                 self.show_hide_tracker_centerline()
         else:
@@ -669,9 +719,22 @@ class MainWindow(QMainWindow):
 
     def show_hide_tracker_centerline(self):
         if self.ui.checkBox_showTrackerCenterline.isChecked():
+            self.registered_points = np.zeros_like(np.array(self.tracker_cls.centerline))
+            # self.registered_points = np.swapaxes(self.registered_points, 0, 2)
             regMat_inv = np.linalg.inv(self.regMat)
-            self.tracker_cls.centerline = np.squeeze(np.matmul(regMat_inv, self.tracker_cls.centerline))
-            self.draw_points(self.tracker_cls.centerline)
+            numPoints = np.array(self.tracker_cls.centerline).shape[-1]
+            pt_tracker = np.zeros([numPoints, 3], dtype='float')
+            # for ref, tool in zip(self.refCoords, self.toolCoords):
+            for ii in range(numPoints):
+                self.tracker_cls.centerline[0:3,0:3,ii] = self.patient_cls.centerline[0:3,0:3,0]
+                reg = np.squeeze(np.matmul(regMat_inv, self.tracker_cls.centerline[:,:,ii]))
+                # reg_aligned = np.squeeze(np.matmul(self.patient_cls.XyzToRas, reg))
+                self.registered_points[:,:,ii] = reg
+                self.registered_points[0:3,0:3,ii] = self.patient_cls.centerline[0:3,0:3,0]
+            self.draw_points(self.registered_points)
+
+
+            # self.draw_points(self.tracker_cls.centerline)
         else:
             self.remove_points()
 
@@ -680,23 +743,15 @@ class MainWindow(QMainWindow):
         from ui.UiWindows import RegWindow
         regWindow = RegWindow(self)
         regWindow.setData(self.patient_cls.centerline, self.tracker_cls.centerline)
-        res =  regWindow.exec()
-        if (res == QDialog.Accepted) and (regWindow.reg_mat):
+        res = regWindow.exec()
+        if (res == QDialog.Accepted) and (np.array(regWindow.reg_mat).any()):
             self.regMat = regWindow.reg_mat
             print(self.regMat)
             self.save_regmat()
             self.is_registered = True
             self.update_patient()
-
-        # self.register_cls = Registration(self.patient_cls.centerline, self.tracker_cls.centerline)
-        # thread_reg = threading.Thread(target=self.register_cls.register())
-        # thread_reg.start()
-        # thread_reg.join()
-        # self.regMat = self.register_cls.reg_mat
-        # # self.regMat = self.register_cls.register()
-        # self.save_regmat()
-        # self.is_registered = True
-        # self.update_patient()
+            self.ui.checkBox_showTrackerCenterline.setChecked(False)
+            self.ui.checkBox_showTrackerCenterline.setChecked(True)
 
     def save_regmat(self):
         try:
@@ -707,14 +762,16 @@ class MainWindow(QMainWindow):
         except:
             QMessageBox.critical(self, 'Centerline NOT Saved', 'There was a problem saving the centerline!')
 
-    def draw_points(self, points):
+    def draw_points(self, points, draw_start_end=False):
         self.vtk_widget_3D.draw_points(points)
-        self.vtk_widget_3D.add_start_point(points[:,:,0]) # start point
-        self.vtk_widget_3D.add_end_point(points[:,:,-1]) # end point
+        # if draw_start_end:
+        #     self.vtk_widget_3D.add_start_point(points[:,:,0]) # start point
+        #     self.vtk_widget_3D.add_end_point(points[:,:,-1]) # end point
 
         self.vtk_widget_3D_2.draw_points(points)
-        self.vtk_widget_3D_2.add_start_point(points[:,:,0]) # start point
-        self.vtk_widget_3D_2.add_end_point(points[:,:,-1]) # end point
+        # if draw_start_end:
+        #     self.vtk_widget_3D_2.add_start_point(points[:,:,0]) # start point
+        #     self.vtk_widget_3D_2.add_end_point(points[:,:,-1]) # end point
         # self.playCam(points)
 
     def draw_centerline(self, points):
@@ -759,7 +816,6 @@ class MainWindow(QMainWindow):
         #     continue
         self.vtk_widget_3D.set_camera(tool_mat)
         self.vtk_widget_3D_2.set_cross_position(tool_mat[0,3], tool_mat[1,3], tool_mat[2,3], is3D=True)
-
         self.show_tool_on_2D_view(tool_mat)
         QApplication.processEvents()
         
@@ -866,8 +922,8 @@ class MainWindow(QMainWindow):
 
         if self.vtk_widget_2D.cross != None:
             self.vtk_widget_2D.remove_cross()
-            if (self.tracker_connected):
-                self.show_tool_on_views(self.tool_mat)
+            if (self.tracker_cls.tracker_connected):
+                self.show_tool_on_views(self.registered_tool)
             else:
                 self.show_tool_on_views(self.cam_pos)
 
@@ -925,7 +981,6 @@ class MainWindow(QMainWindow):
         self.ui.Slider_2D.valueChanged.connect(self.slider_changed)
 
         self.ui.btn_LoadToolPoints.clicked.connect(self.read_tool_points)
-        self.ui.btn_LoadRefPoints.clicked.connect(self.read_ref_points)
         self.ui.checkBox_showPoints.stateChanged.connect(self.show_hide_points)
         self.ui.checkBox_showImageCenterline.stateChanged.connect(self.show_hide_image_centerline)
         self.ui.checkBox_showTrackerCenterline.stateChanged.connect(self.show_hide_points)

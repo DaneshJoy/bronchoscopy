@@ -310,7 +310,7 @@ color: rgb(157, 205, 216);</string>
            <enum>QTabWidget::Rounded</enum>
           </property>
           <property name="currentIndex">
-           <number>2</number>
+           <number>3</number>
           </property>
           <property name="iconSize">
            <size>
@@ -1986,59 +1986,6 @@ alternate-background-color: rgb(85, 255, 127);</string>
                <set>Qt::AlignCenter</set>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_3">
-               <item>
-                <widget class="QToolButton" name="btn_LoadRefPoints">
-                 <property name="enabled">
-                  <bool>false</bool>
-                 </property>
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="font">
-                  <font>
-                   <pointsize>10</pointsize>
-                   <kerning>false</kerning>
-                  </font>
-                 </property>
-                 <property name="cursor">
-                  <cursorShape>PointingHandCursor</cursorShape>
-                 </property>
-                 <property name="layoutDirection">
-                  <enum>Qt::LeftToRight</enum>
-                 </property>
-                 <property name="autoFillBackground">
-                  <bool>false</bool>
-                 </property>
-                 <property name="styleSheet">
-                  <string notr="true">background-color: rgb(65, 65, 65);</string>
-                 </property>
-                 <property name="text">
-                  <string>    Load Ref. Points ...</string>
-                 </property>
-                 <property name="icon">
-                  <iconset resource="resources.qrc">
-                   <normaloff>:/icon/icons/trajectory.png</normaloff>:/icon/icons/trajectory.png</iconset>
-                 </property>
-                 <property name="iconSize">
-                  <size>
-                   <width>50</width>
-                   <height>50</height>
-                  </size>
-                 </property>
-                 <property name="checkable">
-                  <bool>false</bool>
-                 </property>
-                 <property name="toolButtonStyle">
-                  <enum>Qt::ToolButtonTextBesideIcon</enum>
-                 </property>
-                 <property name="autoRaise">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
                <item>
                 <widget class="QToolButton" name="btn_LoadToolPoints">
                  <property name="enabled">

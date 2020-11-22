@@ -56,6 +56,8 @@ class Patient():
             self.add_patient_row([_name, _date])
             thread_img = threading.Thread(target=self.load_image(os.path.join(self.patients_dir, _name, _image+'.nii.gz')))
             thread_img.start()
+            return True
+        return False
 
     def update_patient(self, name, segmented, image_cl, tracker_cl, registered):
         self.db.db_updatePatient(self.db_connection, [segmented, image_cl, tracker_cl, registered, name])

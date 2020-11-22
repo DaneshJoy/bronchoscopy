@@ -33,7 +33,10 @@
    <item>
     <widget class="QProgressBar" name="progressBar">
      <property name="maximum">
-      <number>100</number>
+      <number>0</number>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
      </property>
      <property name="textVisible">
       <bool>false</bool>

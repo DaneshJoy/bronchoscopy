@@ -168,7 +168,10 @@ class QVTKViewer(QFrame):
                 self.cross.SetMapper(mapper)
                 self.ren.AddActor(self.cross)
             self.cross.SetPosition(x, y, z)
-            self.ren.GetRenderWindow().Render()
+            if is3D:
+                self.interactor.Render()
+            else:
+                self.ren.GetRenderWindow().Render()
 
     def reset_view(self, is3D):
         self.ren.ResetCamera()

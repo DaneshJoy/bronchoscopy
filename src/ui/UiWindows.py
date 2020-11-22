@@ -160,7 +160,7 @@ class RegWindow(QDialog):
         super().__init__(parent)
         self.setup()
         self.steps = 0
-        self.regmat = None
+        self.reg_mat = []
         self.is_canceled = False
 
     def setData(self, image_coords, tracker_coords):
@@ -191,7 +191,8 @@ class RegWindow(QDialog):
         # Create the navigation toolbar, tied to the canvas
         
     def start(self):      
-        self.ui.btn_start.hide()  
+        self.ui.btn_start.hide()
+        self.ui.progressBar.show()  
         X = self.coord2points(self.target_coords)
         Y = self.coord2points(self.source_coords)
         callback = partial(self.visualize, ax=self.axes)
@@ -200,18 +201,19 @@ class RegWindow(QDialog):
         
         self.ui.progressBar.setMaximum(self.steps)
         self.ui.progressBar.setValue(self.steps)
+        self.ui.progressBar.setTextVisible(True)
 
         RR = reg.R
-        tt = reg.t
-        # reg_mat = np.array([[RR[0][0], RR[0][1], RR[0][2], tt[0]],
-        #                     [RR[1][0], RR[1][1], RR[1][2], tt[1]],
-        #                     [RR[2][0], RR[2][1], RR[2][2], tt[2]],
-        #                     [0,         0,      0,          1]])
+        tt = reg.t + [135, -153, -142]
+        self.reg_mat = np.array([[RR[0][0], RR[0][1], RR[0][2], tt[0]],
+                                [RR[1][0], RR[1][1], RR[1][2], tt[1]],
+                                [RR[2][0], RR[2][1], RR[2][2], tt[2]],
+                                [0,         0,      0,          1]])
 
-        self.reg_mat = np.array([[RR[0][0], RR[1][0], RR[2][0], tt[0]],
-                            [RR[0][1], RR[1][1], RR[2][1], tt[1]],
-                            [RR[0][2], RR[1][2], RR[2][2], tt[2]],
-                            [0,         0,      0,          1]])
+        # self.reg_mat = np.array([[RR[0][0], RR[1][0], RR[2][0], tt[0]],
+        #                         [RR[0][1], RR[1][1], RR[2][1], tt[1]],
+        #                         [RR[0][2], RR[1][2], RR[2][2], tt[2]],
+        #                         [0,         0,      0,          1]])
 
 
     def visualize(self, iteration, error, X, Y, ax):
@@ -243,6 +245,7 @@ class RegWindow(QDialog):
         self.prepare_main_frame()
         self.ui.btn_start.clicked.connect(self.start)
         self.ui.buttonBox.rejected.connect(self.cancel_reg)
+        self.ui.progressBar.hide()
 
 
 class ToolsWindow(QDialog):
