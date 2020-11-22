@@ -203,17 +203,26 @@ class RegWindow(QDialog):
         self.ui.progressBar.setValue(self.steps)
         self.ui.progressBar.setTextVisible(True)
 
-        RR = reg.R
-        tt = reg.t + [135, -153, -142]
+        RR = reg.s * reg.R
+        tt = reg.t
         self.reg_mat = np.array([[RR[0][0], RR[0][1], RR[0][2], tt[0]],
                                 [RR[1][0], RR[1][1], RR[1][2], tt[1]],
                                 [RR[2][0], RR[2][1], RR[2][2], tt[2]],
                                 [0,         0,      0,          1]])
+        # self.R = reg.R
+        # self.t = reg.t
+        # self.scale = reg.s
 
         # self.reg_mat = np.array([[RR[0][0], RR[1][0], RR[2][0], tt[0]],
         #                         [RR[0][1], RR[1][1], RR[2][1], tt[1]],
         #                         [RR[0][2], RR[1][2], RR[2][2], tt[2]],
         #                         [0,         0,      0,          1]])
+
+
+        # # regMat_inv = np.linalg.inv(self.reg_mat)
+        # # Y_reg = np.squeeze(np.matmul(regMat_inv, Y))
+        # Y_reg = reg.s * np.dot(Y, reg.R) + reg.t
+        # self.vis(X, Y_reg, ax=self.axes)
 
 
     def visualize(self, iteration, error, X, Y, ax):
@@ -235,6 +244,12 @@ class RegWindow(QDialog):
         self.ui.progressBar.setValue(self.ui.progressBar.value() + 1)
         QApplication.processEvents()
         # plt.pause(0.003)
+    
+    def vis(self, X, Y, ax):
+        ax.cla()
+        ax.scatter(X[:, 0],  X[:, 1], X[:, 2], color='red', marker='+', label='Image Points')
+        ax.scatter(Y[:, 0],  Y[:, 1], Y[:, 2], color='blue', marker='.', label='Tracker Points')
+        self.canvas.draw()
 
     def cancel_reg(self):
         self.is_canceled = True

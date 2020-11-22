@@ -296,17 +296,17 @@ class MainWindow(QMainWindow):
                     self.trackerRawCoords_ref.append(ref_mat) 
                     self.trackerRawCoords_tool.append(tool_mat) 
 
-                if (self.patient_cls.XyzToRas != []):
-                    # refcoords = np.swapaxes(refcoords, 0, 2)
-                    # refcoords = np.swapaxes(ref_mat, 0, 1)
-                    # toolcoords = np.swapaxes(toolcoords, 0, 2)
-                    # toolcoords = np.swapaxes(tool_mat, 0, 1)
-                    self.registered_tool = self.apply_registration(tool_mat, ref_mat)
-                    # TODO: check this out!
-                    # registered_tool = np.squeeze(np.matmul(self.patient_cls.XyzToRas, registered_tool))
+                # if (self.patient_cls.XyzToRas != []):
+                    # # refcoords = np.swapaxes(refcoords, 0, 2)
+                    # # refcoords = np.swapaxes(ref_mat, 0, 1)
+                    # # toolcoords = np.swapaxes(toolcoords, 0, 2)
+                    # # toolcoords = np.swapaxes(tool_mat, 0, 1)
+                    # self.registered_tool = self.apply_registration(tool_mat, ref_mat)
+                    # # registered_tool = np.squeeze(np.matmul(self.patient_cls.XyzToRas, registered_tool))
+                    # self.show_tool_on_views(self.registered_tool)
 
-                    self.show_tool_on_views(self.registered_tool)
-
+                self.registered_tool = self.apply_registration(tool_mat, ref_mat)
+                self.show_tool_on_views(self.registered_tool)
                 self.toolsWindow.setData(ref_mat, tool_mat)
 
             time.sleep(0.03)
@@ -541,11 +541,16 @@ class MainWindow(QMainWindow):
         # tool2ref = inv(inv(refMat) * toolMat)
         # registeredTool = inv(regMat) * tool2ref
 
-        regMat_inv = np.linalg.inv(self.regMat)
+        # regMat_inv = np.linalg.inv(self.regMat)
+        reg = np.zeros_like(toolMat)
         refMat_inv = np.linalg.inv(refMat)
         tool2ref = np.squeeze(np.matmul(refMat_inv, toolMat))
-        reg = np.squeeze(np.matmul(regMat_inv, tool2ref))
-        # reg = np.squeeze(np.matmul(self.patient_cls.XyzToRas, reg))
+        pt_tracker = self.coord2points(tool2ref)
+        reg[0:3,3] = np.dot(pt_tracker, self.regMat[0:3,0:3])+self.regMat[:3,3]
+        # reg[0:3,3] = self.s * np.dot(pt_tracker, self.R) + self.t
+        reg[0:3,0:3] = tool2ref[0:3,0:3]
+        # reg = np.squeeze(np.matmul(regMat_inv, tool2ref))
+        # # reg = np.squeeze(np.matmul(self.patient_cls.XyzToRas, reg))
         return reg
 
     def read_points(self, filepath=None):
@@ -717,35 +722,42 @@ class MainWindow(QMainWindow):
         else:
             self.remove_centerline()
 
+    def coord2points(self, coords):
+        if coords.shape == (4,4):
+            points = coords[:,3][:-1]
+        else:
+            numPoints = coords.shape[-1]
+            # numPoints = len(coords)
+            points = np.zeros([numPoints, 3])
+            for i in range(numPoints):
+                points[i,:] = coords[:,:,i][:,3][:-1]
+        return points
+
     def show_hide_tracker_centerline(self):
         if self.ui.checkBox_showTrackerCenterline.isChecked():
             self.registered_points = np.zeros_like(np.array(self.tracker_cls.centerline))
-            # self.registered_points = np.swapaxes(self.registered_points, 0, 2)
-            regMat_inv = np.linalg.inv(self.regMat)
             numPoints = np.array(self.tracker_cls.centerline).shape[-1]
-            pt_tracker = np.zeros([numPoints, 3], dtype='float')
+            pt_tracker = self.coord2points(self.tracker_cls.centerline)
+            # reg = self.s * np.dot(pt_tracker, self.R) + self.t
+            reg = np.dot(pt_tracker, self.regMat[0:3,0:3])+self.regMat[:3,3]
             # for ref, tool in zip(self.refCoords, self.toolCoords):
             for ii in range(numPoints):
-                self.tracker_cls.centerline[0:3,0:3,ii] = self.patient_cls.centerline[0:3,0:3,0]
-                reg = np.squeeze(np.matmul(regMat_inv, self.tracker_cls.centerline[:,:,ii]))
-                # reg_aligned = np.squeeze(np.matmul(self.patient_cls.XyzToRas, reg))
-                self.registered_points[:,:,ii] = reg
-                self.registered_points[0:3,0:3,ii] = self.patient_cls.centerline[0:3,0:3,0]
+                self.registered_points[0:3,3,ii] = reg[ii]
             self.draw_points(self.registered_points)
-
-
             # self.draw_points(self.tracker_cls.centerline)
         else:
             self.remove_points()
 
     def register_centerlines(self):
-        # TODO: registration
         from ui.UiWindows import RegWindow
         regWindow = RegWindow(self)
         regWindow.setData(self.patient_cls.centerline, self.tracker_cls.centerline)
         res = regWindow.exec()
         if (res == QDialog.Accepted) and (np.array(regWindow.reg_mat).any()):
             self.regMat = regWindow.reg_mat
+            # self.R = regWindow.R
+            # self.t = regWindow.t
+            # self.s = regWindow.scale
             print(self.regMat)
             self.save_regmat()
             self.is_registered = True
