@@ -310,7 +310,7 @@ color: rgb(157, 205, 216);</string>
            <enum>QTabWidget::Rounded</enum>
           </property>
           <property name="currentIndex">
-           <number>3</number>
+           <number>2</number>
           </property>
           <property name="iconSize">
            <size>
@@ -1787,12 +1787,66 @@ border-color: rgb(255, 78, 81);</string>
                  </layout>
                 </widget>
                </item>
+               <item>
+                <widget class="QToolButton" name="btn_regMat">
+                 <property name="enabled">
+                  <bool>true</bool>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>10</pointsize>
+                   <kerning>false</kerning>
+                  </font>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="layoutDirection">
+                  <enum>Qt::LeftToRight</enum>
+                 </property>
+                 <property name="autoFillBackground">
+                  <bool>false</bool>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">background-color: rgb(65, 65, 65);</string>
+                 </property>
+                 <property name="text">
+                  <string>Registration Matrix ...</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="resources.qrc">
+                   <normaloff>:/icon/icons/matrix.png</normaloff>:/icon/icons/matrix.png</iconset>
+                 </property>
+                 <property name="iconSize">
+                  <size>
+                   <width>50</width>
+                   <height>50</height>
+                  </size>
+                 </property>
+                 <property name="checkable">
+                  <bool>false</bool>
+                 </property>
+                 <property name="toolButtonStyle">
+                  <enum>Qt::ToolButtonTextBesideIcon</enum>
+                 </property>
+                 <property name="autoRaise">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
               </layout>
               <zorder>frame_imageCenterline</zorder>
               <zorder>frame_trackerCenterline</zorder>
               <zorder>label_7</zorder>
               <zorder>label_8</zorder>
               <zorder>frame</zorder>
+              <zorder>btn_regMat</zorder>
              </widget>
             </item>
             <item>
@@ -1959,6 +2013,19 @@ alternate-background-color: rgb(85, 255, 127);</string>
                </item>
               </layout>
              </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_4">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
             </item>
             <item>
              <widget class="QGroupBox" name="groupBox_offline">
@@ -2352,59 +2419,6 @@ alternate-background-color: rgb(85, 255, 127);</string>
                </size>
               </property>
              </spacer>
-            </item>
-            <item>
-             <widget class="QToolButton" name="btn_regMat">
-              <property name="enabled">
-               <bool>true</bool>
-              </property>
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-                <kerning>false</kerning>
-               </font>
-              </property>
-              <property name="cursor">
-               <cursorShape>PointingHandCursor</cursorShape>
-              </property>
-              <property name="layoutDirection">
-               <enum>Qt::LeftToRight</enum>
-              </property>
-              <property name="autoFillBackground">
-               <bool>false</bool>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">background-color: rgb(65, 65, 65);</string>
-              </property>
-              <property name="text">
-               <string>Registration Matrix ...</string>
-              </property>
-              <property name="icon">
-               <iconset resource="resources.qrc">
-                <normaloff>:/icon/icons/matrix.png</normaloff>:/icon/icons/matrix.png</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>50</width>
-                <height>50</height>
-               </size>
-              </property>
-              <property name="checkable">
-               <bool>false</bool>
-              </property>
-              <property name="toolButtonStyle">
-               <enum>Qt::ToolButtonTextBesideIcon</enum>
-              </property>
-              <property name="autoRaise">
-               <bool>true</bool>
-              </property>
-             </widget>
             </item>
            </layout>
           </widget>
@@ -2860,7 +2874,26 @@ alternate-background-color: rgb(85, 255, 127);</string>
             <property name="lineWidth">
              <number>0</number>
             </property>
-            <layout class="QVBoxLayout" name="verticalLayout_10"/>
+            <layout class="QVBoxLayout" name="verticalLayout_10">
+             <item>
+              <widget class="QLabel" name="label_bronchoscopeStatus">
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">color: rgb(255, 145, 71);</string>
+               </property>
+               <property name="text">
+                <string>Ø Bronchoscope is Not Available Ø</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
           <item>

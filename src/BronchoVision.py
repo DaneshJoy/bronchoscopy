@@ -414,6 +414,7 @@ class MainWindow(QMainWindow):
         self.vtk_widget_3D.show_image(self.patient_cls.reoriented_image)
         self.vtk_widget_3D_2.show_image(self.patient_cls.reoriented_image)
         self.vtk_widget_2D.show_image(self.patient_cls.reoriented_image, self.patient_cls.dims, self.patient_cls.spacing, self.patient_cls.origin)
+        self.ui.label_bronchoscopeStatus.show()
 
     def set_ui_elements_enabled(self, isEnabled):
         self.ui.groupBox_Viewports.setEnabled(isEnabled)
@@ -671,16 +672,24 @@ class MainWindow(QMainWindow):
             numPoints = self.tool_coords.shape[-1]
 
             if (self.ref_coords == []):
-                self.registered_points = self.tool_coords
-                regMat_inv = np.linalg.inv(self.regMat)
-                for i in range(numPoints):
-                    self.registered_points[:,:,i] = np.squeeze(np.matmul(regMat_inv, self.registered_points[:,:,i] ))
-                    self.registered_points[:,:,i] = np.squeeze(np.matmul(self.patient_cls.XyzToRas, self.registered_points[:,:,i]))
-                # self.registered_points = np.swapaxes(self.toolCoords, 1, 2)
-                # self.registered_pointsregistered_points = np.swapaxes(self.registered_points, 0, 2)
+                self.registered_points = np.zeros_like(np.array(self.tool_coords))
+                pt_tracker = self.coord2points(self.tool_coords)
+                # reg = self.s * np.dot(pt_tracker, self.R) + self.t
+                reg = np.dot(pt_tracker, self.regMat[0:3,0:3])+self.regMat[:3,3]
+                # for ref, tool in zip(self.refCoords, self.toolCoords):
+                for ii in range(numPoints):
+                    self.registered_points[0:3,3,ii] = reg[ii]
+                    self.registered_points[0:3,0:3,ii] = self.tool_coords[0:3,0:3,ii]
+
+                # self.registered_points = self.tool_coords
+                # regMat_inv = np.linalg.inv(self.regMat)
+                # for i in range(numPoints):
+                #     self.registered_points[:,:,i] = np.squeeze(np.matmul(regMat_inv, self.registered_points[:,:,i] ))
+                #     # self.registered_points[:,:,i] = np.squeeze(np.matmul(self.patient_cls.XyzToRas, self.registered_points[:,:,i]))
+                # # self.registered_points = np.swapaxes(self.toolCoords, 1, 2)
+                # # self.registered_pointsregistered_points = np.swapaxes(self.registered_points, 0, 2)
 
             # self.vtk_widget_3D.register(pt_tracker)
-            numPoints = self.registered_points.shape[-1]
 
             # # Flip/Rotate points to match the orientation of the image
             # for i in range(numPoints):
@@ -735,15 +744,15 @@ class MainWindow(QMainWindow):
 
     def show_hide_tracker_centerline(self):
         if self.ui.checkBox_showTrackerCenterline.isChecked():
-            self.registered_points = np.zeros_like(np.array(self.tracker_cls.centerline))
+            self.registered_centerline = np.zeros_like(np.array(self.tracker_cls.centerline))
             numPoints = np.array(self.tracker_cls.centerline).shape[-1]
             pt_tracker = self.coord2points(self.tracker_cls.centerline)
             # reg = self.s * np.dot(pt_tracker, self.R) + self.t
             reg = np.dot(pt_tracker, self.regMat[0:3,0:3])+self.regMat[:3,3]
             # for ref, tool in zip(self.refCoords, self.toolCoords):
             for ii in range(numPoints):
-                self.registered_points[0:3,3,ii] = reg[ii]
-            self.draw_points(self.registered_points)
+                self.registered_centerline[0:3,3,ii] = reg[ii]
+            self.draw_points(self.registered_centerline)
             # self.draw_points(self.tracker_cls.centerline)
         else:
             self.remove_points()
@@ -959,7 +968,10 @@ class MainWindow(QMainWindow):
         self.ui.checkBox_showPoints.setEnabled(False)
         self.reset_viewports()
         self.remove_points()
+        self.vtk_widget_3D_2.remove_cross()
+        self.vtk_widget_2D.remove_cross()
         self.registered_points = []
+        self.registered_centerline = []
         self.ref_coords = []
         self.tool_coords == []
 
@@ -1029,7 +1041,8 @@ class MainWindow(QMainWindow):
         self.ui.checkBox_showImageCenterline.hide()
         self.ui.checkBox_showTrackerCenterline.hide()
         self.ui.toolBar.hide()
-        
+        self.ui.label_bronchoscopeStatus.hide()
+
         self.ui.tabWidget.setCurrentIndex(0)
 
         # Messed up! only for this phantom image!

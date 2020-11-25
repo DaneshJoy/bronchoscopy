@@ -21,7 +21,7 @@
 
 3. **Run the application**
     ```
-    > run.bat
+    > src\run.bat
     ```
 --------------
 

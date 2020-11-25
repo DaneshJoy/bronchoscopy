@@ -139,14 +139,14 @@ class RegMatWindow(QDialog):
         self.setup()
     
     def setData(self, regMat):
-        for i in range(4):
+        for i in range(3):
             for j in range(4):
                 newitem = QTableWidgetItem(str(regMat[i, j].round(3)))
                 self.ui.table_regMat.setItem(i, j, newitem)
 
     def getData(self):
-        regMat_new = np.zeros([4, 4], dtype='float')
-        for i in range(4):
+        regMat_new = np.zeros([3, 4], dtype='float')
+        for i in range(3):
             for j in range(4):
                 regMat_new[i, j] = float(self.ui.table_regMat.takeItem(i, j).text())
         return regMat_new
@@ -155,6 +155,7 @@ class RegMatWindow(QDialog):
         self.ui = RegMatWin.Ui_RegMatWin()
         self.ui.setupUi(self)
 
+from pylab import *
 class RegWindow(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -166,6 +167,27 @@ class RegWindow(QDialog):
     def setData(self, image_coords, tracker_coords):
         self.target_coords = image_coords
         self.source_coords = tracker_coords
+        self.axes1 = self.fig.add_subplot(121, projection='3d')
+        self.X = self.coord2points(self.target_coords)
+        self.Y = self.coord2points(self.source_coords)
+
+        self.vis_one(self.X, title='Image Points', color='red', marker='+', ax=self.axes1)
+        self.axes2 = self.fig.add_subplot(122, projection='3d')
+        self.vis_one(self.Y, title='Tracker Points', color='blue', marker='.', ax=self.axes2)
+
+        # draw borders around subplots
+        self.rect1 = plt.Rectangle(
+            # (lower-left corner), width, height
+            (0.02, 0.02), 0.48, 0.97, fill=False, color="k", lw=1, 
+            zorder=1000, transform=self.fig.transFigure, figure=self.fig
+        )
+        self.rect2 = plt.Rectangle(
+            # (lower-left corner), width, height
+            (0.51, 0.02), 0.47, 0.97, fill=False, color="k", lw=1, 
+            zorder=1000, transform=self.fig.transFigure, figure=self.fig
+        )
+        self.fig.patches.extend([self.rect1, self.rect2])
+        self.fig.tight_layout() 
 
     def coord2points(self, coords):
         numPoints = coords.shape[-1]
@@ -187,16 +209,21 @@ class RegWindow(QDialog):
         vbox.addWidget(self.canvas)
         self.ui.frame_main.setLayout(vbox)
 
-        self.axes = self.fig.add_subplot(111, projection='3d')
-        # Create the navigation toolbar, tied to the canvas
+        # self.axes = self.fig.add_subplot(111, projection='3d')
         
-    def start(self):      
+    def start(self): 
+        self.fig.delaxes(self.axes1)
+        self.fig.delaxes(self.axes2)
+        self.fig.patches = []
+        self.axes = self.fig.add_subplot(111, projection='3d') 
+        self.fig.tight_layout()    
         self.ui.btn_start.hide()
+        self.ui.buttonBox.show()
         self.ui.progressBar.show()  
         X = self.coord2points(self.target_coords)
         Y = self.coord2points(self.source_coords)
         callback = partial(self.visualize, ax=self.axes)
-        reg = RigidRegistration(**{'X': X, 'Y': Y})
+        reg = RigidRegistration(**{'X': self.X, 'Y': self.Y})
         reg.register(callback)
         
         self.ui.progressBar.setMaximum(self.steps)
@@ -220,9 +247,9 @@ class RegWindow(QDialog):
 
 
         # # regMat_inv = np.linalg.inv(self.reg_mat)
-        # # Y_reg = np.squeeze(np.matmul(regMat_inv, Y))
-        # Y_reg = reg.s * np.dot(Y, reg.R) + reg.t
-        # self.vis(X, Y_reg, ax=self.axes)
+        # # Y_reg = np.squeeze(np.matmul(regMat_inv, self.Y))
+        # Y_reg = reg.s * np.dot(self.Y, reg.R) + reg.t
+        # self.vis(self.Y, Y_reg, ax=self.axes)
 
 
     def visualize(self, iteration, error, X, Y, ax):
@@ -232,7 +259,7 @@ class RegWindow(QDialog):
         # plt.cla()
         ax.scatter(X[:, 0],  X[:, 1], X[:, 2], color='red', marker='+', label='Image Points')
         ax.scatter(Y[:, 0],  Y[:, 1], Y[:, 2], color='blue', marker='.', label='Tracker Points')
-        ax.text2D(0.87, 0.92, 'Iteration: {:d}\nQ: {:06.4f}'.format(
+        ax.text2D(0.87, 0.92, 'Iteration: {:d}\nErr: {:06.4f}'.format(
             iteration, error), horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, fontsize='x-large')
         ax.legend(loc='upper left', fontsize='x-large')
         self.canvas.draw()
@@ -245,7 +272,13 @@ class RegWindow(QDialog):
         QApplication.processEvents()
         # plt.pause(0.003)
     
-    def vis(self, X, Y, ax):
+    def vis_one(self, X, title, color, marker, ax):
+        ax.cla()
+        ax.scatter(X[:, 0], X[:, 1], X[:, 2], color=color, marker=marker)
+        ax.set_title(title)
+        self.canvas.draw()
+
+    def vis_two(self, X, Y, ax):
         ax.cla()
         ax.scatter(X[:, 0],  X[:, 1], X[:, 2], color='red', marker='+', label='Image Points')
         ax.scatter(Y[:, 0],  Y[:, 1], Y[:, 2], color='blue', marker='.', label='Tracker Points')
@@ -261,6 +294,7 @@ class RegWindow(QDialog):
         self.ui.btn_start.clicked.connect(self.start)
         self.ui.buttonBox.rejected.connect(self.cancel_reg)
         self.ui.progressBar.hide()
+        self.ui.buttonBox.hide()
 
 
 class ToolsWindow(QDialog):
