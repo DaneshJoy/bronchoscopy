@@ -93,6 +93,7 @@ class QVTKViewer(QFrame):
         pass
 
     def remove_image(self):
+        self.axes.EnabledOff()
         self.ren.RemoveAllViewProps()
         self.ren.ResetCamera()
         self.cross = None

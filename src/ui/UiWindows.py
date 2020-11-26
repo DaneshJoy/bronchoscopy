@@ -108,6 +108,10 @@ class NewPatientWindow(QDialog):
         patient_dir = os.path.join(self.patients_dir , self._name)
         if (not os.path.exists(patient_dir)):
             os.mkdir(patient_dir)
+        
+        XyzToRas_file = os.path.join(self.patients_dir , self._name, 'XyzToRasMatrix.npy')
+        np.save(XyzToRas_file, self.XyzToRas)
+        
         myWriter = vmtkscripts.vmtkImageWriter()
         myWriter.Image = self.ImageData
         myWriter.OutputFileName = os.path.join(self.patients_dir , self._name, self._imageName + '.nii.gz')
@@ -115,8 +119,6 @@ class NewPatientWindow(QDialog):
         myWriter.ApplyTransform = 1
         myWriter.Execute()
 
-        XyzToRas_file = os.path.join(self.patients_dir , self._name, 'XyzToRasMatrix.npy')
-        np.save(XyzToRas_file, self.XyzToRas)
         
         QApplication.restoreOverrideCursor()
 

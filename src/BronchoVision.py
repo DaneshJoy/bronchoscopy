@@ -54,6 +54,8 @@ class MainWindow(QMainWindow):
         self.cam_pos = None
         self.exitting = False
 
+        self.new_patient = False
+
         self.is_segmented = False
         self.is_image_cl = False
         self.is_tracker_cl = False
@@ -90,11 +92,13 @@ class MainWindow(QMainWindow):
         if self.patient_cls.new_patient():
             index = self.ui.tableWidget_Patients.model().index(self.ui.tableWidget_Patients.rowCount()-1,0)
             self.curr_patient = self.ui.tableWidget_Patients.model().data(index)
+            self.new_patient = True
             self.load_patient()
+            self.new_patient = False
 
     def load_patient(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        if not self.curr_patient:
+        if not self.new_patient:
             index = self.ui.tableWidget_Patients.selectionModel().selectedRows()[0]
             self.curr_patient = self.ui.tableWidget_Patients.model().data(index)
         try:
@@ -431,6 +435,8 @@ class MainWindow(QMainWindow):
         self.vtk_widget_3D.remove_image()
         self.vtk_widget_3D_2.remove_image()
         self.vtk_widget_2D.remove_image()
+        self.hide_subPanels()
+        self.ui.label_bronchoscopeStatus.hide()
         
     def countdown_splash(self):
         splash_pix = QPixmap('ui/icons/5.png')

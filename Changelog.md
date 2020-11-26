@@ -12,6 +12,7 @@
 - **Fixes**
         - Remove the cross mark, after resetting Virtual mode
         - Show correct and registered points, loaded in tracker offline section
+        - Fixed errors in New/Load/Delete Patients
 
 ---
 
