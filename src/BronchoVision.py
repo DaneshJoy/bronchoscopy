@@ -11,6 +11,7 @@ import threading
 import time
 
 import numpy as np
+from scipy.misc.common import face
 import vtk
 from PyQt5 import QtCore, QtWidgets, uic
 from PyQt5.QtCore import Qt
@@ -168,7 +169,21 @@ class MainWindow(QMainWindow):
     
     def import_patient(self):
         # TODO: importPatient
-        QMessageBox.information(None, 'Comming Soon...', f'Not Implemented Yet !')
+        # QMessageBox.information(None, 'Comming Soon...', f'Not Implemented Yet !')
+        self.ui.stackedWidget.setCurrentIndex((self.ui.stackedWidget.currentIndex()+1)%3)
+        if self.ui.stackedWidget.currentIndex() == 1:
+            self.remove_images_from_viewports()
+            self.vtk_widget_3D.show_image(self.patient_cls.reoriented_image)
+            self.vtk_widget_3D_2.show_image(self.patient_cls.reoriented_image)
+            self.vtk_widget_3D_2.ren.SetActiveCamera(self.vtk_widget_3D_max.ren.GetActiveCamera())
+            self.vtk_widget_2D.show_image(self.patient_cls.reoriented_image, self.patient_cls.dims, self.patient_cls.spacing, self.patient_cls.origin)
+        elif self.ui.stackedWidget.currentIndex() == 2:
+            self.remove_images_from_viewports()
+            self.vtk_widget_3D_max.show_image(self.patient_cls.reoriented_image)
+            self.vtk_widget_3D_max.ren.SetActiveCamera(self.vtk_widget_3D_2.ren.GetActiveCamera())
+            size = self.ui.frame_Viewport_max.size()
+            self.vtk_widget_3D_max.ren.GetRenderWindow().SetSize(size.width(),size.height())
+            # self.vtk_widget_3D_max.interactor.ReInitialize()
 
     '''
     >>> ----------------------------------------
@@ -401,6 +416,7 @@ class MainWindow(QMainWindow):
     >>> ----------------------------------------
     '''
     def show_images(self):
+        self.ui.stackedWidget.setCurrentIndex(1)
         self.remove_images_from_viewports()
 
         flipXFilter = vtk.vtkImageFlip()
@@ -434,6 +450,7 @@ class MainWindow(QMainWindow):
     def remove_images_from_viewports(self):
         self.vtk_widget_3D.remove_image()
         self.vtk_widget_3D_2.remove_image()
+        self.vtk_widget_3D_max.remove_image()
         self.vtk_widget_2D.remove_image()
         self.hide_subPanels()
         self.ui.label_bronchoscopeStatus.hide()
@@ -1035,8 +1052,11 @@ class MainWindow(QMainWindow):
         self.ui.btn_loadtrackerCenterline.clicked.connect(self.load_tracker_centerline)
         self.ui.btn_registerCenterlines.clicked.connect(self.register_centerlines)
 
-        self.vtk_widget_3D = QVtkViewer3D(self.ui.vtk_panel_3D_1, size, 'Virtual')
-        self.vtk_widget_3D_2 = QVtkViewer3D(self.ui.vtk_panel_3D_2, size, 'Normal')
+        self.ui.stackedWidget.setCurrentIndex(0)
+
+        self.vtk_widget_3D = QVtkViewer3D(self.ui.vtk_panel_3D_1, size, 'Virtual', False)
+        self.vtk_widget_3D_2 = QVtkViewer3D(self.ui.vtk_panel_3D_2, size, 'Normal', False)
+        self.vtk_widget_3D_max = QVtkViewer3D(self.ui.vtk_panel_3D_max, size, '3D', True)
 
         self.toolsWindow = ToolsWindow(self)
         self.regMatWindow = RegMatWindow(self)
@@ -1063,7 +1083,7 @@ class MainWindow(QMainWindow):
         viewType = phantom_view
 
         # viewType = self.ui.comboBox_2DView.currentText()
-        self.vtk_widget_2D = QVtkViewer2D(self.ui.vtk_panel_2D, size, viewType)
+        self.vtk_widget_2D = QVtkViewer2D(self.ui.vtk_panel_2D, size, viewType, False)
         self.hide_subPanels()
         
 

@@ -44,7 +44,7 @@ class MyInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
 '''
 
 class QVTKViewer(QFrame):
-    def __init__(self, panel, size, viewType):
+    def __init__(self, panel, size, viewType, isMaximized):
         super().__init__(panel)
 
         QSurfaceFormat.defaultFormat().setProfile(QSurfaceFormat.CompatibilityProfile)
@@ -61,8 +61,12 @@ class QVTKViewer(QFrame):
         self.layout.addWidget(self.interactor)
         # self.layout.setStretchFactor(self.interactor,1)
         self.layout.setContentsMargins(0, 0, 0, 0)
-        self.width = (size.width()) // 2 - 100
-        self.height = (size.height()) // 2 - 50
+        if isMaximized:
+            self.width = size.width()
+            self.height = size.height()
+        else:
+            self.width = (size.width()) // 2 - 100
+            self.height = (size.height()) // 2 - 50
         self.interactor.setMinimumSize(self.width, self.height)
         self.interactor.setMaximumSize(self.width, self.height)
         self.setLayout(self.layout)

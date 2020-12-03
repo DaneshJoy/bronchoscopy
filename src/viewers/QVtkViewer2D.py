@@ -2,8 +2,8 @@ from viewers.QVtkViewer import QVTKViewer
 import vtk
 
 class QVtkViewer2D(QVTKViewer):
-    def __init__(self, panel, size, viewType):
-        super().__init__(panel, size, viewType)
+    def __init__(self, panel, size, viewType, isMaximized):
+        super().__init__(panel, size, viewType, isMaximized)
         self.reslice = vtk.vtkImageReslice()
     
     def show_image(self, reader, dims, spacing, origin):

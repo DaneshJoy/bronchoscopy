@@ -5,8 +5,8 @@ import vtk
 import numpy as np
 
 class QVtkViewer3D(QVTKViewer):
-    def __init__(self, panel, size, viewType):
-        super().__init__(panel, size, viewType)
+    def __init__(self, panel, size, viewType, isMaximized):
+        super().__init__(panel, size, viewType, isMaximized)
         self.startPoint = None
         self.endPoint = None
 
@@ -41,7 +41,7 @@ class QVtkViewer3D(QVTKViewer):
         self.surface.SetMapper(surfaceMapper)
         # self.surface.GetProperty().SetDiffuseColor(0.8, 0.6, 0.2)
         self.surface.GetProperty().SetAmbient(0.1)
-        if self.viewType == 'Normal':
+        if self.viewType == 'Normal' or self.viewType == '3D':
             self.surface.GetProperty().SetOpacity(0.3)
             self.surface.GetProperty().SetSpecular(0.2)
         else:
@@ -115,7 +115,6 @@ class QVtkViewer3D(QVTKViewer):
 
         self.ren.AddActor(self.surface)
         # self.ren.AddActor(volume)
-
         self.ren.SetActiveCamera(cam)
         self.ren.ResetCamera()
         cam.Zoom(1.5)
