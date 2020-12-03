@@ -44,4 +44,5 @@ class Centerline():
             p_aligned = np.squeeze(np.matmul(XyzToRas, p_tmp))
             center_points[:,:,numPoints-i-1] = p_tmp
 
-        np.save(os.path.join(self.patient_dir, 'phantom_centerline.npy'), center_points)
+        return center_points
+        # np.save(os.path.join(self.patient_dir, 'phantom_centerline.npy'), center_points)

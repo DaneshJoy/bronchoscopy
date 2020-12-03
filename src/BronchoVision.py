@@ -993,6 +993,7 @@ class MainWindow(QMainWindow):
             self.ui.checkBox_showImageCenterline.setChecked(True)
             if self.is_image_cl and self.is_tracker_cl:
                     self.ui.btn_registerCenterlines.setEnabled(True)
+            # np.save(os.path.join(self.patient_dir, 'phantom_centerline.npy'), self.patient_cls.centerline)
             self.update_patient()
 
     def setup(self, size):
