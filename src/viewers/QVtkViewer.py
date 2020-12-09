@@ -52,7 +52,8 @@ class QVTKViewer(QFrame):
         
         self.viewType = viewType
         self.colors = vtk.vtkNamedColors()
-        self.colors.SetColor("SkinColor", [204, 153, 51, 255]) # rgba
+        # self.colors.SetColor("SkinColor", [204, 153, 51, 255]) # rgba
+        self.colors.SetColor("SkinColor", [220, 80, 90, 255]) # rgba
         self.colors.SetColor("BkgColor", [51, 77, 102, 255])
         self.axes = vtk.vtkOrientationMarkerWidget()
         # Make the actual QtWidget a child so that it can be reparented

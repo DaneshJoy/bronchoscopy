@@ -195,7 +195,7 @@ class MainWindow(QMainWindow):
         if not self.tracker_cls.tracker_connected:
             splash_pix = QPixmap('ui/icons/connecting.png')
             splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
-            x_pos = self.geometry().x()+self.ui.frame_Viewports.x()+int((self.ui.vtk_panel_endoscope.width()-splash.width())/2)+20
+            x_pos = self.geometry().x()+self.ui.stackedWidget.x()+int((self.ui.vtk_panel_endoscope.width()-splash.width())/2)+20
             y_pos = self.geometry().y()+self.ui.vtk_panel_3D_1.height()+self.ui.SubPanel_3D.height()+int((self.ui.vtk_panel_endoscope.height()-splash.height())/2)+20
             splash.move(x_pos, y_pos)
             splash.show()
@@ -258,10 +258,10 @@ class MainWindow(QMainWindow):
         splash_pix_tool = QPixmap('ui/icons/tool_not_detected.png')
         splash_tool = QSplashScreen(splash_pix_tool, Qt.WindowStaysOnTopHint)
 
-        x_pos = self.geometry().x()+self.ui.frame_Viewports.x()+int((self.ui.vtk_panel_endoscope.width()-splash_ref.width())/2)+20
+        x_pos = self.geometry().x()+self.ui.stackedWidget.x()+int((self.ui.vtk_panel_endoscope.width()-splash_ref.width())/2)+20
         y_pos = self.geometry().y()+self.ui.vtk_panel_3D_1.height()+self.ui.SubPanel_3D.height()+int((self.ui.vtk_panel_endoscope.height()-splash_ref.height())/2)+20
         splash_ref.move(x_pos, y_pos-int(splash_tool.height()/2))
-        x_pos = self.geometry().x()+self.ui.frame_Viewports.x()+int((self.ui.vtk_panel_endoscope.width()-splash_tool.width())/2)+20
+        x_pos = self.geometry().x()+self.ui.stackedWidget.x()+int((self.ui.vtk_panel_endoscope.width()-splash_tool.width())/2)+20
         y_pos = self.geometry().y()+self.ui.vtk_panel_3D_1.height()+self.ui.SubPanel_3D.height()+int((self.ui.vtk_panel_endoscope.height()-splash_tool.height())/2)+20
         splash_tool.move(x_pos, y_pos+int(splash_ref.height()/2))
 
@@ -430,6 +430,7 @@ class MainWindow(QMainWindow):
         flipYFilter.Update()
 
         self.patient_cls.reoriented_image = flipYFilter
+        # self.patient_cls.reoriented_image = self.patient_cls.imgReader
 
         self.vtk_widget_3D.show_image(self.patient_cls.reoriented_image)
         self.vtk_widget_3D_2.show_image(self.patient_cls.reoriented_image)
@@ -458,7 +459,7 @@ class MainWindow(QMainWindow):
     def countdown_splash(self):
         splash_pix = QPixmap('ui/icons/5.png')
         splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
-        x_pos = self.geometry().x()+self.ui.frame_Viewports.x()+int((self.ui.vtk_panel_endoscope.width()-splash.width())/2)+20
+        x_pos = self.geometry().x()+self.ui.self.geometry().x()+int((self.ui.vtk_panel_endoscope.width()-splash.width())/2)+20
         y_pos = self.geometry().y()+self.ui.vtk_panel_3D_1.height()+self.ui.SubPanel_3D.height()+int((self.ui.vtk_panel_endoscope.height()-splash.height())/2)+20
         splash.move(x_pos, y_pos)
         splash.show()
@@ -572,9 +573,10 @@ class MainWindow(QMainWindow):
         pt_tracker = self.coord2points(tool2ref)
         reg[0:3,3] = np.dot(pt_tracker, self.regMat[0:3,0:3])+self.regMat[:3,3]
         # reg[0:3,3] = self.s * np.dot(pt_tracker, self.R) + self.t
-        reg[0:3,0:3] = tool2ref[0:3,0:3]
+        regMat_inv = np.linalg.inv(self.regMat)
+        reg[0:3,0:3] = np.dot(regMat_inv[0:3,0:3], tool2ref[0:3,0:3])
         # reg = np.squeeze(np.matmul(regMat_inv, tool2ref))
-        # # reg = np.squeeze(np.matmul(self.patient_cls.XyzToRas, reg))
+        # reg = np.squeeze(np.matmul(self.patient_cls.XyzToRas, reg))
         return reg
 
     def read_points(self, filepath=None):
