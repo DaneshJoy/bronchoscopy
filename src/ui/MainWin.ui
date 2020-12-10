@@ -2531,7 +2531,7 @@ alternate-background-color: rgb(85, 255, 127);</string>
              <number>2</number>
             </property>
             <item row="1" column="0">
-             <layout class="QVBoxLayout" name="verticalLayout_lowerLeft" stretch="20,1">
+             <layout class="QVBoxLayout" name="verticalLayout_lowerLeft" stretch="0,1">
               <property name="spacing">
                <number>0</number>
               </property>
@@ -2549,18 +2549,24 @@ alternate-background-color: rgb(85, 255, 127);</string>
                   <height>0</height>
                  </size>
                 </property>
-                <property name="font">
-                 <font>
-                  <kerning>false</kerning>
-                 </font>
-                </property>
                 <property name="styleSheet">
                  <string notr="true">background-color: rgb(0, 0, 0);</string>
                 </property>
                 <property name="lineWidth">
                  <number>0</number>
                 </property>
-                <layout class="QVBoxLayout" name="verticalLayout_10">
+                <layout class="QVBoxLayout" name="verticalLayout_10" stretch="20,1">
+                 <item>
+                  <widget class="QLabel" name="label_9">
+                   <property name="styleSheet">
+                    <string notr="true">background-color: rgba(0, 0, 0, 25);
+image: url(:/icon/icons/bronchs_transparent.png);</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
                  <item>
                   <widget class="QLabel" name="label_bronchoscopeStatus">
                    <property name="font">
@@ -2569,7 +2575,8 @@ alternate-background-color: rgb(85, 255, 127);</string>
                     </font>
                    </property>
                    <property name="styleSheet">
-                    <string notr="true">color: rgb(255, 145, 71);</string>
+                    <string notr="true">color: rgb(255, 145, 71);
+background-color: rgb(0, 0, 0);</string>
                    </property>
                    <property name="text">
                     <string>Ø Bronchoscope is Not Available Ø</string>
@@ -2593,10 +2600,10 @@ alternate-background-color: rgb(85, 255, 127);</string>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
-                <property name="baseSize">
+                <property name="maximumSize">
                  <size>
-                  <width>0</width>
-                  <height>0</height>
+                  <width>16777215</width>
+                  <height>30</height>
                  </size>
                 </property>
                 <property name="styleSheet">
@@ -2608,13 +2615,7 @@ alternate-background-color: rgb(85, 255, 127);</string>
                 <property name="frameShadow">
                  <enum>QFrame::Raised</enum>
                 </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_8">
-                 <property name="spacing">
-                  <number>0</number>
-                 </property>
-                 <property name="leftMargin">
-                  <number>0</number>
-                 </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_4">
                  <property name="topMargin">
                   <number>0</number>
                  </property>
@@ -2625,30 +2626,77 @@ alternate-background-color: rgb(85, 255, 127);</string>
                   <number>0</number>
                  </property>
                  <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="2">
-                   <item>
-                    <widget class="QLabel" name="view3_desc">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <pointsize>10</pointsize>
-                       <kerning>false</kerning>
-                      </font>
-                     </property>
-                     <property name="styleSheet">
-                      <string notr="true">color: rgb(157, 205, 216);</string>
-                     </property>
-                     <property name="text">
-                      <string>Bronchoscope</string>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
+                  <widget class="QLabel" name="view3_desc">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>50</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <kerning>false</kerning>
+                    </font>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">color: rgb(157, 205, 216);</string>
+                   </property>
+                   <property name="text">
+                    <string>Bronchoscope</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_7">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>395</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QToolButton" name="btn_maximize_Bronchoscope">
+                   <property name="maximumSize">
+                    <size>
+                     <width>30</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="cursor">
+                    <cursorShape>PointingHandCursor</cursorShape>
+                   </property>
+                   <property name="text">
+                    <string>Maximize View</string>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="resources.qrc">
+                     <normaloff>:/icon/icons/maximize.png</normaloff>:/icon/icons/maximize.png</iconset>
+                   </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>30</width>
+                     <height>30</height>
+                    </size>
+                   </property>
+                   <property name="autoRaise">
+                    <bool>true</bool>
+                   </property>
+                   <property name="arrowType">
+                    <enum>Qt::NoArrow</enum>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </widget>
@@ -2921,16 +2969,10 @@ alternate-background-color: rgb(85, 255, 127);</string>
                 <property name="enabled">
                  <bool>true</bool>
                 </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="baseSize">
+                <property name="maximumSize">
                  <size>
-                  <width>0</width>
-                  <height>0</height>
+                  <width>16777215</width>
+                  <height>30</height>
                  </size>
                 </property>
                 <property name="styleSheet">
@@ -2942,13 +2984,7 @@ alternate-background-color: rgb(85, 255, 127);</string>
                 <property name="frameShadow">
                  <enum>QFrame::Raised</enum>
                 </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_6">
-                 <property name="spacing">
-                  <number>0</number>
-                 </property>
-                 <property name="leftMargin">
-                  <number>0</number>
-                 </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_5">
                  <property name="topMargin">
                   <number>0</number>
                  </property>
@@ -2959,33 +2995,74 @@ alternate-background-color: rgb(85, 255, 127);</string>
                   <number>0</number>
                  </property>
                  <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="2">
-                   <item>
-                    <widget class="QLabel" name="view1_desc">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <pointsize>10</pointsize>
-                       <kerning>false</kerning>
-                      </font>
-                     </property>
-                     <property name="styleSheet">
-                      <string notr="true">color: rgb(157, 205, 216);</string>
-                     </property>
-                     <property name="text">
-                      <string>Virtual</string>
-                     </property>
-                     <property name="alignment">
-                      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
+                  <widget class="QLabel" name="view1_desc">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <kerning>false</kerning>
+                    </font>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">color: rgb(157, 205, 216);</string>
+                   </property>
+                   <property name="text">
+                    <string>Virtual</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_3">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>450</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QToolButton" name="btn_maximize_3D">
+                   <property name="maximumSize">
+                    <size>
+                     <width>30</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="cursor">
+                    <cursorShape>PointingHandCursor</cursorShape>
+                   </property>
+                   <property name="text">
+                    <string>Maximize View</string>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="resources.qrc">
+                     <normaloff>:/icon/icons/maximize.png</normaloff>:/icon/icons/maximize.png</iconset>
+                   </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>30</width>
+                     <height>30</height>
+                    </size>
+                   </property>
+                   <property name="autoRaise">
+                    <bool>true</bool>
+                   </property>
+                   <property name="arrowType">
+                    <enum>Qt::NoArrow</enum>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </widget>
@@ -3035,10 +3112,10 @@ alternate-background-color: rgb(85, 255, 127);</string>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
-                <property name="baseSize">
+                <property name="maximumSize">
                  <size>
-                  <width>0</width>
-                  <height>0</height>
+                  <width>16777215</width>
+                  <height>30</height>
                  </size>
                 </property>
                 <property name="styleSheet">
@@ -3050,13 +3127,7 @@ alternate-background-color: rgb(85, 255, 127);</string>
                 <property name="frameShadow">
                  <enum>QFrame::Raised</enum>
                 </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_9">
-                 <property name="spacing">
-                  <number>0</number>
-                 </property>
-                 <property name="leftMargin">
-                  <number>0</number>
-                 </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_3">
                  <property name="topMargin">
                   <number>0</number>
                  </property>
@@ -3067,71 +3138,74 @@ alternate-background-color: rgb(85, 255, 127);</string>
                   <number>0</number>
                  </property>
                  <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="3,2,1">
-                   <item>
-                    <widget class="QSlider" name="Slider_2D">
-                     <property name="autoFillBackground">
-                      <bool>false</bool>
-                     </property>
-                     <property name="styleSheet">
-                      <string notr="true"/>
-                     </property>
-                     <property name="value">
-                      <number>50</number>
-                     </property>
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="sliceNum_sagittal">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <pointsize>10</pointsize>
-                       <kerning>false</kerning>
-                      </font>
-                     </property>
-                     <property name="styleSheet">
-                      <string notr="true">color: rgb(157, 205, 216);</string>
-                     </property>
-                     <property name="text">
-                      <string>50</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="view4_title">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <pointsize>10</pointsize>
-                       <kerning>false</kerning>
-                      </font>
-                     </property>
-                     <property name="styleSheet">
-                      <string notr="true">color: rgb(157, 205, 216);</string>
-                     </property>
-                     <property name="text">
-                      <string>2D</string>
-                     </property>
-                     <property name="alignment">
-                      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
+                  <widget class="QLabel" name="sliceNum_sagittal">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <kerning>false</kerning>
+                    </font>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">color: rgb(157, 205, 216);</string>
+                   </property>
+                   <property name="text">
+                    <string>50</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QSlider" name="Slider_2D">
+                   <property name="autoFillBackground">
+                    <bool>false</bool>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true"/>
+                   </property>
+                   <property name="value">
+                    <number>50</number>
+                   </property>
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QToolButton" name="btn_maximize_2D">
+                   <property name="maximumSize">
+                    <size>
+                     <width>30</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="cursor">
+                    <cursorShape>PointingHandCursor</cursorShape>
+                   </property>
+                   <property name="text">
+                    <string>Maximize View</string>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="resources.qrc">
+                     <normaloff>:/icon/icons/maximize.png</normaloff>:/icon/icons/maximize.png</iconset>
+                   </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>30</width>
+                     <height>30</height>
+                    </size>
+                   </property>
+                   <property name="autoRaise">
+                    <bool>true</bool>
+                   </property>
+                   <property name="arrowType">
+                    <enum>Qt::NoArrow</enum>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </widget>
@@ -3181,14 +3255,11 @@ alternate-background-color: rgb(85, 255, 127);</string>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
-                <property name="baseSize">
+                <property name="maximumSize">
                  <size>
-                  <width>0</width>
-                  <height>0</height>
+                  <width>16777215</width>
+                  <height>30</height>
                  </size>
-                </property>
-                <property name="autoFillBackground">
-                 <bool>false</bool>
                 </property>
                 <property name="styleSheet">
                  <string notr="true">background-color: rgb(0, 0, 0);</string>
@@ -3199,13 +3270,7 @@ alternate-background-color: rgb(85, 255, 127);</string>
                 <property name="frameShadow">
                  <enum>QFrame::Raised</enum>
                 </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_7">
-                 <property name="spacing">
-                  <number>0</number>
-                 </property>
-                 <property name="leftMargin">
-                  <number>0</number>
-                 </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_2">
                  <property name="topMargin">
                   <number>0</number>
                  </property>
@@ -3216,36 +3281,77 @@ alternate-background-color: rgb(85, 255, 127);</string>
                   <number>0</number>
                  </property>
                  <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="2">
-                   <property name="spacing">
-                    <number>6</number>
+                  <widget class="QLabel" name="view2_desc">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
                    </property>
-                   <property name="sizeConstraint">
-                    <enum>QLayout::SetDefaultConstraint</enum>
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>50</height>
+                    </size>
                    </property>
-                   <item>
-                    <widget class="QLabel" name="view2_desc">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <pointsize>10</pointsize>
-                       <kerning>false</kerning>
-                      </font>
-                     </property>
-                     <property name="styleSheet">
-                      <string notr="true">color: rgb(157, 205, 216);</string>
-                     </property>
-                     <property name="text">
-                      <string>Normal</string>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <kerning>false</kerning>
+                    </font>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">color: rgb(157, 205, 216);</string>
+                   </property>
+                   <property name="text">
+                    <string>Normal</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_4">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>384</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QToolButton" name="btn_maximize_3D_2">
+                   <property name="maximumSize">
+                    <size>
+                     <width>30</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="cursor">
+                    <cursorShape>PointingHandCursor</cursorShape>
+                   </property>
+                   <property name="text">
+                    <string>Maximize View</string>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="resources.qrc">
+                     <normaloff>:/icon/icons/maximize.png</normaloff>:/icon/icons/maximize.png</iconset>
+                   </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>30</width>
+                     <height>30</height>
+                    </size>
+                   </property>
+                   <property name="autoRaise">
+                    <bool>true</bool>
+                   </property>
+                   <property name="arrowType">
+                    <enum>Qt::NoArrow</enum>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </widget>

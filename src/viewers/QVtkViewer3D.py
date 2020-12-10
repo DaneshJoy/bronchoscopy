@@ -28,7 +28,7 @@ class QVtkViewer3D(QVTKViewer):
         if self.viewType == 'Virtual':
             self.surfaceExtractor.SetValue(0, -600)
         else:
-            self.surfaceExtractor.SetValue(0, -600)
+            self.surfaceExtractor.SetValue(0, -255)
 
         # Mapper
         surfaceMapper = vtk.vtkOpenGLPolyDataMapper()
@@ -43,13 +43,24 @@ class QVtkViewer3D(QVTKViewer):
         self.surface.GetProperty().SetAmbient(0.1)
         if self.viewType == 'Normal' or self.viewType == '3D':
             self.surface.GetProperty().SetOpacity(0.3)
-            self.surface.GetProperty().SetSpecular(0.2)
+            self.surface.GetProperty().SetSpecular(0.4)
+            self.surface.GetProperty().SetSpecularPower(40)
         else:
-            self.surface.GetProperty().SetSpecular(0.7)
-        self.surface.GetProperty().SetSpecularPower(40)
+            self.surface.GetProperty().SetSpecular(0.4)
+            self.surface.GetProperty().SetSpecularPower(40)
+            self.surface.GetProperty().SetDiffuse(0.6)
+
+            ambientLight = vtk.vtkLight()
+            ambientLight.SetLightTypeToSceneLight()
+            ambientLight.PositionalOff()
+            ambientLight.SetPosition(0,1,1)
+            ambientLight.SetIntensity(0.7)
+            self.ren.AddLight(ambientLight)
+            # self.surface.GetProperty().SetAmbient(0.3)
         # self.surface.GetProperty().SetDiffuseColor(1, .49, .25)
         self.surface.GetProperty().SetDiffuseColor(self.colors.GetColor3d("SkinColor"))
-        self.surface.GetProperty().SetDiffuse(0.7)
+
+ 
 
         # ###### Volume Rendering
         # volume = vtk.vtkVolume()

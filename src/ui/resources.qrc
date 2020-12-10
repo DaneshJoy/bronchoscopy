@@ -3,6 +3,10 @@
     <file>logo/logo_transparent.png</file>
   </qresource>
   <qresource prefix="icon">
+    <file>icons/bronchs_transparent.png</file>
+    <file>icons/bronchs.jpg</file>
+    <file>icons/lungs_small.jpg</file>
+    <file>icons/maximize.png</file>
     <file>icons/3D_vis.png</file>
     <file>icons/register_centerlines.png</file>
     <file>icons/add_patient.png</file>

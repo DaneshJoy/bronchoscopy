@@ -459,7 +459,7 @@ class MainWindow(QMainWindow):
     def countdown_splash(self):
         splash_pix = QPixmap('ui/icons/5.png')
         splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
-        x_pos = self.geometry().x()+self.ui.self.geometry().x()+int((self.ui.vtk_panel_endoscope.width()-splash.width())/2)+20
+        x_pos = self.geometry().x()+self.ui.stackedWidget.geometry().x()+int((self.ui.vtk_panel_endoscope.width()-splash.width())/2)+20
         y_pos = self.geometry().y()+self.ui.vtk_panel_3D_1.height()+self.ui.SubPanel_3D.height()+int((self.ui.vtk_panel_endoscope.height()-splash.height())/2)+20
         splash.move(x_pos, y_pos)
         splash.show()
