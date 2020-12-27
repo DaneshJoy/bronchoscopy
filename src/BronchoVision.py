@@ -600,8 +600,9 @@ class MainWindow(QMainWindow):
         return points
 
     def load_image_centerline(self):
-        self.patient_cls.centerline = self.read_points()
-        if self.patient_cls.centerline != []:
+        tmp_centerline = self.read_points()
+        if tmp_centerline != []:
+            self.patient_cls.centerline = tmp_centerline 
             self.remove_centerline()
             self.ui.checkBox_showImageCenterline.show()
             self.ui.checkBox_showImageCenterline.setChecked(False)
@@ -1005,8 +1006,9 @@ class MainWindow(QMainWindow):
             del self.centerline_cls
         self.centerline_cls = Centerline(self.patient_cls.image_path)
 
-        self.patient_cls.centerline = self.centerline_cls.extract()
-        if self.patient_cls.centerline != []:
+        tmp_centerline = self.centerline_cls.extract()
+        if tmp_centerline != []:
+            self.patient_cls.centerline = tmp_centerline
             self.is_image_cl = True
             self.ui.checkBox_showImageCenterline.show()
             self.ui.checkBox_showImageCenterline.setChecked(True)

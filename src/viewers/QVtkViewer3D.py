@@ -378,8 +378,8 @@ class QVtkViewer3D(QVTKViewer):
         # actor
         self.points = vtk.vtkActor()
         self.points.SetMapper(pmap)
-        self.points.GetProperty().SetPointSize(2)
-        self.points.GetProperty().SetColor(0.5,1,1) # (R,G,B)
+        self.points.GetProperty().SetPointSize(3)
+        self.points.GetProperty().SetColor(0.2,0.5,1) # (R,G,B)
 
         # assign actor to the renderer
         self.ren.AddActor(self.points)
@@ -412,8 +412,8 @@ class QVtkViewer3D(QVTKViewer):
         # actor
         self.centerline = vtk.vtkActor()
         self.centerline.SetMapper(pmap)
-        self.centerline.GetProperty().SetPointSize(2)
-        self.centerline.GetProperty().SetColor(1,0.5,0.5) # (R,G,B)
+        self.centerline.GetProperty().SetPointSize(3)
+        self.centerline.GetProperty().SetColor(0.2,1,0.2) # (R,G,B)
 
         # assign actor to the renderer
         self.ren.AddActor(self.centerline)

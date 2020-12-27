@@ -10,6 +10,7 @@
         - Visualize Image/Tracker points before registration
         - Show the final Registration Matrix (Scale*Rotation, Translation)
 - **Fixes**
+        - Fixed tracker connection crash
         - Remove the cross mark, after resetting Virtual mode
         - Show correct and registered points, loaded in tracker offline section
         - Fixed errors in New/Load/Delete Patients
