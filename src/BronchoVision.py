@@ -967,12 +967,12 @@ class MainWindow(QMainWindow):
         self.vtk_widget_2D.show_image(self.patient_cls.reoriented_image, self.patient_cls.dims, self.patient_cls.spacing, self.patient_cls.origin)
         self.update_subPanels(self.patient_cls.dims)
 
-        if self.vtk_widget_2D.cross != None:
-            self.vtk_widget_2D.remove_cross()
-            if (self.tracker_cls.tracker_connected):
-                self.show_tool_on_views(self.registered_tool)
-            else:
-                self.show_tool_on_views(self.cam_pos)
+        # if self.vtk_widget_2D.cross != None:
+        #     self.vtk_widget_2D.remove_cross()
+        #     if (self.tracker_cls.tracker_connected):
+        #         self.show_tool_on_views(self.registered_tool)
+        #     else:
+        #         self.show_tool_on_views(self.cam_pos)
 
     def reset_viewports(self):
         self.vtk_widget_3D.reset_view(is3D=True)

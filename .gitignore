@@ -110,6 +110,7 @@ build/
 Patients/
 Records/
 vtk_log.txt
+*.lnk
 
 # VS COde
 .vscode/
