@@ -18,7 +18,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QIcon, QPalette, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QDialog,
                              QFileDialog, QLabel, QMainWindow, QMessageBox,
-                             QSplashScreen, QTableWidgetItem, QWidget)
+                             QSplashScreen, QTableWidgetItem, QWidget, QVBoxLayout)
 from scipy.io import loadmat
 
 from modules.patient import Patient
@@ -83,6 +83,7 @@ class MainWindow(QMainWindow):
                                 [0, 1, 0, 0],
                                 [0, 0, 1, 0],
                                 [0, 0, 0, 1]])
+    
 
     '''
     >>> ----------------------------------------
@@ -430,7 +431,7 @@ class MainWindow(QMainWindow):
         flipYFilter.Update()
 
         self.patient_cls.reoriented_image = flipYFilter
-        # self.patient_cls.reoriented_image = self.patient_cls.imgReader
+        # self.patient_cls.reoriented_image = self.paQVtkViewer3Dtient_cls.imgReader
 
         self.vtk_widget_3D.show_image(self.patient_cls.reoriented_image)
         self.vtk_widget_3D_2.show_image(self.patient_cls.reoriented_image)
@@ -1014,7 +1015,7 @@ class MainWindow(QMainWindow):
             self.ui.checkBox_showImageCenterline.setChecked(True)
             if self.is_image_cl and self.is_tracker_cl:
                     self.ui.btn_registerCenterlines.setEnabled(True)
-            # np.save(os.path.join(self.patient_dir, 'phantom_centerline.npy'), self.patient_cls.centerline)
+            self.save_image_centerline()
             self.update_patient()
 
     def setup(self, size):
@@ -1062,6 +1063,18 @@ class MainWindow(QMainWindow):
         self.vtk_widget_3D_2 = QVtkViewer3D(self.ui.vtk_panel_3D_2, size, 'Normal', False)
         self.vtk_widget_3D_max = QVtkViewer3D(self.ui.vtk_panel_3D_max, size, '3D', True)
 
+        layout_3D = QVBoxLayout()
+        layout_3D.addWidget(self.vtk_widget_3D, 0, Qt.AlignCenter)
+        self.ui.vtk_panel_3D_1.setLayout(layout_3D)
+
+        layout_3D_2 = QVBoxLayout()
+        layout_3D_2.addWidget(self.vtk_widget_3D_2, 0, Qt.AlignCenter)
+        self.ui.vtk_panel_3D_2.setLayout(layout_3D_2)
+
+        layout_3D_max = QVBoxLayout()
+        layout_3D_max.addWidget(self.vtk_widget_3D_max, 0, Qt.AlignCenter)
+        self.ui.vtk_panel_3D_max.setLayout(layout_3D_max)
+
         self.toolsWindow = ToolsWindow(self)
         self.regMatWindow = RegMatWindow(self)
         self.newPatientWindow = NewPatientWindow(self)
@@ -1088,6 +1101,11 @@ class MainWindow(QMainWindow):
 
         # viewType = self.ui.comboBox_2DView.currentText()
         self.vtk_widget_2D = QVtkViewer2D(self.ui.vtk_panel_2D, size, viewType, False)
+
+        layout_2D = QVBoxLayout()
+        layout_2D.addWidget(self.vtk_widget_2D, 0, Qt.AlignCenter)
+        self.ui.vtk_panel_2D.setLayout(layout_2D)
+
         self.hide_subPanels()
         
 

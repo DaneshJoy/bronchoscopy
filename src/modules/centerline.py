@@ -42,7 +42,7 @@ class Centerline():
                             [0, 0, 0, 1]])
             # Apply XYZ2RAS matrix to match the orientation of the image
             p_aligned = np.squeeze(np.matmul(XyzToRas, p_tmp))
-            center_points[:,:,numPoints-i-1] = p_tmp
+            center_points[:,:,numPoints-i-1] = p_aligned
 
         return center_points
         # np.save(os.path.join(self.patient_dir, 'phantom_centerline.npy'), center_points)

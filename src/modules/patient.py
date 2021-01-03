@@ -112,6 +112,7 @@ class Patient():
             _QMatrix = reader.GetQFormMatrix()
             # self.origin = (0, 0, 0)
             self.origin = (-_QMatrix.GetElement(0,3), -_QMatrix.GetElement(1,3), _QMatrix.GetElement(2,3))
+            # self.origin = (-5, -69, 4)
             imageInfo = vtk.vtkImageChangeInformation()
             imageInfo.SetOutputOrigin(self.origin)
             imageInfo.SetInputConnection(reader.GetOutputPort())

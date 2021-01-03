@@ -53,7 +53,7 @@ class QVTKViewer(QFrame):
         self.viewType = viewType
         self.colors = vtk.vtkNamedColors()
         # self.colors.SetColor("SkinColor", [204, 153, 51, 255]) # rgba
-        self.colors.SetColor("SkinColor", [220, 80, 90, 255]) # rgba
+        self.colors.SetColor("SkinColor", [250, 100, 100, 255]) # rgba
         self.colors.SetColor("BkgColor", [51, 77, 102, 255])
         self.axes = vtk.vtkOrientationMarkerWidget()
         # Make the actual QtWidget a child so that it can be reparented
@@ -68,6 +68,9 @@ class QVTKViewer(QFrame):
         else:
             self.width = (size.width()) // 2 - 100
             self.height = (size.height()) // 2 - 50
+        if self.viewType == 'Virtual':
+            self.width = self.width // 1.8
+
         self.interactor.setMinimumSize(self.width, self.height)
         self.interactor.setMaximumSize(self.width, self.height)
         self.setLayout(self.layout)

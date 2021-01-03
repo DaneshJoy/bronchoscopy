@@ -132,6 +132,21 @@ class QVtkViewer3D(QVTKViewer):
         cam.Dolly(1.5)
         self.ren.ResetCameraClippingRange()
 
+        if self.viewType == 'Virtual':
+            # create a ligh
+            self.light = vtk.vtkLight()
+            self.light.SetLightTypeToSceneLight()
+            self.light.SetPositional(1)
+            self.light.SetPosition(self.ren.GetActiveCamera().GetPosition())
+            self.light.SetFocalPoint(self.ren.GetActiveCamera().GetFocalPoint())
+            self.light.SetConeAngle(80)
+            # self.light.SetColor(0.0, 0.0, 0.0)
+            # self.light.SetDiffuseColor(1,0,0)
+            # self.light.SetAmbientColor(0,1,0)
+            # self.light.SetSpecularColor(0,0,1)
+            self.light.SetIntensity(1)
+            self.ren.AddLight(self.light)
+
         self.show_orientation_widget()
 
         self.initCamViewUp = self.ren.GetActiveCamera().GetViewUp()
@@ -245,9 +260,10 @@ class QVtkViewer3D(QVTKViewer):
         # cx = self.width - px
         # cy = py
 
-        # convert the principal point to window center (normalized coordinate system) and set it
+        # # convert the principal point to window center (normalized coordinate system) and set it
         # wcx = cx / ((w-1)/2) - 1
         # wcy = cy / ((h-1)/2) - 1
+        
         wcx = -2.0*(px - w/2.0) / w
         wcy =  2.0*(py - h/2.0) / h
         self.ren.GetActiveCamera().SetWindowCenter(wcx, wcy)
@@ -287,6 +303,11 @@ class QVtkViewer3D(QVTKViewer):
         # Use the following two lines to have a nice start from far!
         # self.ren.GetActiveCamera().Azimuth(180)
         # self.ren.GetActiveCamera().Dolly(1.2)
+
+        if self.viewType == 'Virtual':
+            # move the light
+            self.light.SetPosition(self.ren.GetActiveCamera().GetPosition())
+            self.light.SetFocalPoint(self.ren.GetActiveCamera().GetFocalPoint())
 
         # near = 0.1
         # far = 1000.0
