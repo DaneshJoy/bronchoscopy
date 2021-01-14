@@ -46,17 +46,17 @@ class QVtkViewer3D(QVTKViewer):
             self.surface.GetProperty().SetSpecular(0.4)
             self.surface.GetProperty().SetSpecularPower(40)
         else:
-            self.surface.GetProperty().SetSpecular(0.4)
+            self.surface.GetProperty().SetSpecular(0.5)
             self.surface.GetProperty().SetSpecularPower(40)
             self.surface.GetProperty().SetDiffuse(0.6)
 
-            ambientLight = vtk.vtkLight()
-            ambientLight.SetLightTypeToSceneLight()
-            ambientLight.PositionalOff()
-            ambientLight.SetPosition(0,1,1)
-            ambientLight.SetIntensity(0.7)
-            self.ren.AddLight(ambientLight)
             # self.surface.GetProperty().SetAmbient(0.3)
+            # ambientLight = vtk.vtkLight()
+            # ambientLight.SetLightTypeToSceneLight()
+            # ambientLight.PositionalOff()
+            # ambientLight.SetPosition(0,1,1)
+            # ambientLight.SetIntensity(0.7)
+            # self.ren.AddLight(ambientLight)
         # self.surface.GetProperty().SetDiffuseColor(1, .49, .25)
         self.surface.GetProperty().SetDiffuseColor(self.colors.GetColor3d("SkinColor"))
 
@@ -134,18 +134,19 @@ class QVtkViewer3D(QVTKViewer):
 
         if self.viewType == 'Virtual':
             # create a ligh
-            self.light = vtk.vtkLight()
-            self.light.SetLightTypeToSceneLight()
-            self.light.SetPositional(1)
-            self.light.SetPosition(self.ren.GetActiveCamera().GetPosition())
-            self.light.SetFocalPoint(self.ren.GetActiveCamera().GetFocalPoint())
-            self.light.SetConeAngle(80)
-            # self.light.SetColor(0.0, 0.0, 0.0)
-            # self.light.SetDiffuseColor(1,0,0)
-            # self.light.SetAmbientColor(0,1,0)
-            # self.light.SetSpecularColor(0,0,1)
-            self.light.SetIntensity(1)
-            self.ren.AddLight(self.light)
+            if self.ren.GetLights().GetNumberOfItems() == 1:
+                self.light = vtk.vtkLight()
+                self.light.SetLightTypeToSceneLight()
+                self.light.SetPositional(1)
+                self.light.SetPosition(self.ren.GetActiveCamera().GetPosition())
+                self.light.SetFocalPoint(self.ren.GetActiveCamera().GetFocalPoint())
+                self.light.SetConeAngle(80)
+                # self.light.SetColor(0.0, 0.0, 0.0)
+                # self.light.SetDiffuseColor(1,0,0)
+                # self.light.SetAmbientColor(0,1,0)
+                # self.light.SetSpecularColor(0,0,1)
+                self.light.SetIntensity(1)
+                self.ren.AddLight(self.light)
 
         self.show_orientation_widget()
 
@@ -268,9 +269,11 @@ class QVtkViewer3D(QVTKViewer):
         wcy =  2.0*(py - h/2.0) / h
         self.ren.GetActiveCamera().SetWindowCenter(wcx, wcy)
 
-        # Set vertical view angle as a indirect way of setting the y focal distance
-        view_angle = 180 / np.pi * 2.0 * np.arctan2(h / 2.0, fy)
-        self.ren.GetActiveCamera().SetViewAngle(view_angle)
+        # # Set vertical view angle as a indirect way of setting the y focal distance
+        # view_angle = 180 / np.pi * 2.0 * np.arctan2(h / 2.0, fy)
+        # self.ren.GetActiveCamera().SetViewAngle(view_angle)
+
+        self.ren.GetActiveCamera().SetViewAngle(80)
 
         # Set the image aspect ratio as an indirect way of setting the x focal distance
         m = np.eye(4)

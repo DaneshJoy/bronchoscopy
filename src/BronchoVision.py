@@ -83,6 +83,9 @@ class MainWindow(QMainWindow):
                                 [0, 1, 0, 0],
                                 [0, 0, 1, 0],
                                 [0, 0, 0, 1]])
+        self.R = []
+        self.t = []
+        self.s = []
     
 
     '''
@@ -123,8 +126,15 @@ class MainWindow(QMainWindow):
                 self.is_tracker_cl = True
                 self.ui.checkBox_showTrackerCenterline.show()
             regmat_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'registration_matrix.npy')
+            R_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'registration_R.npy')
+            t_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'registration_t.npy')
+            s_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'registration_s.npy')
             if (os.path.exists(regmat_path)):
                 self.regMat = self.load_regmat(regmat_path)
+                self.regMat_inv = np.linalg.inv(self.regMat)
+                self.R = self.load_regmat(R_path)
+                self.t = self.load_regmat(t_path)
+                self.s = self.load_regmat(s_path)
 
             if self.is_image_cl and self.is_tracker_cl:
                 self.ui.btn_registerCenterlines.setEnabled(True)
@@ -316,6 +326,10 @@ class MainWindow(QMainWindow):
                     self.trackerRawCoords_ref.append(ref_mat) 
                     self.trackerRawCoords_tool.append(tool_mat) 
 
+                elif self.R != []:
+                    self.registered_tool = self.apply_registration(tool_mat, ref_mat)
+                    self.show_tool_on_views(self.registered_tool)
+                    self.toolsWindow.setData(ref_mat, tool_mat)
                 # if (self.patient_cls.XyzToRas != []):
                     # # refcoords = np.swapaxes(refcoords, 0, 2)
                     # # refcoords = np.swapaxes(ref_mat, 0, 1)
@@ -325,11 +339,7 @@ class MainWindow(QMainWindow):
                     # # registered_tool = np.squeeze(np.matmul(self.patient_cls.XyzToRas, registered_tool))
                     # self.show_tool_on_views(self.registered_tool)
 
-                self.registered_tool = self.apply_registration(tool_mat, ref_mat)
-                self.show_tool_on_views(self.registered_tool)
-                self.toolsWindow.setData(ref_mat, tool_mat)
-
-            time.sleep(0.03)
+            time.sleep(0.1)
         return
         
     def coords_record(self):
@@ -349,7 +359,6 @@ class MainWindow(QMainWindow):
             self.record_coords = True
             self.pause_tracker_loop = False
         else:
-            self.record_coords = False
             self.ui.btn_recordCoords.setText(' Start Record')
             icon = QIcon(":/icon/icons/rec_start.png")
             self.ui.btn_recordCoords.setIcon(icon)
@@ -357,6 +366,7 @@ class MainWindow(QMainWindow):
 
             ret = QMessageBox.question(self, f'Accept the Record?', 'Save and Use This Record?', QMessageBox.Ok | QMessageBox.Cancel)
             if ret == QMessageBox.Cancel:
+                self.record_coords = False
                 return
 
             # Calculate Tool2Ref (tracker centerline)
@@ -408,7 +418,8 @@ class MainWindow(QMainWindow):
                 np.save(os.path.join(self.records_dir, toolFile), toolcoords)
             except:
                 QMessageBox.critical(self, f'Saving Failed!', 'Failed to save the recorded points\nPoints would not be available after closing the application.')
-
+            finally:
+                self.record_coords = False
             QMessageBox.information(self, f'Tracker Points Saved', f'Tool/Ref points saved to \"{self.records_dir}\" ')
 
     '''
@@ -541,6 +552,7 @@ class MainWindow(QMainWindow):
 
     def slider_changed(self):
         self.vtk_widget_2D.set_slice(self.ui.Slider_2D.value())
+        self.ui.label_sliceNum.setNum(self.ui.Slider_2D.value()+1)
         self.vtk_widget_2D.interactor.Initialize()
         return
 
@@ -563,6 +575,7 @@ class MainWindow(QMainWindow):
         self.ui.SubPanel_endoscope.show()
 
     def apply_registration(self, toolMat, refMat):
+
         # Calculate tool coords in ref space and apply registration matrix
         # tool2ref = inv(inv(refMat) * toolMat)
         # registeredTool = inv(regMat) * tool2ref
@@ -572,10 +585,11 @@ class MainWindow(QMainWindow):
         refMat_inv = np.linalg.inv(refMat)
         tool2ref = np.squeeze(np.matmul(refMat_inv, toolMat))
         pt_tracker = self.coord2points(tool2ref)
-        reg[0:3,3] = np.dot(pt_tracker, self.regMat[0:3,0:3])+self.regMat[:3,3]
-        # reg[0:3,3] = self.s * np.dot(pt_tracker, self.R) + self.t
-        regMat_inv = np.linalg.inv(self.regMat)
-        reg[0:3,0:3] = np.dot(regMat_inv[0:3,0:3], tool2ref[0:3,0:3])
+        # reg[0:3,3] = np.dot(pt_tracker, self.regMat[0:3,0:3])+self.regMat[:3,3]
+        reg[0:3,3] = self.s * np.dot(pt_tracker, self.R) + self.t
+        # self.regMat_inv = np.linalg.inv(self.regMat)
+        reg[0:3,0:3] = np.dot(self.regMat_inv[0:3,0:3], tool2ref[0:3,0:3])
+        # reg[0:3,0:3] = self.s * np.dot(self.R, tool2ref[0:3,0:3])
         # reg = np.squeeze(np.matmul(regMat_inv, tool2ref))
         # reg = np.squeeze(np.matmul(self.patient_cls.XyzToRas, reg))
         return reg
@@ -791,9 +805,9 @@ class MainWindow(QMainWindow):
         res = regWindow.exec()
         if (res == QDialog.Accepted) and (np.array(regWindow.reg_mat).any()):
             self.regMat = regWindow.reg_mat
-            # self.R = regWindow.R
-            # self.t = regWindow.t
-            # self.s = regWindow.scale
+            self.R = regWindow.R
+            self.t = regWindow.t
+            self.s = regWindow.scale
             print(self.regMat)
             self.save_regmat()
             self.is_registered = True
@@ -806,7 +820,19 @@ class MainWindow(QMainWindow):
             regmat_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'registration_matrix.npy')
             if os.path.exists(regmat_path):
                 os.remove(regmat_path)
+            R_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'registration_R.npy')
+            if os.path.exists(R_path):
+                os.remove(R_path)
+            t_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'registration_t.npy')
+            if os.path.exists(t_path):
+                os.remove(t_path)
+            s_path = os.path.join(self.patient_cls.patients_dir, self.curr_patient, 'registration_s.npy')
+            if os.path.exists(s_path):
+                os.remove(s_path)
             np.save(regmat_path, self.regMat)
+            np.save(R_path, self.R)
+            np.save(t_path, self.t)
+            np.save(s_path, self.s)
         except:
             QMessageBox.critical(self, 'Centerline NOT Saved', 'There was a problem saving the centerline!')
 
@@ -1158,6 +1184,7 @@ if __name__ == "__main__":
 
     screen = app.primaryScreen()
     size = screen.availableGeometry()  # size.height(), size.width()
+    size.setHeight(size.height()-110)
     main_win = MainWindow(size)
     main_win.showMaximized()
     # main_win.show()

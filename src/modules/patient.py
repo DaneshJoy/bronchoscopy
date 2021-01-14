@@ -54,8 +54,8 @@ class Patient():
             _name, _date, _image = self.newPatientWindow.getData()
             self.db.db_addPatient(self.db_connection, [_name, _date, _image, 0, 0, 0, 0])
             self.add_patient_row([_name, _date])
-            thread_img = threading.Thread(target=self.load_image(os.path.join(self.patients_dir, _name, _image+'.nii.gz')))
-            thread_img.start()
+            # thread_img = threading.Thread(target=self.load_image(os.path.join(self.patients_dir, _name, _image+'.nii.gz')))
+            # thread_img.start()
             return True
         return False
 
@@ -110,13 +110,16 @@ class Patient():
 
         if 'nii' in extension or 'gz' in extension:
             _QMatrix = reader.GetQFormMatrix()
-            # self.origin = (0, 0, 0)
-            self.origin = (-_QMatrix.GetElement(0,3), -_QMatrix.GetElement(1,3), _QMatrix.GetElement(2,3))
-            # self.origin = (-5, -69, 4)
-            imageInfo = vtk.vtkImageChangeInformation()
-            imageInfo.SetOutputOrigin(self.origin)
-            imageInfo.SetInputConnection(reader.GetOutputPort())
-            self.imgReader = imageInfo
+            if (_QMatrix != None):
+                # self.origin = (0, 0, 0)
+                self.origin = (-_QMatrix.GetElement(0,3), -_QMatrix.GetElement(1,3), _QMatrix.GetElement(2,3))
+                # self.origin = (-5, -69, 4)
+                imageInfo = vtk.vtkImageChangeInformation()
+                imageInfo.SetOutputOrigin(self.origin)
+                imageInfo.SetInputConnection(reader.GetOutputPort())
+                self.imgReader = imageInfo
+            else:
+                self.imgReader = reader
         else:
             # origin = (140, 140, -58)
             # imageInfo = vtk.vtkImageChangeInformation()
