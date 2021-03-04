@@ -45,4 +45,3 @@ class Centerline():
             center_points[:,:,numPoints-i-1] = p_aligned
 
         return center_points
-        # np.save(os.path.join(self.patient_dir, 'phantom_centerline.npy'), center_points)
