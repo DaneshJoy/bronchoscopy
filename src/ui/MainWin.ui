@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1462</width>
+    <width>1550</width>
     <height>1032</height>
    </rect>
   </property>
@@ -754,22 +754,7 @@ color: rgb(157, 205, 216);</string>
            <attribute name="title">
             <string>View</string>
            </attribute>
-           <layout class="QVBoxLayout" name="verticalLayout_14">
-            <property name="spacing">
-             <number>3</number>
-            </property>
-            <property name="leftMargin">
-             <number>5</number>
-            </property>
-            <property name="topMargin">
-             <number>20</number>
-            </property>
-            <property name="rightMargin">
-             <number>5</number>
-            </property>
-            <property name="bottomMargin">
-             <number>5</number>
-            </property>
+           <layout class="QVBoxLayout" name="verticalLayout_18">
             <item>
              <widget class="QGroupBox" name="groupBox_Viewports">
               <property name="enabled">
@@ -803,9 +788,6 @@ color: rgb(157, 205, 216);</string>
                <bool>false</bool>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_5">
-               <property name="spacing">
-                <number>10</number>
-               </property>
                <item>
                 <layout class="QHBoxLayout" name="horizontalLayout_11" stretch="1,3">
                  <property name="spacing">
@@ -1106,12 +1088,12 @@ color: rgb(157, 205, 216);</string>
                 </layout>
                </item>
                <item>
-                <spacer name="verticalSpacer_10">
+                <spacer name="verticalSpacer_11">
                  <property name="orientation">
                   <enum>Qt::Vertical</enum>
                  </property>
                  <property name="sizeType">
-                  <enum>QSizePolicy::Expanding</enum>
+                  <enum>QSizePolicy::Minimum</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -1173,6 +1155,105 @@ color: rgb(157, 205, 216);</string>
                   <bool>true</bool>
                  </property>
                 </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupBox_Bronchoscope">
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+                <weight>50</weight>
+                <bold>false</bold>
+                <strikeout>false</strikeout>
+                <kerning>false</kerning>
+               </font>
+              </property>
+              <property name="autoFillBackground">
+               <bool>false</bool>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">color: rgb(157, 205, 216);</string>
+              </property>
+              <property name="title">
+               <string>Bronchoscope</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+              <property name="flat">
+               <bool>false</bool>
+              </property>
+              <property name="checkable">
+               <bool>false</bool>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_14">
+               <item>
+                <widget class="QToolButton" name="btn_startVideo">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>10</pointsize>
+                   <kerning>false</kerning>
+                  </font>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="layoutDirection">
+                  <enum>Qt::LeftToRight</enum>
+                 </property>
+                 <property name="autoFillBackground">
+                  <bool>false</bool>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">background-color: rgb(65, 65, 65);</string>
+                 </property>
+                 <property name="text">
+                  <string>Start Bronchoscope</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="resources.qrc">
+                   <normaloff>:/icon/icons/bronchoscope.png</normaloff>:/icon/icons/bronchoscope.png</iconset>
+                 </property>
+                 <property name="iconSize">
+                  <size>
+                   <width>50</width>
+                   <height>50</height>
+                  </size>
+                 </property>
+                 <property name="checkable">
+                  <bool>false</bool>
+                 </property>
+                 <property name="toolButtonStyle">
+                  <enum>Qt::ToolButtonTextBesideIcon</enum>
+                 </property>
+                 <property name="autoRaise">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="verticalSpacer_15">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Expanding</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>42</height>
+                  </size>
+                 </property>
+                </spacer>
                </item>
               </layout>
              </widget>
@@ -2875,12 +2956,14 @@ alternate-background-color: rgb(85, 255, 127);</string>
                   <property name="lineWidth">
                    <number>0</number>
                   </property>
-                  <layout class="QVBoxLayout" name="verticalLayout_17" stretch="20,1">
+                  <layout class="QVBoxLayout" name="verticalLayout_17" stretch="5,1">
                    <item>
-                    <widget class="QLabel" name="label_10">
+                    <widget class="QLabel" name="label_video">
                      <property name="styleSheet">
-                      <string notr="true">background-color: rgba(0, 0, 0, 25);
-image: url(:/icon/icons/bronchs_transparent.png);</string>
+                      <string notr="true">background-color: rgba(0, 0, 0, 25);</string>
+                     </property>
+                     <property name="pixmap">
+                      <pixmap resource="resources.qrc">:/icon/icons/bronchs_transparent.png</pixmap>
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignCenter</set>

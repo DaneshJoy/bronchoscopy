@@ -10,17 +10,18 @@ from PyQt5 import QtCore, QtGui
 
 
 class Video():
-    def __init__(self, image_label):
+    def __init__(self, timer, image_label):
         self.image_label = image_label
         self.cap = None 
-        self.timer = QtCore.QTimer(self, interval=5)
+        self.timer = timer
+        # self.timer = QtCore.QTimer(self, interval=5)
         self.timer.timeout.connect(self.update_frame)
         self._image_counter = 0
 
     @QtCore.pyqtSlot()
-    def start_webcam(self):
+    def start_webcam(self, cam_idx):
         if self.cap is None:
-            self.cap = cv2.VideoCapture(0)
+            self.cap = cv2.VideoCapture(cam_idx)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH,  640)
         self.timer.start()

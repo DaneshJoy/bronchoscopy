@@ -11,9 +11,10 @@ import threading
 import time
 
 import numpy as np
+import cv2
 from scipy.misc.common import face
 import vtk
-from PyQt5 import QtCore, QtWidgets, uic
+from PyQt5 import QtCore, QtWidgets, uic, QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QIcon, QPalette, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QDialog,
@@ -24,6 +25,7 @@ from scipy.io import loadmat
 from modules.patient import Patient
 from modules.tracker import Tracker
 from modules.centerline import Centerline
+from modules.video import Video
 from ui import MainWin
 from ui.UiWindows import NewPatientWindow, RegMatWindow, ToolsWindow
 from viewers.QVtkViewer2D import QVtkViewer2D
@@ -1060,6 +1062,51 @@ class MainWindow(QMainWindow):
             self.save_image_centerline()
             self.update_patient()
 
+
+
+
+
+
+
+    def init_video(self, image_label):
+        self.image_label = image_label
+        self.cap = None 
+        self.timer = QtCore.QTimer(self, interval=5)
+        self.timer.timeout.connect(self.update_frame)
+        self._image_counter = 0
+
+    @QtCore.pyqtSlot()
+    def start_webcam(self, cam_idx):
+        if self.cap is None:
+            self.cap = cv2.VideoCapture(cam_idx)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH,  640)
+        self.timer.start()
+
+    @QtCore.pyqtSlot()
+    def update_frame(self):
+        ret, image = self.cap.read()
+        simage     = cv2.flip(image, 1)
+        self.displayImage(image, True)
+
+    def displayImage(self, img, window=True):
+        qformat = QtGui.QImage.Format_Indexed8
+        if len(img.shape)==3 :
+            if img.shape[2]==4:
+                qformat = QtGui.QImage.Format_RGBA8888
+            else:
+                qformat = QtGui.QImage.Format_RGB888
+        outImage = QtGui.QImage(img, img.shape[1], img.shape[0], img.strides[0], qformat)
+        outImage = outImage.rgbSwapped()
+        if window:
+            self.image_label.setPixmap(QtGui.QPixmap.fromImage(outImage))
+
+    def start_video(self):
+        # self.video_cls = Video(self.ui.label_video)
+        # self.video_cls.start_webcam(cam_idx=0)
+        self.init_video(self.ui.label_video)
+        self.start_webcam(cam_idx=0)
+
     def setup(self, size):
         self.ui = MainWin.Ui_MainWin()
         self.ui.setupUi(self)
@@ -1098,6 +1145,8 @@ class MainWindow(QMainWindow):
         self.ui.btn_recordCoords.clicked.connect(self.coords_record)
         self.ui.btn_loadtrackerCenterline.clicked.connect(self.load_tracker_centerline)
         self.ui.btn_registerCenterlines.clicked.connect(self.register_centerlines)
+
+        self.ui.btn_startVideo.clicked.connect(self.start_video)
 
         self.ui.stackedWidget.setCurrentIndex(0)
 
