@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1550</width>
+    <width>1682</width>
     <height>1032</height>
    </rect>
   </property>
@@ -227,12 +227,6 @@
        <bool>true</bool>
       </property>
       <widget class="QFrame" name="frame_Left">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
        <property name="maximumSize">
         <size>
          <width>350</width>
@@ -898,20 +892,7 @@ color: rgb(157, 205, 216);</string>
                 </widget>
                </item>
                <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_12" stretch="1,2,10,0">
-                 <item>
-                  <spacer name="horizontalSpacer">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>40</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
+                <layout class="QHBoxLayout" name="horizontalLayout_12" stretch="2,10,0">
                  <item>
                   <widget class="QLabel" name="label_4">
                    <property name="font">
@@ -993,20 +974,7 @@ color: rgb(157, 205, 216);</string>
                 </layout>
                </item>
                <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_14" stretch="1,2,10,0">
-                 <item>
-                  <spacer name="horizontalSpacer_2">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>40</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
+                <layout class="QHBoxLayout" name="horizontalLayout_14" stretch="2,10,0">
                  <item>
                   <widget class="QLabel" name="label_5">
                    <property name="font">
@@ -1191,6 +1159,9 @@ color: rgb(157, 205, 216);</string>
               <layout class="QVBoxLayout" name="verticalLayout_14">
                <item>
                 <widget class="QToolButton" name="btn_startVideo">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                    <horstretch>0</horstretch>
@@ -1220,7 +1191,7 @@ color: rgb(157, 205, 216);</string>
                  </property>
                  <property name="icon">
                   <iconset resource="resources.qrc">
-                   <normaloff>:/icon/icons/bronchoscope.png</normaloff>:/icon/icons/bronchoscope.png</iconset>
+                   <normaloff>:/icon/icons/bronchoscope_inactive.png</normaloff>:/icon/icons/bronchoscope_inactive.png</iconset>
                  </property>
                  <property name="iconSize">
                   <size>
@@ -1238,6 +1209,114 @@ color: rgb(157, 205, 216);</string>
                   <bool>true</bool>
                  </property>
                 </widget>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_19" stretch="4,10,1">
+                 <item>
+                  <widget class="QLabel" name="label_10">
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <kerning>false</kerning>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Camera</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="comboBox_cams">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="baseSize">
+                    <size>
+                     <width>0</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                     <kerning>false</kerning>
+                    </font>
+                   </property>
+                   <property name="autoFillBackground">
+                    <bool>false</bool>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">background-color: rgb(65, 65, 65);</string>
+                   </property>
+                   <property name="currentText">
+                    <string/>
+                   </property>
+                   <property name="currentIndex">
+                    <number>-1</number>
+                   </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>16</width>
+                     <height>16</height>
+                    </size>
+                   </property>
+                   <property name="frame">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QToolButton" name="btn_refreshCams">
+                   <property name="enabled">
+                    <bool>true</bool>
+                   </property>
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                    </font>
+                   </property>
+                   <property name="cursor">
+                    <cursorShape>PointingHandCursor</cursorShape>
+                   </property>
+                   <property name="toolTip">
+                    <string>Refresh Available Cameras</string>
+                   </property>
+                   <property name="autoFillBackground">
+                    <bool>false</bool>
+                   </property>
+                   <property name="text">
+                    <string>Start Virtual Camera</string>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="resources.qrc">
+                     <normaloff>:/icon/icons/reset.png</normaloff>:/icon/icons/reset.png</iconset>
+                   </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>45</width>
+                     <height>45</height>
+                    </size>
+                   </property>
+                   <property name="autoRaise">
+                    <bool>true</bool>
+                   </property>
+                   <property name="arrowType">
+                    <enum>Qt::NoArrow</enum>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </item>
                <item>
                 <spacer name="verticalSpacer_15">
@@ -3126,7 +3205,7 @@ background-color: rgb(0, 0, 0);</string>
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>600</width>
+                  <width>500</width>
                   <height>0</height>
                  </size>
                 </property>

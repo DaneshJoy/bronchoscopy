@@ -16,7 +16,7 @@ from scipy.misc.common import face
 import vtk
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QIcon, QPalette, QPixmap
+from PyQt5.QtGui import QColor, QIcon, QImage, QPalette, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QDialog,
                              QFileDialog, QLabel, QMainWindow, QMessageBox,
                              QSplashScreen, QTableWidgetItem, QWidget, QVBoxLayout)
@@ -25,7 +25,6 @@ from scipy.io import loadmat
 from modules.patient import Patient
 from modules.tracker import Tracker
 from modules.centerline import Centerline
-from modules.video import Video
 from ui import MainWin
 from ui.UiWindows import NewPatientWindow, RegMatWindow, ToolsWindow
 from viewers.QVtkViewer2D import QVtkViewer2D
@@ -53,7 +52,11 @@ class MainWindow(QMainWindow):
         self.registered_points = []
         self.tool_coords = []
         self.ref_coords = []
+        self.cap = None
+        self.timer = QtCore.QTimer(self, interval=5)
         self.setup(size)
+        self.image_label = self.ui.label_video
+        self.get_available_cams()
         self.paused = False
         self.size = size
         self.cam_pos = None
@@ -542,35 +545,36 @@ class MainWindow(QMainWindow):
 
         # Commented parts are correct, changed only for this phantom image!
         # if self.ui.comboBox_2DView.currentText() == 'Axial':
-        if self.ui.comboBox_2DView.currentText() == 'Coronal':    
-            # self.ui.Slider_2D.setRange(0, dims[2]-1)
-            # self.ui.Slider_2D.setValue(dims[2]//2)
-            self.ui.Slider_2D.setRange(0, dims[0]-1)
-            self.ui.Slider_2D.setValue(dims[0]//2)
+        # if self.ui.comboBox_2DView.currentText() == 'Coronal':    
+            # self.ui.Slider_axial.setRange(0, dims[2]-1)
+            # self.ui.Slider_axial.setValue(dims[2]//2)
+        self.ui.Slider_coronal.setRange(0, dims[0]-1)
+        self.ui.Slider_coronal.setValue(dims[0]//2)
         # elif self.ui.comboBox_2DView.currentText() == 'Coronal':
-        elif self.ui.comboBox_2DView.currentText() == 'Sagittal':
-            # self.ui.Slider_2D.setRange(0, dims[1]-1)
-            # self.ui.Slider_2D.setValue(dims[1]//2)
-            self.ui.Slider_2D.setRange(0, dims[2]-1)
-            self.ui.Slider_2D.setValue(dims[2]//2)
+        # elif self.ui.comboBox_2DView.currentText() == 'Sagittal':
+            # self.ui.Slider_coronal.setRange(0, dims[1]-1)
+            # self.ui.Slider_coronal.setValue(dims[1]//2)
+        self.ui.Slider_sagittal.setRange(0, dims[2]-1)
+        self.ui.Slider_sagittal.setValue(dims[2]//2)
         # else: self.ui.comboBox_2DView.currentText() == 'Sagittal':
-        elif self.ui.comboBox_2DView.currentText() == 'Axial':
-            # self.ui.Slider_2D.setRange(0, dims[0]-1)
-            # self.ui.Slider_2D.setValue(dims[0]//2)
-            self.ui.Slider_2D.setRange(0, dims[1]-1)
-            self.ui.Slider_2D.setValue(dims[1]//2)
+        # elif self.ui.comboBox_2DView.currentText() == 'Axial':
+            # self.ui.Slider_sagittal.setRange(0, dims[0]-1)
+            # self.ui.Slider_sagittal.setValue(dims[0]//2)
+        self.ui.Slider_axial.setRange(0, dims[1]-1)
+        self.ui.Slider_axial.setValue(dims[1]//2)
 
-    def slider_changed(self):
+    def slider_axial_changed(self):
         self.vtk_widget_axial.set_slice(self.ui.Slider_axial.value())
         self.ui.label_sliceNum_axial.setNum(self.ui.Slider_axial.value()+1)
         self.vtk_widget_axial.interactor.Initialize()
+    def slider_coronal_changed(self):
         self.vtk_widget_coronal.set_slice(self.ui.Slider_coronal.value())
         self.ui.label_sliceNum_coronal.setNum(self.ui.Slider_coronal.value()+1)
         self.vtk_widget_coronal.interactor.Initialize()
+    def slider_sagittal_changed(self):
         self.vtk_widget_sagittal.set_slice(self.ui.Slider_sagittal.value())
         self.ui.label_sliceNum_sagittal.setNum(self.ui.Slider_sagittal.value()+1)
         self.vtk_widget_sagittal.interactor.Initialize()
-        return
 
     def slider_virtual_changed(self):
         self.vtk_widget_virtual.setThreshold(self.ui.slider_threshold_virtual.value())
@@ -935,11 +939,11 @@ class MainWindow(QMainWindow):
         self.ui.Slider_sagittal.setValue(sagittal_slice)
 
         # if self.ui.comboBox_2DView.currentText() == 'Sagittal': #Axial
-        self.vtk_widget_axial.set_cross_position(tool_mat[0,3], tool_mat[1,3])
+        self.vtk_widget_sagittal.set_cross_position(tool_mat[0,3], tool_mat[1,3])
         # elif self.ui.comboBox_2DView.currentText() == 'Axial': #Coronal
-        self.vtk_widget_coronal.set_cross_position(tool_mat[0,3], tool_mat[2,3]+self.patient_cls.origin[1])
+        self.vtk_widget_axial.set_cross_position(tool_mat[0,3], tool_mat[2,3]+self.patient_cls.origin[1])
         # elif self.ui.comboBox_2DView.currentText() == 'Coronal': #Sagittal
-        self.vtk_widget_sagittal.set_cross_position(tool_mat[1,3], tool_mat[2,3]+self.patient_cls.origin[0])
+        self.vtk_widget_coronal.set_cross_position(tool_mat[1,3], tool_mat[2,3]+self.patient_cls.origin[0])
 
     def play_cam(self):
         # cam_pos = np.array([[0.6793, -0.7232, -0.1243, 33.3415], [-0.0460, -0.2110, 0.9764, -29.0541], [-0.7324, -0.6576, -0.1767, 152.6576], [0, 0, 0, 1.0000]])
@@ -1068,10 +1072,8 @@ class MainWindow(QMainWindow):
 
 
 
-    def init_video(self, image_label):
-        self.image_label = image_label
+    def init_video(self):
         self.cap = None 
-        self.timer = QtCore.QTimer(self, interval=5)
         self.timer.timeout.connect(self.update_frame)
         self._image_counter = 0
 
@@ -1096,16 +1098,56 @@ class MainWindow(QMainWindow):
                 qformat = QtGui.QImage.Format_RGBA8888
             else:
                 qformat = QtGui.QImage.Format_RGB888
-        outImage = QtGui.QImage(img, img.shape[1], img.shape[0], img.strides[0], qformat)
+        # outImage = QtGui.QImage(img, img.shape[1], img.shape[0], img.strides[0], qformat)
+        outImage = QtGui.QImage(img, 470, 400, img.strides[0], qformat)
         outImage = outImage.rgbSwapped()
         if window:
             self.image_label.setPixmap(QtGui.QPixmap.fromImage(outImage))
 
-    def start_video(self):
-        # self.video_cls = Video(self.ui.label_video)
-        # self.video_cls.start_webcam(cam_idx=0)
-        self.init_video(self.ui.label_video)
-        self.start_webcam(cam_idx=0)
+    def start_cam(self):
+        self.init_video()
+        cam_idx = int(self.ui.comboBox_cams.currentText())
+        self.start_webcam(cam_idx)
+        self.ui.label_bronchoscopeStatus_2.setText("Camera Active")
+        self.ui.btn_startVideo.setText("Stop Bronchoscope")
+        icon = QIcon(":/icon/icons/bronchoscope.png")
+        self.ui.btn_startVideo.setIcon(icon)
+
+    # @QtCore.pyqtSlot()
+    def stop_cam(self):
+        self.cap = None
+        self.timer.stop()
+        self.ui.label_bronchoscopeStatus_2.setText("Ø Bronchoscope is Not Available Ø")
+        self.ui.btn_startVideo.setText("Start Bronchoscope")
+        icon = QIcon(":/icon/icons/bronchoscope_inactive.png")
+        self.image_label.setPixmap(QtGui.QPixmap.fromImage(QImage(":/icon/icons/bronchs_transparent.png")))
+        self.ui.btn_startVideo.setIcon(icon)
+    
+
+    def start_stop_video(self):
+        if self.cap is None:
+            self.start_cam()
+        else:
+            self.stop_cam()
+    
+    def get_available_cams(self):
+        self.stop_cam()
+        self.ui.comboBox_cams.clear()
+        self.ui.btn_startVideo.setEnabled(False)
+        # checks the first 5 indexes.
+        index = 0
+        arr = []
+        i = 5
+        while i > 0:
+            cap = cv2.VideoCapture(index)
+            if cap.read()[0]:
+                arr.append(str(index))
+                cap.release()
+                self.ui.btn_startVideo.setEnabled(True)
+            index += 1
+            i -= 1
+        
+        self.ui.comboBox_cams.addItems(arr)
 
     def setup(self, size):
         self.ui = MainWin.Ui_MainWin()
@@ -1120,7 +1162,9 @@ class MainWindow(QMainWindow):
         self.ui.btn_ImportPatient.clicked.connect(self.import_patient)
         self.ui.btn_ClearPatients.clicked.connect(self.clear_patients)
 
-        self.ui.Slider_2D.valueChanged.connect(self.slider_changed)
+        self.ui.Slider_axial.valueChanged.connect(self.slider_axial_changed)
+        self.ui.Slider_coronal.valueChanged.connect(self.slider_coronal_changed)
+        self.ui.Slider_sagittal.valueChanged.connect(self.slider_sagittal_changed)
 
         self.ui.btn_LoadToolPoints.clicked.connect(self.read_tool_points)
         self.ui.checkBox_showPoints.stateChanged.connect(self.show_hide_points)
@@ -1146,7 +1190,8 @@ class MainWindow(QMainWindow):
         self.ui.btn_loadtrackerCenterline.clicked.connect(self.load_tracker_centerline)
         self.ui.btn_registerCenterlines.clicked.connect(self.register_centerlines)
 
-        self.ui.btn_startVideo.clicked.connect(self.start_video)
+        self.ui.btn_startVideo.clicked.connect(self.start_stop_video)
+        self.ui.btn_refreshCams.clicked.connect(self.get_available_cams)
 
         self.ui.stackedWidget.setCurrentIndex(0)
 
@@ -1212,8 +1257,8 @@ class MainWindow(QMainWindow):
         layout_sagittal.addWidget(self.vtk_widget_sagittal, 0, Qt.AlignCenter)
         self.ui.vtk_panel_sagittal.setLayout(layout_sagittal)
 
-
         self.hide_subPanels()
+
         
 
     def initialize(self):
@@ -1266,6 +1311,7 @@ if __name__ == "__main__":
     screen = app.primaryScreen()
     size = screen.availableGeometry()  # size.height(), size.width()
     size.setHeight(size.height()-110)
+    size.setWidth(size.width()-40)
     main_win = MainWindow(size)
     main_win.showMaximized()
     # main_win.show()

@@ -3,6 +3,7 @@
     <file>logo/logo_transparent.png</file>
   </qresource>
   <qresource prefix="icon">
+    <file>icons/bronchoscope_inactive.png</file>
     <file>icons/bronchoscope_2.png</file>
     <file>icons/bronchoscope.png</file>
     <file>icons/bronchs_transparent.png</file>

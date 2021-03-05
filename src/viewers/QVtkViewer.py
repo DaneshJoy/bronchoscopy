@@ -66,10 +66,15 @@ class QVTKViewer(QFrame):
             self.width = size.width()
             self.height = size.height()
         else:
-            self.width = (size.width()) // 2 - 100
-            self.height = (size.height()) // 2 - 50
-        if self.viewType == 'Virtual':
-            self.width = self.width // 1.8
+            if self.viewType == 'Normal':
+                self.width = (size.width()) // 4
+                self.height = (size.height()) - 50
+            elif self.viewType == 'Virtual':
+                self.width = (size.width()) // 4
+                self.height = (size.height()) // 2 - 50
+            else:
+                self.width = (size.width()) // 3 - 250
+                self.height = (size.height()) // 3 - 50
 
         self.interactor.setMinimumSize(self.width, self.height)
         self.interactor.setMaximumSize(self.width, self.height)
