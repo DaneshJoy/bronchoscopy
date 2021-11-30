@@ -4,6 +4,17 @@
 
 ---
 
+### 2021-03 (Phantom version)
+
+- **New Features**
+        - Working Camera (Webcam/Bronchoscope/...) view
+        - New Layout (2x1x3)
+        - Moving Light added to the Virtual Camera (Brighter View)
+- **Fixes**
+        - Handled unwanted change in window size after loading patient
+        - Fixed Crash in New Patient
+---
+
 ### 2020-12 (Phantom version)
 
 - **New Features**

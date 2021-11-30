@@ -2081,7 +2081,7 @@ class Ui_MainWin(object):
         self.toolBar.addAction(self.actionExit)
 
         self.retranslateUi(MainWin)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         self.comboBox_2DView.setCurrentIndex(2)
         self.comboBox_cams.setCurrentIndex(-1)
         self.stackedWidget.setCurrentIndex(1)
@@ -2153,7 +2153,7 @@ class Ui_MainWin(object):
         self.checkBox_showPoints.setText(_translate("MainWin", "Show Tracker Points"))
         self.btn_ResetVB.setText(_translate("MainWin", "   Reset Virtual Mode"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_tracking), _translate("MainWin", "Track"))
-        self.label_version.setText(_translate("MainWin", "2020-12 (Phantom Version)  "))
+        self.label_version.setText(_translate("MainWin", "2021-03 (Phantom Version)  "))
         self.view1_desc_2.setText(_translate("MainWin", "Virtual"))
         self.btn_maximize_virtual.setText(_translate("MainWin", "Maximize View"))
         self.label_bronchoscopeStatus_2.setText(_translate("MainWin", "Ø Bronchoscope is Not Available Ø"))

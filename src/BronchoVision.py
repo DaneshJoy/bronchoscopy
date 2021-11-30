@@ -53,7 +53,7 @@ class MainWindow(QMainWindow):
         self.tool_coords = []
         self.ref_coords = []
         self.cap = None
-        self.timer = QtCore.QTimer(self, interval=5)
+        self.timer = QtCore.QTimer(self, interval=10)
         self.setup(size)
         self.image_label = self.ui.label_video
         self.get_available_cams()
@@ -215,8 +215,8 @@ class MainWindow(QMainWindow):
         if not self.tracker_cls.tracker_connected:
             splash_pix = QPixmap('ui/icons/connecting.png')
             splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
-            x_pos = self.geometry().x()+self.ui.stackedWidget.x()+int((self.ui.vtk_panel_endoscope.width()-splash.width())/2)+20
-            y_pos = self.geometry().y()+self.ui.vtk_panel_3D_1.height()+self.ui.SubPanel_3D.height()+int((self.ui.vtk_panel_endoscope.height()-splash.height())/2)+20
+            x_pos = self.geometry().x()+self.ui.stackedWidget.x()+int((self.ui.vtk_panel_bronchoscope.width()-splash.width())/2)+20
+            y_pos = self.geometry().y()+self.ui.vtk_panel_virtual.height()+int((self.ui.vtk_panel_bronchoscope.height()-splash.height())/2)+self.ui.SubPanel_virtual.height()
             splash.move(x_pos, y_pos)
             splash.show()
             self.ui.btn_Connect.setText('Connecting...')
@@ -225,6 +225,14 @@ class MainWindow(QMainWindow):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             QApplication.processEvents()
             if self.tracker_cls.connect():
+                splash.close()
+                self.ui.btn_Connect.setText('Disconnect Tracker')
+                self.ui.btn_ToolsWindow.setEnabled(True)
+                self.ui.btn_recordCoords.setEnabled(True)
+                icon = QIcon(":/icon/icons/tracker_connected.png")
+                self.ui.btn_Connect.setIcon(icon)
+                QApplication.restoreOverrideCursor()
+                
                 # Multithreading Method 1 (recomended)
                 thread_tracker = threading.Thread(target=self.tracker_loop)
                 thread_tracker.start()
@@ -234,15 +242,8 @@ class MainWindow(QMainWindow):
 
                 # Multithreading Method 2 (not recomended)
                 # Use QApplication.processEvents() inside the loop
-
-                self.ui.btn_Connect.setText('Disconnect Tracker')
-                self.ui.btn_ToolsWindow.setEnabled(True)
-                self.ui.btn_recordCoords.setEnabled(True)
-                icon = QIcon(":/icon/icons/tracker_connected.png")
-                self.ui.btn_Connect.setIcon(icon)
-                QApplication.restoreOverrideCursor()
-                splash.close()
                 # QApplication.processEvents()
+
             else:
                 QApplication.restoreOverrideCursor()
                 splash.close()
@@ -269,21 +270,24 @@ class MainWindow(QMainWindow):
             self.ui.btn_Connect.setIcon(icon)
 
     def tracker_loop(self):
+        time.sleep(2)
+
         warmup_counter = 0
 
-        splash_tool_shown = False
-        splash_ref_shown = False
-        splash_pix_ref = QPixmap('ui/icons/ref_not_detected.png')
-        splash_ref = QSplashScreen(splash_pix_ref, Qt.WindowStaysOnTopHint)
-        splash_pix_tool = QPixmap('ui/icons/tool_not_detected.png')
-        splash_tool = QSplashScreen(splash_pix_tool, Qt.WindowStaysOnTopHint)
+        #  # Splash window is disabled for test
+        # splash_tool_shown = False
+        # splash_ref_shown = False
+        # splash_pix_ref = QPixmap('ui/icons/ref_not_detected.png')
+        # splash_ref = QSplashScreen(splash_pix_ref, Qt.WindowStaysOnTopHint)
+        # splash_pix_tool = QPixmap('ui/icons/tool_not_detected.png')
+        # splash_tool = QSplashScreen(splash_pix_tool, Qt.WindowStaysOnTopHint)
 
-        x_pos = self.geometry().x()+self.ui.stackedWidget.x()+int((self.ui.vtk_panel_endoscope.width()-splash_ref.width())/2)+20
-        y_pos = self.geometry().y()+self.ui.vtk_panel_3D_1.height()+self.ui.SubPanel_3D.height()+int((self.ui.vtk_panel_endoscope.height()-splash_ref.height())/2)+20
-        splash_ref.move(x_pos, y_pos-int(splash_tool.height()/2))
-        x_pos = self.geometry().x()+self.ui.stackedWidget.x()+int((self.ui.vtk_panel_endoscope.width()-splash_tool.width())/2)+20
-        y_pos = self.geometry().y()+self.ui.vtk_panel_3D_1.height()+self.ui.SubPanel_3D.height()+int((self.ui.vtk_panel_endoscope.height()-splash_tool.height())/2)+20
-        splash_tool.move(x_pos, y_pos+int(splash_ref.height()/2))
+        # x_pos = self.geometry().x()+self.ui.stackedWidget.x()+int((self.ui.vtk_panel_bronchoscope.width()-splash_ref.width())/2)+20
+        # y_pos = self.geometry().y()+self.ui.vtk_panel_virtual.height()+int((self.ui.vtk_panel_bronchoscope.height()-splash_ref.height())/2)+self.ui.SubPanel_virtual.height()
+        # splash_ref.move(x_pos, y_pos-int(splash_tool.height()/2))
+        # x_pos = self.geometry().x()+self.ui.stackedWidget.x()+int((self.ui.vtk_panel_bronchoscope.width()-splash_tool.width())/2)+20
+        # y_pos = self.geometry().y()+self.ui.vtk_panel_virtual.height()+int((self.ui.vtk_panel_bronchoscope.height()-splash_tool.height())/2)+self.ui.SubPanel_virtual.height()
+        # splash_tool.move(x_pos, y_pos+int(splash_ref.height()/2))
 
         non_vis_counter_ref = 0
         non_vis_counter_tool = 0
@@ -298,47 +302,55 @@ class MainWindow(QMainWindow):
             #     continue
 
             if self.tracker_cls.tracker_connected and not self.pause_tracker_loop:
-                ref_mat, tool_mat = self.tracker_cls.get_frame()
-                if np.isnan(ref_mat.sum()):
-                    if non_vis_counter_ref > 10:
-                        if not splash_ref_shown:
-                            splash_ref.show()
-                            QApplication.processEvents()
-                            splash_ref_shown = True
-                    else:
-                        non_vis_counter_ref += 1
-                elif splash_ref_shown:
-                    splash_ref.close()
-                    QApplication.processEvents()
-                    splash_ref_shown = False
-                    non_vis_counter_ref = 0
+                try:
+                    ref_mat, tool_mat = self.tracker_cls.get_frame()
+                except:
+                    print('capture error')
+
+                #  # Splash window is disabled for test
+                # if np.isnan(ref_mat.sum()):
+                #     if non_vis_counter_ref > 10:
+                #         if not splash_ref_shown:
+                #             splash_ref.show()
+                #             QApplication.processEvents()
+                #             splash_ref_shown = True
+                #     else:
+                #         non_vis_counter_ref += 1
+                # elif splash_ref_shown:
+                #     splash_ref.close()
+                #     QApplication.processEvents()
+                #     splash_ref_shown = False
+                #     non_vis_counter_ref = 0
                 
 
-                if np.isnan(tool_mat.sum()):
-                    if non_vis_counter_tool > 10:
-                        if not splash_tool_shown:
-                            splash_tool.show()
-                            QApplication.processEvents()
-                            splash_tool_shown = True
-                    else:
-                        non_vis_counter_tool += 1
-                elif splash_tool_shown:
-                    splash_tool.close()
-                    QApplication.processEvents()
-                    splash_tool_shown = False
-                    non_vis_counter_tool = 0
+                # if np.isnan(tool_mat.sum()):
+                #     if non_vis_counter_tool > 10:
+                #         if not splash_tool_shown:
+                #             splash_tool.show()
+                #             QApplication.processEvents()
+                #             splash_tool_shown = True
+                #     else:
+                #         non_vis_counter_tool += 1
+                # elif splash_tool_shown:
+                #     splash_tool.close()
+                #     QApplication.processEvents()
+                #     splash_tool_shown = False
+                #     non_vis_counter_tool = 0
 
                 if np.isnan(ref_mat.sum()) or np.isnan(tool_mat.sum()):
                     continue
 
-                if (self.record_coords):
-                    self.trackerRawCoords_ref.append(ref_mat) 
-                    self.trackerRawCoords_tool.append(tool_mat) 
+                try:
+                    if (self.record_coords):
+                        self.trackerRawCoords_ref.append(ref_mat) 
+                        self.trackerRawCoords_tool.append(tool_mat) 
 
-                elif self.R != []:
-                    self.registered_tool = self.apply_registration(tool_mat, ref_mat)
-                    self.show_tool_on_views(self.registered_tool)
-                    self.toolsWindow.setData(ref_mat, tool_mat)
+                    elif self.R != []:
+                        self.registered_tool = self.apply_registration(tool_mat, ref_mat)
+                        self.show_tool_on_views(self.registered_tool)
+                        self.toolsWindow.setData(ref_mat, tool_mat)
+                except:
+                    print('registeration set error')
                 # if (self.patient_cls.XyzToRas != []):
                     # # refcoords = np.swapaxes(refcoords, 0, 2)
                     # # refcoords = np.swapaxes(ref_mat, 0, 1)
@@ -348,7 +360,7 @@ class MainWindow(QMainWindow):
                     # # registered_tool = np.squeeze(np.matmul(self.patient_cls.XyzToRas, registered_tool))
                     # self.show_tool_on_views(self.registered_tool)
 
-            time.sleep(0.1)
+            time.sleep(0.25)
         return
         
     def coords_record(self):
@@ -924,17 +936,19 @@ class MainWindow(QMainWindow):
         # Commented views are correct, changed only for this phantom image!
         # if self.ui.comboBox_2DView.currentText() == 'Coronal': #Axial
         # axial_slice = int((tool_mat[2,3] - self.patient_cls.origin[2]) / self.patient_cls.spacing[2])
-        axial_slice = int((tool_mat[0,3] - self.patient_cls.origin[0]) / self.patient_cls.spacing[0])
-        self.vtk_widget_axial.set_slice(axial_slice)
-        self.ui.Slider_axial.setValue(axial_slice)
+        coronal_slice = int((tool_mat[0,3] - self.patient_cls.origin[0]) / self.patient_cls.spacing[0])
         # elif self.ui.comboBox_2DView.currentText() == 'Sagittal': #Coronal
         # coronal_slice = int((tool_mat[1,3] - self.patient_cls.origin[1]) / self.patient_cls.spacing[1])
-        coronal_slice = int((tool_mat[2,3] - self.patient_cls.origin[2]) / self.patient_cls.spacing[2])
-        self.vtk_widget_coronal.set_slice(coronal_slice)
-        self.ui.Slider_coronal.setValue(coronal_slice)
+        sagittal_slice = int((tool_mat[2,3] - self.patient_cls.origin[2]) / self.patient_cls.spacing[2])
         # elif self.ui.comboBox_2DView.currentText() == 'Axial': #Sagittal
         # sagittal_slice = int((tool_mat[0,3] - self.patient_cls.origin[0]) / self.patient_cls.spacing[0])
-        sagittal_slice = int((tool_mat[1,3] - self.patient_cls.origin[1]) / self.patient_cls.spacing[1])
+        axial_slice = int((tool_mat[1,3] - self.patient_cls.origin[1]) / self.patient_cls.spacing[1])
+        
+
+        self.vtk_widget_axial.set_slice(axial_slice)
+        self.ui.Slider_axial.setValue(axial_slice)
+        self.vtk_widget_coronal.set_slice(coronal_slice)
+        self.ui.Slider_coronal.setValue(coronal_slice)
         self.vtk_widget_sagittal.set_slice(sagittal_slice)
         self.ui.Slider_sagittal.setValue(sagittal_slice)
 
@@ -1084,6 +1098,7 @@ class MainWindow(QMainWindow):
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH,  640)
         self.timer.start()
+        self.cap.set (cv2.CAP_PROP_SETTINGS, 1)
 
     @QtCore.pyqtSlot()
     def update_frame(self):
@@ -1105,7 +1120,9 @@ class MainWindow(QMainWindow):
             self.image_label.setPixmap(QtGui.QPixmap.fromImage(outImage))
 
     def start_cam(self):
-        self.init_video()
+        thread_bronchoscope = threading.Thread(target=self.init_video)
+        thread_bronchoscope.start()
+        # self.init_video()
         cam_idx = int(self.ui.comboBox_cams.currentText())
         self.start_webcam(cam_idx)
         self.ui.label_bronchoscopeStatus_2.setText("Camera Active")

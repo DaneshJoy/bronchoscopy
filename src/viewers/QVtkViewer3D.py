@@ -128,7 +128,7 @@ class QVtkViewer3D(QVTKViewer):
         # self.ren.AddActor(volume)
         self.ren.SetActiveCamera(cam)
         self.ren.ResetCamera()
-        cam.Zoom(1.5)
+        cam.Zoom(2)
         cam.Dolly(1.5)
         self.ren.ResetCameraClippingRange()
 
@@ -302,7 +302,8 @@ class QVtkViewer3D(QVTKViewer):
 
         self.ren.GetActiveCamera().Yaw(180)
 
-        self.ren.GetActiveCamera().Zoom(0.901)
+        # self.ren.GetActiveCamera().Zoom(0.901)
+        self.ren.GetActiveCamera().Zoom(3)
         # Use the following two lines to have a nice start from far!
         # self.ren.GetActiveCamera().Azimuth(180)
         # self.ren.GetActiveCamera().Dolly(1.2)
