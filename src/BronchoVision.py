@@ -613,7 +613,7 @@ class MainWindow(QMainWindow):
     def apply_registration(self, toolMat, refMat):
 
         # Calculate tool coords in ref space and apply registration matrix
-        # tool2ref = inv(inv(refMat) * toolMat)
+        tool2ref = inv(inv(refMat) * toolMat)
         # registeredTool = inv(regMat) * tool2ref
 
         # regMat_inv = np.linalg.inv(self.regMat)
